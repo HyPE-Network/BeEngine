@@ -1,7 +1,7 @@
 package org.distril.beengine.console;
 
 import lombok.extern.log4j.Log4j2;
-import org.distril.beengine.Server;
+import org.distril.beengine.server.Server;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;

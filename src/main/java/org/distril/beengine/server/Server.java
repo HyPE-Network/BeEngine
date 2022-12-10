@@ -1,12 +1,19 @@
-package org.distril.beengine;
+package org.distril.beengine.server;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.console.Console;
 import org.distril.beengine.network.Network;
+import org.distril.beengine.player.Player;
+import org.distril.beengine.player.data.provider.NBTPlayerDataProvider;
+import org.distril.beengine.player.data.provider.PlayerDataProvider;
 import org.distril.beengine.scheduler.Scheduler;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
@@ -17,16 +24,23 @@ public class Server {
 	private final AtomicBoolean running = new AtomicBoolean(true);
 
 	private final Console console;
+	private final ServerSettings settings = new ServerSettings();
 	private final Network network;
 
 	private final Scheduler scheduler = new Scheduler();
+
+	private final Set<Player> players = new HashSet<>();
+
+	@Setter
+	@Getter
+	private PlayerDataProvider playerDataProvider = new NBTPlayerDataProvider();
 
 	private long currentTick;
 
 	public Server() {
 		this.console = new Console(this);
 
-		this.network = new Network("0.0.0.0", 19132);
+		this.network = new Network(this, this.settings.getIp(), this.settings.getPort());
 	}
 
 	public void start() {
@@ -94,6 +108,18 @@ public class Server {
 
 	public void stop() {
 		this.console.interrupt();
+	}
+
+	public void addPlayer(Player player) {
+		this.players.add(player);
+	}
+
+	public void removePlayer(Player player) {
+		this.players.remove(player);
+	}
+
+	public Set<Player> getPlayers() {
+		return Collections.unmodifiableSet(this.players);
 	}
 
 	public boolean isRunning() {
