@@ -35,7 +35,7 @@ public class Console extends Thread {
 
 			reader.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
 			reader.unsetOpt(LineReader.Option.INSERT_TAB);
-			while (this.server.isStarted()) {
+			while (this.server.isRunning()) {
 				try {
 					var command = reader.readLine().trim();
 					if (!command.isEmpty()) {
