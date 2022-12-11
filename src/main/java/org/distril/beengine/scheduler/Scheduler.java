@@ -61,6 +61,11 @@ public class Scheduler {
 		this.queue.add(entry);
 	}
 
+	public void cancelAllTasks() {
+		this.queue.forEach(entry -> entry.getTask().cancel());
+		this.queue.clear();
+	}
+
 	@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 	public static class TaskBuilder {
 

@@ -1,4 +1,5 @@
 .idea
 logs
+players
 target
 dependency-reduced-pom.xml

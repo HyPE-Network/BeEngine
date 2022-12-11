@@ -19,8 +19,6 @@ public class Network implements BedrockServerEventHandler {
 	static {
 		PONG.setEdition("MCPE");
 		PONG.setGameType("Survival");
-		PONG.setMotd("test motd");
-		PONG.setSubMotd("test sub-motd");
 		PONG.setPlayerCount(0);
 		PONG.setProtocolVersion(CODEC.getProtocolVersion());
 		PONG.setVersion(CODEC.getMinecraftVersion());
@@ -37,6 +35,8 @@ public class Network implements BedrockServerEventHandler {
 		this.bedrockServer = new BedrockServer(bindAddress, Runtime.getRuntime().availableProcessors());
 		this.bedrockServer.setHandler(this);
 
+		PONG.setMotd(server.getSettings().getMotd());
+		PONG.setSubMotd(PONG.getMotd());
 		PONG.setMaximumPlayerCount(server.getSettings().getMaximumPlayers());
 		PONG.setIpv4Port(port);
 		PONG.setIpv6Port(port);

@@ -108,6 +108,8 @@ public class Server {
 
 	public void stop() {
 		this.console.interrupt();
+		this.network.stop();
+		this.scheduler.cancelAllTasks();
 	}
 
 	public void addPlayer(Player player) {

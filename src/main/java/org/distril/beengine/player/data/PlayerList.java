@@ -1,4 +1,4 @@
-package org.distril.beengine.player.data.provider;
+package org.distril.beengine.player.data;
 
 import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import lombok.RequiredArgsConstructor;

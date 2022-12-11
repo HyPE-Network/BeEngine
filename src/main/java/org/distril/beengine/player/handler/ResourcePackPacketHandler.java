@@ -52,6 +52,14 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 			case COMPLETED -> {
 				Player player = new Player(this.server, this.session, this.loginData);
 				player.initialize();
+
+				this.session.addDisconnectHandler(reason -> this.server.getScheduler().prepareTask(() -> {
+					this.server.removePlayer(player);
+
+					player.onDisconnect();
+				}).async().schedule());
+
+				this.session.setPacketHandler(new PlayerPacketHandler());
 				return true;
 			}
 		}
