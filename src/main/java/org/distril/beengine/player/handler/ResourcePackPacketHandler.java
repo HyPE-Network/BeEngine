@@ -60,7 +60,7 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 					player.onDisconnect();
 				}).async().schedule());
 
-				this.session.setPacketHandler(new PlayerPacketHandler());
+				this.session.setPacketHandler(new PlayerPacketHandler(player));
 				return true;
 			}
 		}

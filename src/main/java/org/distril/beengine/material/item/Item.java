@@ -11,6 +11,7 @@ import org.distril.beengine.material.Material;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @ToString
 @Getter
@@ -18,14 +19,16 @@ import java.util.List;
 @Log4j2
 public abstract class Item implements Cloneable, Behavior {
 
-	private final List<String> lores = new ArrayList<>();
+	public static final Item AIR = Material.AIR.getItem();
 
+	private static final AtomicInteger ID = new AtomicInteger(0);
+
+	private final List<String> lores = new ArrayList<>();
+	private final int networkId;
 	@Accessors(chain = true)
 	private Material material;
-
 	@Accessors(chain = true)
 	private int count = 1, meta;
-
 	@Setter
 	@Getter
 	private String customName;
@@ -38,6 +41,7 @@ public abstract class Item implements Cloneable, Behavior {
 	public Item(Material material, int meta) {
 		this.material = material;
 		this.meta = meta;
+		this.networkId = material != Material.AIR ? ID.incrementAndGet() : 0;
 	}
 
 	public Item setCount(int count) {
@@ -57,6 +61,10 @@ public abstract class Item implements Cloneable, Behavior {
 	public void setLores(String... lores) {
 		this.lores.clear();
 		this.lores.addAll(List.of(lores));
+	}
+
+	public String getIdentifier() {
+		return this.material.getIdentifier();
 	}
 
 	public int getRuntimeId() {

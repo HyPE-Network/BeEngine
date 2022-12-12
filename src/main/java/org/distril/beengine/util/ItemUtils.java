@@ -5,6 +5,7 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtUtils;
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import org.distril.beengine.material.block.BlockPalette;
+import org.distril.beengine.material.item.Item;
 import org.distril.beengine.material.item.ItemPalette;
 
 import java.io.ByteArrayInputStream;
@@ -49,5 +50,31 @@ public class ItemUtils {
 		try (var reader = NbtUtils.createReaderLE(new ByteArrayInputStream(nbtData))) {
 			return ((NbtMap) reader.readTag());
 		}
+	}
+
+	public static Item getAirIfNull(Item item) {
+		if (item == null) {
+			return Item.AIR;
+		}
+
+		return item;
+	}
+
+	public static ItemData toNetwork(Item item) {
+		item = ItemUtils.getAirIfNull(item);
+
+		int blockRuntimeId = 0; // todo
+
+		return ItemData.builder()
+				.id(item.getRuntimeId())
+				.netId(item.getNetworkId())
+				.blockRuntimeId(blockRuntimeId)
+				.count(item.getCount())
+				.damage(item.getMeta())
+				.canBreak(new String[0]) // todo
+				.canPlace(new String[0]) // todo
+				.tag(item.getNbt())
+				.usingNetId(true)
+				.build();
 	}
 }

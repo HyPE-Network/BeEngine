@@ -10,6 +10,10 @@ import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.entity.EntityHuman;
+import org.distril.beengine.inventory.Inventory;
+import org.distril.beengine.inventory.InventoryHolder;
+import org.distril.beengine.inventory.defaults.PlayerInventory;
+import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.ItemPalette;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
@@ -26,19 +30,25 @@ import java.util.UUID;
 
 @Getter
 @Log4j2
-public class Player extends EntityHuman {
+public class Player extends EntityHuman implements InventoryHolder {
 
 	private final Server server;
 	private final BedrockServerSession session;
 	private final LoginData loginData;
 
 	private final PlayerList playerList = new PlayerList(this);
+
+	private final PlayerInventory inventory;
+
 	private PlayerData data;
 
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
 		this.server = server;
 		this.session = session;
 		this.loginData = loginData;
+
+		this.inventory = new PlayerInventory(this);
+		this.inventory.addItem(Material.BEDROCK.getItem());
 
 		this.setDevice(loginData.getDevice());
 		this.setXuid(loginData.getXuid());
@@ -89,7 +99,6 @@ public class Player extends EntityHuman {
 			this.spawnTo(this);
 
 			this.setGamemode(this.data.getGamemode());
-
 
 			var startGamePacket = new StartGamePacket();
 			startGamePacket.setUniqueEntityId(this.getId());
@@ -213,5 +222,14 @@ public class Player extends EntityHuman {
 
 	public void disconnect(String reason) {
 		this.session.disconnect(reason);
+	}
+
+	public void openInventory(Inventory inventory) {
+		inventory.openFor(this);
+	}
+
+	@Override
+	public PlayerInventory getInventory() {
+		return this.inventory;
 	}
 }
