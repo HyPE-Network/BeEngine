@@ -10,6 +10,7 @@ import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.entity.EntityHuman;
+import org.distril.beengine.material.item.ItemPalette;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.Gamemode;
@@ -112,7 +113,7 @@ public class Player extends EntityHuman {
 			startGamePacket.setPremiumWorldTemplateId("");
 			startGamePacket.setInventoriesServerAuthoritative(true);
 			startGamePacket.getGamerules().add(new GameRuleData<>("showcoordinates", true));
-			// startGamePacket.setItemEntries(); // todo
+			startGamePacket.setItemEntries(ItemPalette.getItemEntries());
 
 			var movementSettings = new SyncedPlayerMovementSettings();
 			movementSettings.setMovementMode(AuthoritativeMovementMode.CLIENT);
@@ -142,9 +143,7 @@ public class Player extends EntityHuman {
 			availableEntityIdentifiersPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
 			this.sendPacket(availableEntityIdentifiersPacket);
 
-			var creativeContentPacket = new CreativeContentPacket();
-			// todo: creative items
-			this.sendPacket(creativeContentPacket);
+			this.sendPacket(ItemPalette.getCreativeContentPacket());
 
 			var craftingDataPacket = new CraftingDataPacket();
 			// todo: crafting data

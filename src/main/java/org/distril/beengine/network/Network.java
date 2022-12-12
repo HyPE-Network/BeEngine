@@ -73,6 +73,7 @@ public class Network implements BedrockServerEventHandler {
 	@Override
 	public void onSessionCreation(BedrockServerSession session) {
 		session.setLogging(false);
+		session.setCompressionLevel(7);
 		session.setPacketHandler(new LoginPacketHandler(session, this.server));
 	}
 

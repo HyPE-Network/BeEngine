@@ -5,12 +5,16 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.console.Console;
+import org.distril.beengine.material.item.ItemRegistry;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.player.data.provider.NBTPlayerDataProvider;
 import org.distril.beengine.player.data.provider.PlayerDataProvider;
 import org.distril.beengine.scheduler.Scheduler;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +24,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Log4j2
 public class Server {
 
+	@Getter
+	private static Server instance;
+
 	@Getter(AccessLevel.NONE)
 	private final AtomicBoolean running = new AtomicBoolean(true);
 
@@ -28,6 +35,7 @@ public class Server {
 	private final Network network;
 
 	private final Scheduler scheduler = new Scheduler();
+	private final ItemRegistry itemRegistry = new ItemRegistry();
 
 	private final Set<Player> players = new HashSet<>();
 
@@ -38,15 +46,22 @@ public class Server {
 	private long currentTick;
 
 	public Server() {
+		Server.instance = this;
 		this.console = new Console(this);
 
 		this.network = new Network(this, this.settings.getIp(), this.settings.getPort());
+
+		try {
+			Files.createDirectory(Path.of("players"));
+		} catch (IOException ignored) {/**/}
 	}
 
 	public void start() {
 		this.console.start();
 
 		log.info("Starting server...");
+
+		this.itemRegistry.init();
 
 		try {
 			this.network.start();
@@ -58,6 +73,7 @@ public class Server {
 		this.startTickLoopProcessor();
 	}
 
+	@SuppressWarnings("BusyWait")
 	private void startTickLoopProcessor() {
 		var nextTick = System.currentTimeMillis();
 		try {
@@ -107,9 +123,16 @@ public class Server {
 	}
 
 	public void stop() {
-		this.console.interrupt();
+		log.info("Stopping server...");
 		this.network.stop();
+
+		log.info("Cancel all tasks...");
 		this.scheduler.cancelAllTasks();
+
+		log.info("Server stopped!");
+		this.console.interrupt();
+
+		System.exit(0);
 	}
 
 	public void addPlayer(Player player) {

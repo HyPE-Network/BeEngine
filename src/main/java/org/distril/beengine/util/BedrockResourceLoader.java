@@ -5,7 +5,6 @@ import com.nukkitx.nbt.NbtUtils;
 import org.distril.beengine.Bootstrap;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 public class BedrockResourceLoader {
 
@@ -13,20 +12,16 @@ public class BedrockResourceLoader {
 	public static final NbtMap ENTITY_IDENTIFIERS;
 
 	static {
-		try (var reader = NbtUtils.createNetworkReader(getResource("biome_definitions.dat"))) {
+		try (var reader = NbtUtils.createNetworkReader(Bootstrap.getResource("data/biome_definitions.dat"))) {
 			BIOME_DEFINITIONS = (NbtMap) reader.readTag();
 		} catch (IOException exception) {
 			throw new RuntimeException(exception);
 		}
 
-		try (var reader = NbtUtils.createNetworkReader(getResource("entity_identifiers.dat"))) {
+		try (var reader = NbtUtils.createNetworkReader(Bootstrap.getResource("data/entity_identifiers.dat"))) {
 			ENTITY_IDENTIFIERS = (NbtMap) reader.readTag();
 		} catch (IOException exception) {
 			throw new RuntimeException(exception);
 		}
-	}
-
-	private static InputStream getResource(String name) {
-		return Bootstrap.class.getClassLoader().getResourceAsStream(name);
 	}
 }

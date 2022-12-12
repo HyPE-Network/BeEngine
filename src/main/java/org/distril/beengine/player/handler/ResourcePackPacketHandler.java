@@ -20,12 +20,13 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 	public ResourcePackPacketHandler(Server server, BedrockServerSession session, LoginData loginData) {
 		this.server = server;
 		this.session = session;
+		this.session.getHardcodedBlockingId().set(355);
 		this.loginData = loginData;
 
 		// Notify client about all resource packs on the server
 		var packet = new ResourcePacksInfoPacket();
 		packet.setForcedToAccept(false);
-		session.sendPacket(packet);
+		this.session.sendPacket(packet);
 	}
 
 	@Override

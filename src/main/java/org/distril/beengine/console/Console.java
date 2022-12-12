@@ -39,6 +39,11 @@ public class Console extends Thread {
 				try {
 					var command = reader.readLine().trim();
 					if (!command.isEmpty()) {
+						if (command.equals("stop")) {
+							this.server.stop();
+							return;
+						}
+
 						log.info(command);
 					}
 				} catch (EndOfFileException ignored) {/**/}
