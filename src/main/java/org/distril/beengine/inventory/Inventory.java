@@ -1,6 +1,5 @@
 package org.distril.beengine.inventory;
 
-import com.nukkitx.protocol.bedrock.data.inventory.ContainerId;
 import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket;
 import com.nukkitx.protocol.bedrock.packet.InventoryContentPacket;
 import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket;
@@ -20,23 +19,37 @@ import java.util.stream.Collectors;
 @Getter
 public abstract class Inventory {
 
-	private static final AtomicInteger ID = new AtomicInteger(0);
+	private static final AtomicInteger NEXT_ID = new AtomicInteger(0);
 
 	private final Set<Player> viewers = new HashSet<>();
-
-	private final byte id = (byte) ID.incrementAndGet();
 
 	private final InventoryHolder holder;
 	private final InventoryType type;
 
 	private final Item[] items;
 
+	private final int id;
+
 	public Inventory(InventoryHolder holder, InventoryType type) {
+		this(holder, type, Integer.MIN_VALUE);
+	}
+
+	public Inventory(InventoryHolder holder, InventoryType type, int overrideId) {
 		this.holder = holder;
 		this.type = type;
 		this.items = new Item[type.getSize()];
 
 		Arrays.fill(this.items, Item.AIR);
+
+		if (overrideId != Integer.MIN_VALUE) {
+			this.id = overrideId;
+		} else {
+			this.id = NEXT_ID.incrementAndGet();
+		}
+	}
+
+	protected int getId() {
+		return this.id;
 	}
 
 	public void setItem(int slot, Item item) {
@@ -71,23 +84,31 @@ public abstract class Inventory {
 		Arrays.fill(this.items, Item.AIR);
 	}
 
-	public void openFor(Player player) {
+	public boolean openFor(Player player) {
 		if (this.viewers.add(player)) {
 			this.onOpen(player);
+
+			return true;
 		}
+
+		return false;
 	}
 
 	protected void onOpen(Player player) {/**/}
 
-	public void closeFor(Player player) {
+	public boolean closeFor(Player player) {
 		if (this.viewers.remove(player)) {
 			this.onClose(player);
+
+			return true;
 		}
+
+		return false;
 	}
 
 	protected void onClose(Player player) {
 		ContainerClosePacket packet = new ContainerClosePacket();
-		packet.setId(this.id);
+		packet.setId((byte) this.getId());
 		player.sendPacket(packet);
 	}
 
@@ -97,17 +118,17 @@ public abstract class Inventory {
 
 	protected void sendSlot(int slot, Player... players) {
 		var packet = new InventorySlotPacket();
-		packet.setContainerId(this.id);
+		packet.setContainerId(this.getId());
 		packet.setSlot(slot);
 		packet.setItem(ItemUtils.toNetwork(this.getItem(slot)));
 
 		Arrays.stream(players).forEach(player -> player.sendPacket(packet));
 	}
 
-	protected void sendSlots(Player player, Item... items) {
+	public void sendSlots(Player player) {
 		var packet = new InventoryContentPacket();
-		packet.setContainerId(ContainerId.INVENTORY);
-		packet.setContents(Arrays.stream(items).map(ItemUtils::toNetwork).collect(Collectors.toList()));
+		packet.setContainerId(this.getId());
+		packet.setContents(Arrays.stream(this.items).map(ItemUtils::toNetwork).collect(Collectors.toList()));
 		player.sendPacket(packet);
 	}
 

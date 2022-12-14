@@ -39,6 +39,7 @@ public class Player extends EntityHuman implements InventoryHolder {
 	private final PlayerList playerList = new PlayerList(this);
 
 	private final PlayerInventory inventory;
+	private Inventory openedInventory;
 
 	private PlayerData data;
 
@@ -171,6 +172,8 @@ public class Player extends EntityHuman implements InventoryHolder {
 			playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
 			this.sendPacket(playStatusPacket);
 
+			this.inventory.sendSlots(this);
+
 			log.info("{} logged in [X = {}, Y = {}, Z = {}]", this.getUsername(), this.getPosition().getX(), this.getPosition().getY(), this.getPosition().getZ());
 
 			this.setSpawned(true);
@@ -225,7 +228,21 @@ public class Player extends EntityHuman implements InventoryHolder {
 	}
 
 	public void openInventory(Inventory inventory) {
-		inventory.openFor(this);
+		this.closeOpenedInventory();
+
+		if (inventory.openFor(this)) {
+			this.openedInventory = inventory;
+		}
+
+		/*this.server.getScheduler().prepareTask(() -> {
+			this.closeOpenedInventory();
+		}).delay(20 * 3).schedule();*/
+	}
+
+	public void closeOpenedInventory() {
+		if (this.openedInventory != null && this.openedInventory.closeFor(this)) {
+			this.openedInventory = null;
+		}
 	}
 
 	@Override

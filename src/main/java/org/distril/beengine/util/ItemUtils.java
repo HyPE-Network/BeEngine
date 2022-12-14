@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtUtils;
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
+import org.distril.beengine.material.Material;
 import org.distril.beengine.material.block.BlockPalette;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.material.item.ItemPalette;
@@ -76,5 +77,21 @@ public class ItemUtils {
 				.tag(item.getNbt())
 				.usingNetId(true)
 				.build();
+	}
+
+	public static Item fromNetwork(ItemData itemData) {
+		if (itemData == null) {
+			return Item.AIR;
+		}
+
+		var item = Material.fromRuntimeId(itemData.getId()).getItem();
+		item.setMeta(itemData.getDamage());
+		item.setCount(itemData.getCount());
+		item.setNbt(itemData.getTag());
+		item.setBlockingTicks(itemData.getBlockingTicks());
+		item.setBlockRuntimeId(itemData.getBlockRuntimeId());
+		item.setNetworkId(itemData.getNetId());
+
+		return item;
 	}
 }

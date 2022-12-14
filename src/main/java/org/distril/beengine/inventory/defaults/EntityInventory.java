@@ -23,6 +23,10 @@ public class EntityInventory extends Inventory {
 		super(holder, type);
 	}
 
+	public EntityInventory(InventoryHolder holder, InventoryType type, int overrideId) {
+		super(holder, type, overrideId);
+	}
+
 	@Override
 	public void clear() {
 		super.clear();
@@ -36,7 +40,7 @@ public class EntityInventory extends Inventory {
 	@Override
 	protected void onOpen(Player player) {
 		ContainerOpenPacket packet = new ContainerOpenPacket();
-		packet.setId(this.getId());
+		packet.setId((byte) this.getId());
 		packet.setType(this.getType().getContainerType());
 		if (this.getHolder() instanceof Entity entity) {
 			packet.setBlockPosition(entity.getPosition().toInt());
@@ -63,6 +67,13 @@ public class EntityInventory extends Inventory {
 
 	public void setBoots(Item boots) {
 		this.boots = ItemUtils.getAirIfNull(boots);
+		this.sendArmor();
+	}
+
+	@Override
+	public void sendSlots(Player player) {
+		super.sendSlots(player);
+
 		this.sendArmor();
 	}
 
