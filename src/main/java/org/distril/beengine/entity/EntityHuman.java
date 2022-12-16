@@ -2,6 +2,7 @@ package org.distril.beengine.entity;
 
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
+import com.nukkitx.protocol.bedrock.data.GameType;
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
 import com.nukkitx.protocol.bedrock.packet.AddPlayerPacket;
@@ -75,6 +76,7 @@ public class EntityHuman extends Entity {
 		packet.setRuntimeEntityId(this.getId());
 		packet.setUniqueEntityId(this.getId());
 		packet.setPosition(this.getPosition());
+		packet.setGameType(GameType.SURVIVAL);
 		packet.setMotion(Vector3f.ZERO);
 		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getHeadYaw()));
 		packet.setDeviceId("");

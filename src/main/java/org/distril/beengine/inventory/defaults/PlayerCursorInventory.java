@@ -5,19 +5,25 @@ import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryType;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
-import org.distril.beengine.util.ItemUtils;
 
 public class PlayerCursorInventory extends Inventory {
 
 	public PlayerCursorInventory(Player player) {
-		super(player, InventoryType.CURSOR, ContainerId.INVENTORY);
+		super(player, InventoryType.CURSOR, ContainerId.UI);
 	}
 
-	public Item getCursorItem() {
-		return this.getItem(0);
+	@Override
+	public Item getItem(int slot) {
+		return super.getItem(0);
 	}
 
-	public void setCursorItem(Item item) {
-		this.setItem(0, ItemUtils.getAirIfNull(item));
+	@Override
+	public boolean setItem(int slot, Item item) {
+		return super.setItem(0, item);
+	}
+
+	@Override
+	public void sendSlots(Player player) {
+		this.sendSlot(0, player);
 	}
 }

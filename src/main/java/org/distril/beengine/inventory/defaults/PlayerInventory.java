@@ -29,11 +29,11 @@ public class PlayerInventory extends EntityInventory {
 	}
 
 	public Item getCursorItem() {
-		return this.cursorInventory.getCursorItem();
+		return this.cursorInventory.getItem(0);
 	}
 
 	public void setCursorItem(Item item) {
-		this.cursorInventory.setCursorItem(item);
+		this.cursorInventory.setItem(0, item);
 	}
 
 	@Override

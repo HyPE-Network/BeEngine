@@ -50,6 +50,9 @@ public class Player extends EntityHuman implements InventoryHolder {
 
 		this.inventory = new PlayerInventory(this);
 		this.inventory.addItem(Material.BEDROCK.getItem());
+		this.inventory.addItem(Material.DIRT.getItem());
+		this.inventory.setItem(3, Material.BEDROCK.getItem());
+		this.inventory.setItem(4, Material.BEDROCK.getItem());
 
 		this.setDevice(loginData.getDevice());
 		this.setXuid(loginData.getXuid());
@@ -198,6 +201,22 @@ public class Player extends EntityHuman implements InventoryHolder {
 		}
 	}
 
+	public boolean isSurvival() {
+		return this.data.getGamemode() == Gamemode.SURVIVAL;
+	}
+
+	public boolean isCreative() {
+		return this.data.getGamemode() == Gamemode.CREATIVE;
+	}
+
+	public boolean isAdventure() {
+		return this.data.getGamemode() == Gamemode.ADVENTURE;
+	}
+
+	public boolean isSpectator() {
+		return this.data.getGamemode() == Gamemode.SPECTATOR;
+	}
+
 	public void onDisconnect() {
 		if (this.isSpawned()) {
 			this.server.getScheduler().prepareTask(() -> {
@@ -233,10 +252,6 @@ public class Player extends EntityHuman implements InventoryHolder {
 		if (inventory.openFor(this)) {
 			this.openedInventory = inventory;
 		}
-
-		/*this.server.getScheduler().prepareTask(() -> {
-			this.closeOpenedInventory();
-		}).delay(20 * 3).schedule();*/
 	}
 
 	public void closeOpenedInventory() {

@@ -20,7 +20,7 @@ public abstract class Item implements Cloneable, Behavior {
 
 	private static final AtomicInteger NEXT_NETWORK_ID = new AtomicInteger(0);
 
-	private Material material;
+	private final Material material;
 	private int meta;
 	private int count = 1;
 	private NbtMap nbt = NbtMap.EMPTY;
@@ -120,5 +120,17 @@ public abstract class Item implements Cloneable, Behavior {
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.material, this.meta, this.count, this.nbt, this.blockingTicks, this.blockRuntimeId);
+	}
+
+	@SuppressWarnings("MethodDoesntCallSuperMethod")
+	@Override
+	public Item clone() {
+		Item clone = this.material.getItem();
+		clone.setMeta(this.meta);
+		clone.setCount(this.count);
+		clone.setNbt(this.nbt);
+		clone.setBlockingTicks(this.blockingTicks);
+		clone.setBlockRuntimeId(this.blockRuntimeId);
+		return clone;
 	}
 }

@@ -52,13 +52,22 @@ public abstract class Inventory {
 		return this.id;
 	}
 
-	public void setItem(int slot, Item item) {
+	public boolean setItem(int slot, Item item) {
+		return this.setItem(slot, item, true);
+	}
+
+	public boolean setItem(int slot, Item item, boolean send) {
 		if (slot < 0 || slot >= this.items.length) {
-			return;
+			return false;
 		}
 
 		this.items[slot] = ItemUtils.getAirIfNull(item);
-		this.onSlotChange(slot);
+
+		if (send) {
+			this.onSlotChange(slot);
+		}
+
+		return true;
 	}
 
 	public Item getItem(int slot) {

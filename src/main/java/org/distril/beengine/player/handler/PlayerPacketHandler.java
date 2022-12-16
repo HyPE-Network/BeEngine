@@ -23,7 +23,6 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 			this.player.openInventory(this.player.getInventory());
 		}
 
-		log.info(packet.toString());
 		return true;
 	}
 
