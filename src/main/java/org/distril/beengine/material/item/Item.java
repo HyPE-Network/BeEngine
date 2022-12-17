@@ -115,14 +115,13 @@ public abstract class Item implements Cloneable, Behavior {
 			return false;
 		}
 
-		return this.equals((Item) obj, true, true, true);
+		return this.equals((Item) obj, true, true);
 	}
 
-	public boolean equals(Item that, boolean checkMeta, boolean checkCount, boolean checkData) {
+	public boolean equals(Item that, boolean checkMeta, boolean checkData) {
 		checkMeta = !checkMeta || (this.meta == that.getMeta() && this.blockRuntimeId == that.getBlockRuntimeId());
-		checkCount = !checkCount || this.count == that.getCount();
 		checkData = !checkData || Objects.equals(this.nbt, that.getNbt());
-		return this.material == that.getMaterial() && checkMeta && checkCount && checkData;
+		return this.material == that.getMaterial() && checkMeta && checkData;
 	}
 
 	@Override

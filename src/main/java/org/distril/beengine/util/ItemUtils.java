@@ -16,33 +16,38 @@ import java.util.Base64;
 public class ItemUtils {
 
 	public static ItemData fromJSON(JsonObject itemJSON) throws IOException {
+		var itemData = ItemData.builder();
 		var identifier = itemJSON.get("id").getAsString();
-		var count = itemJSON.has("count") ? itemJSON.get("count").getAsInt() : 1;
-		var meta = itemJSON.has("damage") && itemJSON.get("damage").getAsShort() != Short.MAX_VALUE
-		           ? itemJSON.get("damage").getAsInt() : 0;
-		var blockStateNbt = itemJSON.has("block_state_b64") ? itemJSON.get("block_state_b64").getAsString() : null;
-		var tagNbt = itemJSON.has("nbt_b64") ? itemJSON.get("nbt_b64").getAsString() : null;
+		itemData.id(ItemPalette.getRuntimeId(identifier));
 
-		int blockRuntimeId = 0;
+		if (itemJSON.has("block_state_b64")) {
+			var blockNbt = ItemUtils.decodeNbt(itemJSON.get("block_state_b64").getAsString());
 
-		if (blockStateNbt != null) {
-			var blockNbt = ItemUtils.base64ToNbt(blockStateNbt).toBuilder();
-			blockNbt.remove("name_hash");
-			blockNbt.remove("version");
-
-			blockRuntimeId = BlockPalette.getRuntimeId(identifier, blockNbt.build());
+			itemData.blockRuntimeId(BlockPalette.getRuntimeId(blockNbt));
 		}
 
-		return ItemData.builder()
-				.id(ItemPalette.getRuntimeId(identifier))
-				.count(count)
-				.damage(meta)
-				.blockRuntimeId(blockRuntimeId)
-				.tag(ItemUtils.base64ToNbt(tagNbt))
-				.build();
+		if (itemJSON.has("blockRuntimeId")) {
+			itemData.blockRuntimeId(itemJSON.get("blockRuntimeId").getAsInt());
+		}
+
+		if (itemJSON.has("damage")) {
+			int meta = itemJSON.get("damage").getAsInt();
+			if ((meta & 0x7fff) == 0x7fff) {
+				meta = -1;
+			}
+
+			itemData.damage(meta);
+		}
+
+		if (itemJSON.has("nbt_b64")) {
+			itemData.tag(ItemUtils.decodeNbt(itemJSON.get("nbt_b64").getAsString()));
+		}
+
+		return itemData.usingNetId(false)
+				.count(1).build();
 	}
 
-	private static NbtMap base64ToNbt(String base64) throws IOException {
+	private static NbtMap decodeNbt(String base64) throws IOException {
 		if (base64 == null) {
 			return NbtMap.EMPTY;
 		}
@@ -68,14 +73,15 @@ public class ItemUtils {
 
 		return ItemData.builder()
 				.id(item.getRuntimeId())
-				.netId(item.getNetworkId())
-				.blockRuntimeId(blockRuntimeId)
-				.count(item.getCount())
 				.damage(item.getMeta())
+				.count(item.getCount())
+				.tag(item.getNbt())
 				.canBreak(new String[0]) // todo
 				.canPlace(new String[0]) // todo
-				.tag(item.getNbt())
-				.usingNetId(true)
+				.blockingTicks(item.getBlockingTicks())
+				.blockRuntimeId(blockRuntimeId)
+				.netId(item.getNetworkId())
+				.usingNetId(item.getNetworkId() != 0)
 				.build();
 	}
 

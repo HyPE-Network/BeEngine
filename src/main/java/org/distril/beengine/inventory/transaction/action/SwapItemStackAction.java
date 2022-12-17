@@ -15,7 +15,7 @@ public class SwapItemStackAction extends ItemStackAction {
 
 	@Override
 	public boolean isValid(Player player) {
-		return !this.getFromItem().equals(this.getToItem(), true, false, true);
+		return !this.getFromItem().equals(this.getToItem(), true, true);
 	}
 
 	@Override

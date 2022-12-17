@@ -32,7 +32,7 @@ public abstract class MoveItemStackAction extends ItemStackAction {
 		var toItem = this.getToItem();
 
 		return fromItem.getCount() >= this.count &&
-				(toItem.getMaterial() == Material.AIR || fromItem.equals(toItem, true, false, true));
+				(toItem.getMaterial() == Material.AIR || fromItem.equals(toItem, true, true));
 	}
 
 	@Override

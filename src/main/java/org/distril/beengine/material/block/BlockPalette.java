@@ -39,11 +39,14 @@ public class BlockPalette {
 	public static int getRuntimeId(String identifier, NbtMap states) {
 		var fullState = NbtMap.builder();
 		fullState.putString("name", identifier);
-		fullState.putCompound("states", states);
+		fullState.putCompound("states", states.getCompound("states"));
 		return BlockPalette.getRuntimeId(fullState.build());
 	}
 
 	public static int getRuntimeId(NbtMap fullState) {
-		return STATES.getOrDefault(fullState, 0);
+		var builder = fullState.toBuilder();
+		builder.remove("name_hash");
+		builder.remove("version");
+		return STATES.getOrDefault(builder.build(), 0);
 	}
 }
