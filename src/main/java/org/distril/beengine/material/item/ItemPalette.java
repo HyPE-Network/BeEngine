@@ -8,17 +8,16 @@ import com.google.gson.JsonObject;
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.CreativeContentPacket;
 import com.nukkitx.protocol.bedrock.packet.StartGamePacket;
-import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.Bootstrap;
 import org.distril.beengine.util.ItemUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Log4j2
 public class ItemPalette {
 
 	private static final Gson GSON = new Gson();
@@ -46,7 +45,7 @@ public class ItemPalette {
 		try (var reader = new InputStreamReader(Bootstrap.getResource("data/creative_items.json"))) {
 			var itemArray = GSON.fromJson(reader, JsonObject.class).getAsJsonArray("items");
 
-			Set<ItemData> itemsData = new HashSet<>();
+			List<ItemData> itemsData = new ArrayList<>();
 			int netId = 0;
 			for (var itemElement : itemArray) {
 				var itemObj = itemElement.getAsJsonObject();
@@ -55,7 +54,6 @@ public class ItemPalette {
 				itemsData.add(
 						ItemUtils.fromJSON(itemObj)
 								.toBuilder()
-								.usingNetId(true)
 								.netId(netId)
 								.build()
 				);
