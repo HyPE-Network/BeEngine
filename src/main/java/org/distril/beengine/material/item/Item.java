@@ -39,7 +39,15 @@ public abstract class Item implements Cloneable, Behavior {
 	}
 
 	public void setCount(int count) {
-		this.count = Math.max(count, 0);
+		this.count = Math.max(0, count);
+	}
+
+	public void decrementCount(int count) {
+		this.setCount(this.count - count);
+	}
+
+	public void incrementCount(int count) {
+		this.setCount(this.count + count);
 	}
 
 	public void setNbt(NbtMap nbt) {

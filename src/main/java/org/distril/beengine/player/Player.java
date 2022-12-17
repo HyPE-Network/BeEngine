@@ -13,7 +13,6 @@ import org.distril.beengine.entity.EntityHuman;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.defaults.PlayerInventory;
-import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.ItemPalette;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
@@ -49,10 +48,6 @@ public class Player extends EntityHuman implements InventoryHolder {
 		this.loginData = loginData;
 
 		this.inventory = new PlayerInventory(this);
-		this.inventory.addItem(Material.BEDROCK.getItem());
-		this.inventory.addItem(Material.DIRT.getItem());
-		this.inventory.setItem(3, Material.BEDROCK.getItem());
-		this.inventory.setItem(4, Material.BEDROCK.getItem());
 
 		this.setDevice(loginData.getDevice());
 		this.setXuid(loginData.getXuid());
@@ -103,6 +98,7 @@ public class Player extends EntityHuman implements InventoryHolder {
 			this.spawnTo(this);
 
 			this.setGamemode(this.data.getGamemode());
+			this.setGamemode(Gamemode.CREATIVE);
 
 			var startGamePacket = new StartGamePacket();
 			startGamePacket.setUniqueEntityId(this.getId());
@@ -229,7 +225,6 @@ public class Player extends EntityHuman implements InventoryHolder {
 				this.getServer().getScheduler().prepareTask(this::despawnFromAll).schedule();
 			}).async().schedule();
 
-			// remove the player from the player list of others
 			for (Player player : this.getServer().getPlayers()) {
 				player.getPlayerList().removeEntry(this.getPlayerListEntry());
 			}

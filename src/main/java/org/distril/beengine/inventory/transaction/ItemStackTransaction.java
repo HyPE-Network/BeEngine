@@ -26,8 +26,6 @@ public class ItemStackTransaction {
 	private ResponseStatus status = ResponseStatus.OK;
 
 	public boolean handle(ItemStackAction action) {
-		action.onAddToTransaction(this);
-
 		if (!action.isValid(this.player)) {
 			log.warn("Failed validation check on {}", action.getClass().getSimpleName());
 			action.onExecuteFail(this.player);

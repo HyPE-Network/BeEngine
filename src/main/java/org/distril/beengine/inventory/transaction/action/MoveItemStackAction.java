@@ -3,18 +3,22 @@ package org.distril.beengine.inventory.transaction.action;
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerSlotType;
 import com.nukkitx.protocol.bedrock.data.inventory.StackRequestSlotInfoData;
 import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket;
+import lombok.Getter;
+import org.distril.beengine.inventory.transaction.ItemStackTransaction;
 import org.distril.beengine.material.Material;
 import org.distril.beengine.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MoveItemStackAction extends ItemStackAction {
+@Getter
+public abstract class MoveItemStackAction extends ItemStackAction {
 
 	private final int count;
 
-	public MoveItemStackAction(StackRequestSlotInfoData from, StackRequestSlotInfoData to, int count) {
-		super(from, to);
+	public MoveItemStackAction(StackRequestSlotInfoData from, StackRequestSlotInfoData to,
+	                           ItemStackTransaction transaction, int count) {
+		super(from, to, transaction);
 		this.count = count;
 	}
 
@@ -28,20 +32,7 @@ public class MoveItemStackAction extends ItemStackAction {
 		var toItem = this.getToItem();
 
 		return fromItem.getCount() >= this.count &&
-				(toItem.getMaterial() == Material.AIR || this.getToItem().getMaterial() == fromItem.getMaterial());
-	}
-
-	@Override
-	public boolean execute(Player player) {
-		var fromInventory = this.getFromInventory();
-		var toInventory = this.getToInventory();
-
-		var fromItem = this.getFromItem();
-		var toItem = this.getToItem();
-
-		fromInventory.setItem(this.getFromSlot(), toItem, false);
-		toInventory.setItem(this.getToSlot(), fromItem, false);
-		return true;
+				(toItem.getMaterial() == Material.AIR || fromItem.equals(toItem, true, false, true));
 	}
 
 	@Override

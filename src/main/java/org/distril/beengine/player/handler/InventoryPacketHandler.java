@@ -12,8 +12,9 @@ import com.nukkitx.protocol.bedrock.packet.ItemStackRequestPacket;
 import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.inventory.transaction.ItemStackTransaction;
-import org.distril.beengine.inventory.transaction.action.MoveItemStackAction;
+import org.distril.beengine.inventory.transaction.action.PlaceItemStackAction;
 import org.distril.beengine.inventory.transaction.action.SwapItemStackAction;
+import org.distril.beengine.inventory.transaction.action.TakeItemStackAction;
 import org.distril.beengine.player.Player;
 
 @Log4j2
@@ -44,9 +45,10 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 						var source = ((TakeStackRequestActionData) action).getSource();
 						var target = ((TakeStackRequestActionData) action).getDestination();
 
-						continueActions = this.transaction.handle(new MoveItemStackAction(
+						continueActions = this.transaction.handle(new TakeItemStackAction(
 								source,
 								target,
+								this.transaction,
 								((TakeStackRequestActionData) action).getCount()
 						));
 					}
@@ -55,9 +57,10 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 						var source = ((PlaceStackRequestActionData) action).getSource();
 						var target = ((PlaceStackRequestActionData) action).getDestination();
 
-						continueActions = this.transaction.handle(new MoveItemStackAction(
+						continueActions = this.transaction.handle(new PlaceItemStackAction(
 								source,
 								target,
+								this.transaction,
 								((PlaceStackRequestActionData) action).getCount()
 						));
 					}
@@ -66,7 +69,7 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 						var source = ((SwapStackRequestActionData) action).getSource();
 						var target = ((SwapStackRequestActionData) action).getDestination();
 
-						continueActions = this.transaction.handle(new SwapItemStackAction(source, target));
+						continueActions = this.transaction.handle(new SwapItemStackAction(source, target, this.transaction));
 					}
 
 					default -> log.warn("Missing inventory action handler: " + action.getType());

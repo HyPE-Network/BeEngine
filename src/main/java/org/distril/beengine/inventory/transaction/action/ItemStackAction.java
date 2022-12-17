@@ -2,8 +2,8 @@ package org.distril.beengine.inventory.transaction.action;
 
 import com.nukkitx.protocol.bedrock.data.inventory.StackRequestSlotInfoData;
 import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.transaction.ItemStackTransaction;
@@ -13,15 +13,20 @@ import org.distril.beengine.player.Player;
 import java.util.List;
 
 @Log4j2
-@Getter
-@RequiredArgsConstructor
+@Getter(value = AccessLevel.PROTECTED)
 public abstract class ItemStackAction {
 
 	private final StackRequestSlotInfoData from, to;
-	private ItemStackTransaction transaction;
+	private final ItemStackTransaction transaction;
+	private final Item fromItem, toItem;
 
-	public void onAddToTransaction(ItemStackTransaction transaction) {
+	public ItemStackAction(StackRequestSlotInfoData from, StackRequestSlotInfoData to, ItemStackTransaction transaction) {
+		this.from = from;
+		this.to = to;
 		this.transaction = transaction;
+
+		this.fromItem = this.getItem(this.getFromInventory(), from.getSlot());
+		this.toItem = this.getItem(this.getToInventory(), to.getSlot());
 	}
 
 	public abstract boolean isValid(Player player);
@@ -50,30 +55,28 @@ public abstract class ItemStackAction {
 		this.transaction.addContainers(this.getContainers(player));
 	}
 
-	protected Item getFromItem() {
-		var inventory = this.getFromInventory();
+	private Item getItem(Inventory inventory, int slot) {
 		if (inventory != null) {
-			return inventory.getItem(this.getFromSlot());
+			return inventory.getItem(slot);
 		}
 
 		return Item.AIR;
+	}
+
+	protected Item getFromItem() {
+		return this.fromItem.clone();
+	}
+
+	protected void setFromItem(Item item) {
+		this.getFromInventory().setItem(this.from.getSlot(), item, false);
 	}
 
 	protected Item getToItem() {
-		var inventory = this.getToInventory();
-		if (inventory != null) {
-			return inventory.getItem(this.getToSlot());
-		}
-
-		return Item.AIR;
+		return this.toItem.clone();
 	}
 
-	protected int getFromSlot() {
-		return this.from.getSlot();
-	}
-
-	protected int getToSlot() {
-		return this.to.getSlot();
+	protected void setToItem(Item item) {
+		this.getToInventory().setItem(this.to.getSlot(), item, false);
 	}
 
 	protected Inventory getFromInventory() {

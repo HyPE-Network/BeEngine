@@ -2,14 +2,15 @@ package org.distril.beengine.inventory.transaction.action;
 
 import com.nukkitx.protocol.bedrock.data.inventory.StackRequestSlotInfoData;
 import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket;
+import org.distril.beengine.inventory.transaction.ItemStackTransaction;
 import org.distril.beengine.player.Player;
 
 import java.util.List;
 
 public class SwapItemStackAction extends ItemStackAction {
 
-	public SwapItemStackAction(StackRequestSlotInfoData from, StackRequestSlotInfoData to) {
-		super(from, to);
+	public SwapItemStackAction(StackRequestSlotInfoData from, StackRequestSlotInfoData to, ItemStackTransaction transaction) {
+		super(from, to, transaction);
 	}
 
 	@Override
@@ -19,12 +20,8 @@ public class SwapItemStackAction extends ItemStackAction {
 
 	@Override
 	public boolean execute(Player player) {
-		var fromItem = this.getFromItem();
-		var toItem = this.getToItem();
-
-		this.getFromInventory().setItem(this.getFromSlot(), toItem, false);
-		this.getToInventory().setItem(this.getToSlot(), fromItem, false);
-
+		this.setFromItem(this.getToItem());
+		this.setToItem(this.getFromItem());
 		return true;
 	}
 

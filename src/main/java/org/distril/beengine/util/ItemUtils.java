@@ -54,7 +54,7 @@ public class ItemUtils {
 	}
 
 	public static Item getAirIfNull(Item item) {
-		if (item == null) {
+		if (item == null || item.getCount() <= 0) {
 			return Item.AIR;
 		}
 
