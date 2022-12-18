@@ -27,6 +27,8 @@ public class Entity {
 	private float pitch, yaw, headYaw;
 	private Vector3f position = Vector3f.ZERO;
 
+	private float maxHealth = 20f, health = 20f;
+
 	private boolean spawned;
 
 	public Entity(EntityType type) {
@@ -37,7 +39,6 @@ public class Entity {
 	public Set<Player> getViewers() {
 		return Collections.unmodifiableSet(this.viewers);
 	}
-
 
 	public void spawnTo(Player player) {
 		if (this.viewers.add(player)) {

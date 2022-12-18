@@ -10,7 +10,7 @@ import java.io.InputStream;
 public class Bootstrap {
 
 	public static void main(String[] args) {
-		// Bootstrap.enableDebug();
+		Bootstrap.enableDebug();
 		var server = new Server();
 		server.start();
 	}

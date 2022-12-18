@@ -1,7 +1,6 @@
 package org.distril.beengine.entity;
 
 import com.nukkitx.math.vector.Vector3f;
-import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.data.GameType;
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
@@ -61,15 +60,12 @@ public class EntityHuman extends Entity {
 		entry.setSkin(this.skin);
 		entry.setXuid(this.xuid);
 		entry.setPlatformChatId("");
+		entry.setBuildPlatform(this.getDevice().getDeviceOS());
 		return entry;
 	}
 
 	@Override
-	protected BedrockPacket createSpawnPacket(Player player) {
-		if (this instanceof Player) {
-			player.getPlayerList().addEntry(this.getPlayerListEntry());
-		}
-
+	protected AddPlayerPacket createSpawnPacket(Player player) {
 		var packet = new AddPlayerPacket();
 		packet.setUuid(this.uuid);
 		packet.setUsername(this.getUsername());
@@ -82,8 +78,6 @@ public class EntityHuman extends Entity {
 		packet.setDeviceId("");
 		packet.setPlatformChatId("");
 		packet.setHand(ItemData.AIR);
-		player.sendPacket(packet);
-
 		return packet;
 	}
 

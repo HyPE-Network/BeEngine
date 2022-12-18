@@ -6,6 +6,7 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
+import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -19,6 +20,8 @@ import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.Gamemode;
 import org.distril.beengine.player.data.PlayerData;
 import org.distril.beengine.player.data.PlayerList;
+import org.distril.beengine.player.data.attribute.Attribute;
+import org.distril.beengine.player.data.attribute.Attributes;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
 
@@ -35,7 +38,8 @@ public class Player extends EntityHuman implements InventoryHolder {
 	private final BedrockServerSession session;
 	private final LoginData loginData;
 
-	private final PlayerList playerList = new PlayerList(this);
+	private final PlayerList playerList;
+	private final Attributes attributes;
 
 	private final PlayerInventory inventory;
 	private Inventory openedInventory;
@@ -47,6 +51,8 @@ public class Player extends EntityHuman implements InventoryHolder {
 		this.session = session;
 		this.loginData = loginData;
 
+		this.playerList = new PlayerList(this);
+		this.attributes = new Attributes(this);
 		this.inventory = new PlayerInventory(this);
 
 		this.setDevice(loginData.getDevice());
@@ -95,15 +101,12 @@ public class Player extends EntityHuman implements InventoryHolder {
 			this.setHeadYaw(this.data.getYaw());
 			this.setPosition(this.data.getPosition());
 
-			this.spawnTo(this);
-
 			this.setGamemode(this.data.getGamemode());
-			this.setGamemode(Gamemode.CREATIVE);
 
 			var startGamePacket = new StartGamePacket();
 			startGamePacket.setUniqueEntityId(this.getId());
 			startGamePacket.setRuntimeEntityId(this.getId());
-			startGamePacket.setPlayerGameType(GameType.from(this.data.getGamemode().ordinal()));
+			startGamePacket.setPlayerGameType(this.data.getGamemode().getType());
 			startGamePacket.setPlayerPosition(this.getPosition());
 			startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
 			startGamePacket.setSeed(-1L);
@@ -158,6 +161,7 @@ public class Player extends EntityHuman implements InventoryHolder {
 			// todo: crafting data
 			this.sendPacket(craftingDataPacket);
 
+			this.attributes.sendAttributes();
 
 			// Sent the full player list to this player
 			Set<PlayerListPacket.Entry> entries = new HashSet<>();
@@ -213,16 +217,23 @@ public class Player extends EntityHuman implements InventoryHolder {
 		return this.data.getGamemode() == Gamemode.SPECTATOR;
 	}
 
+	public void sendAttribute(Attribute attribute) {
+		var packet = new UpdateAttributesPacket();
+		packet.setRuntimeEntityId(this.getId());
+		packet.getAttributes().add(attribute.toNetwork());
+		this.sendPacket(packet);
+	}
+
 	public void onDisconnect() {
 		if (this.isSpawned()) {
+			this.despawnFromAll();
+
 			this.server.getScheduler().prepareTask(() -> {
 				try {
 					this.server.getPlayerDataProvider().save(this.getUuid(), this.data);
 				} catch (IOException exception) {
 					log.error("Failed to save data of " + this.getUuid(), exception);
 				}
-
-				this.getServer().getScheduler().prepareTask(this::despawnFromAll).schedule();
 			}).async().schedule();
 
 			for (Player player : this.getServer().getPlayers()) {
@@ -258,5 +269,13 @@ public class Player extends EntityHuman implements InventoryHolder {
 	@Override
 	public PlayerInventory getInventory() {
 		return this.inventory;
+	}
+
+	@Override
+	protected AddPlayerPacket createSpawnPacket(Player player) {
+		var packet = super.createSpawnPacket(player);
+		packet.setGameType(this.data.getGamemode().getType());
+		packet.setHand(ItemData.AIR);
+		return packet;
 	}
 }
