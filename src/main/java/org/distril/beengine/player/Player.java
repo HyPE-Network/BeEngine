@@ -19,15 +19,12 @@ import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.Gamemode;
 import org.distril.beengine.player.data.PlayerData;
-import org.distril.beengine.player.data.PlayerList;
 import org.distril.beengine.player.data.attribute.Attribute;
 import org.distril.beengine.player.data.attribute.Attributes;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -38,7 +35,6 @@ public class Player extends EntityHuman implements InventoryHolder {
 	private final BedrockServerSession session;
 	private final LoginData loginData;
 
-	private final PlayerList playerList;
 	private final Attributes attributes;
 
 	private final PlayerInventory inventory;
@@ -51,7 +47,6 @@ public class Player extends EntityHuman implements InventoryHolder {
 		this.session = session;
 		this.loginData = loginData;
 
-		this.playerList = new PlayerList(this);
 		this.attributes = new Attributes(this);
 		this.inventory = new PlayerInventory(this);
 
@@ -163,14 +158,6 @@ public class Player extends EntityHuman implements InventoryHolder {
 
 			this.attributes.sendAttributes();
 
-			// Sent the full player list to this player
-			Set<PlayerListPacket.Entry> entries = new HashSet<>();
-			for (Player player : this.server.getPlayers()) {
-				entries.add(player.getPlayerListEntry());
-			}
-
-			this.playerList.addEntries(entries);
-
 			PlayStatusPacket playStatusPacket = new PlayStatusPacket();
 			playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
 			this.sendPacket(playStatusPacket);
@@ -235,10 +222,6 @@ public class Player extends EntityHuman implements InventoryHolder {
 					log.error("Failed to save data of " + this.getUuid(), exception);
 				}
 			}).async().schedule();
-
-			for (Player player : this.getServer().getPlayers()) {
-				player.getPlayerList().removeEntry(this.getPlayerListEntry());
-			}
 		}
 
 		log.info("{} player left the server", this.getUsername());

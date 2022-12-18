@@ -1,5 +1,6 @@
 package org.distril.beengine.server;
 
+import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,9 +16,7 @@ import org.distril.beengine.scheduler.Scheduler;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
@@ -137,10 +136,34 @@ public class Server {
 
 	public void addPlayer(Player player) {
 		this.players.add(player);
+
+		List<PlayerListPacket.Entry> entries = new ArrayList<>();
+
+		this.players.forEach(target -> {
+			if (!target.equals(player)) {
+				entries.add(target.getPlayerListEntry());
+			}
+		});
+
+		this.updatePlayersList(PlayerListPacket.Action.ADD, entries, Collections.singleton(player));
+
+		this.updatePlayersList(PlayerListPacket.Action.ADD, Collections.singleton(player.getPlayerListEntry()), this.players);
 	}
 
 	public void removePlayer(Player player) {
 		this.players.remove(player);
+
+		this.updatePlayersList(PlayerListPacket.Action.REMOVE, Collections.singleton(player.getPlayerListEntry()),
+				this.players);
+	}
+
+	private void updatePlayersList(PlayerListPacket.Action action, Collection<PlayerListPacket.Entry> entries,
+	                               Collection<Player> players) {
+		var packet = new PlayerListPacket();
+		packet.setAction(action);
+		packet.getEntries().addAll(entries);
+
+		players.forEach(player -> player.sendPacket(packet));
 	}
 
 	public Set<Player> getPlayers() {
