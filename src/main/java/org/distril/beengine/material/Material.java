@@ -1198,7 +1198,7 @@ public enum Material {
 		return BY_RUNTIME_ID.get(runtimeId);
 	}
 
-	public static Material fromName(String identifier) {
+	public static Material fromIdentifier(String identifier) {
 		return BY_IDENTIFIER.get(identifier);
 	}
 
