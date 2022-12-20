@@ -2,63 +2,49 @@ package org.distril.beengine.material.item;
 
 import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import org.distril.beengine.material.Material;
+import org.distril.beengine.material.item.behavior.Behavior;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
-@Setter
 @ToString
-public abstract class Item implements Cloneable, Behavior {
+@AllArgsConstructor
+public class Item {
 
-	public static final Item AIR = Material.AIR.getItem();
-
-	private static final AtomicInteger NEXT_NETWORK_ID = new AtomicInteger(0);
+	public static final Item AIR = ItemBuilder.builder().build();
 
 	private final Material material;
-	private int meta;
-	private int count = 1;
-	private NbtMap nbt = NbtMap.EMPTY;
-	private long blockingTicks;
-	private int blockRuntimeId;
-	private int networkId;
+	private final int meta;
+	private final int count;
+	private final NbtMap nbt;
+	private final long blockingTicks;
+	private final int blockRuntimeId;
+	private final int networkId;
 
-	public Item(Material material) {
-		this(material, 0);
+	private final Behavior behavior;
+
+	public ItemBuilder toBuilder() {
+		return ItemBuilder.builder(this);
 	}
 
-	public Item(Material material, int meta) {
-		this.material = material;
-		this.meta = meta;
-		this.networkId = material != Material.AIR ? NEXT_NETWORK_ID.incrementAndGet() : 0;
+	public Item decrementCount(int count) {
+		return this.toBuilder().count(this.count - count).build();
 	}
 
-	public void setCount(int count) {
-		this.count = Math.max(0, count);
-	}
-
-	public void decrementCount(int count) {
-		this.setCount(this.count - count);
-	}
-
-	public void incrementCount(int count) {
-		this.setCount(this.count + count);
-	}
-
-	public void setNbt(NbtMap nbt) {
-		this.nbt = nbt == null ? NbtMap.EMPTY : nbt;
+	public Item incrementCount(int count) {
+		return this.toBuilder().count(this.count + count).build();
 	}
 
 	public String getCustomName() {
 		return this.nbt.getCompound("display").getString("Name");
 	}
 
-	public void setCustomName(String customName) {
+	public Item setCustomName(String customName) {
 		NbtMap displayNbt;
 		if (customName != null) {
 			displayNbt = this.nbt.getCompound("display").toBuilder()
@@ -70,27 +56,23 @@ public abstract class Item implements Cloneable, Behavior {
 			displayNbt = displayBuilder.build();
 		}
 
-		this.nbt = this.nbt.toBuilder().putCompound("display", displayNbt).build();
+		return this.toBuilder().nbt(this.nbt.toBuilder().putCompound("display", displayNbt).build()).build();
 	}
 
 	public List<String> getLores() {
 		return this.nbt.getCompound("display").getList("Lore", NbtType.STRING);
 	}
 
-	public void setLores(String... lores) {
+	public Item setLores(String... lores) {
 		if (lores == null || lores.length == 0) {
-			return;
+			return this;
 		}
 
 		var displayNbt = this.nbt.getCompound("display").toBuilder()
 				.putList("Lore", NbtType.STRING, lores)
 				.build();
 
-		this.nbt = this.nbt.toBuilder().putCompound("display", displayNbt).build();
-	}
-
-	public int getMaxStackSize() {
-		return 64;
+		return this.toBuilder().nbt(this.nbt.toBuilder().putCompound("display", displayNbt).build()).build();
 	}
 
 	public String getIdentifier() {
@@ -127,17 +109,5 @@ public abstract class Item implements Cloneable, Behavior {
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.material, this.meta, this.count, this.nbt, this.blockingTicks, this.blockRuntimeId);
-	}
-
-	@SuppressWarnings("MethodDoesntCallSuperMethod")
-	@Override
-	public Item clone() {
-		Item clone = this.material.getItem();
-		clone.setMeta(this.meta);
-		clone.setCount(this.count);
-		clone.setNbt(this.nbt);
-		clone.setBlockingTicks(this.blockingTicks);
-		clone.setBlockRuntimeId(this.blockRuntimeId);
-		return clone;
 	}
 }
