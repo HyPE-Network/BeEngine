@@ -4,6 +4,7 @@ import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.player.Player;
+import org.distril.beengine.server.Server;
 
 @Log4j2
 public class PlayerPacketHandler implements BedrockPacketHandler {
@@ -15,6 +16,12 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 	public PlayerPacketHandler(Player player) {
 		this.player = player;
 		this.inventoryPacketHandler = new InventoryPacketHandler(player);
+	}
+
+	@Override
+	public boolean handle(CommandRequestPacket packet) {
+		Server.getInstance().dispatchCommand(this.player, packet.getCommand().substring(1));
+		return true;
 	}
 
 	@Override

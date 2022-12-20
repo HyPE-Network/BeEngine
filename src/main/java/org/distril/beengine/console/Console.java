@@ -13,6 +13,8 @@ import java.io.IOException;
 @Log4j2
 public class Console extends Thread {
 
+	private static final ConsoleSender SENDER = new ConsoleSender();
+
 	private final Server server;
 
 	public Console(Server server) {
@@ -39,12 +41,7 @@ public class Console extends Thread {
 				try {
 					var command = reader.readLine().trim();
 					if (!command.isEmpty()) {
-						if (command.equals("stop")) {
-							this.server.stop();
-							return;
-						}
-
-						log.info(command);
+						this.server.dispatchCommand(SENDER, command);
 					}
 				} catch (EndOfFileException ignored) {/**/}
 			}

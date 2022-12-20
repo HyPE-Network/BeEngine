@@ -7,33 +7,28 @@ import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
 import com.nukkitx.protocol.bedrock.packet.AddPlayerPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerSkinPacket;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.distril.beengine.network.data.Device;
 import org.distril.beengine.player.Player;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 
 @Getter
+@Setter
 public class EntityHuman extends Entity {
 
 	private String username;
-	@Setter
 	private String xuid;
 	private UUID uuid;
+	@Setter(value = AccessLevel.NONE)
 	private SerializedSkin skin;
-	@Setter
 	private Device device;
 
 	public EntityHuman() {
 		super(EntityType.HUMAN);
-	}
-
-	public void setUsername(String username) {
-		this.username = username;
-		this.uuid = UUID.nameUUIDFromBytes(username.getBytes(StandardCharsets.UTF_8));
 	}
 
 	public void setSkin(SerializedSkin skin) {

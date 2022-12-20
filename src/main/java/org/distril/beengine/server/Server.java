@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import org.distril.beengine.command.CommandRegistry;
+import org.distril.beengine.command.CommandSender;
 import org.distril.beengine.console.Console;
 import org.distril.beengine.material.item.ItemRegistry;
 import org.distril.beengine.network.Network;
@@ -35,6 +37,7 @@ public class Server {
 
 	private final Scheduler scheduler = new Scheduler();
 	private final ItemRegistry itemRegistry = new ItemRegistry();
+	private final CommandRegistry commandRegistry = new CommandRegistry();
 
 	private final Set<Player> players = new HashSet<>();
 
@@ -134,15 +137,23 @@ public class Server {
 		System.exit(0);
 	}
 
+	public void dispatchCommand(CommandSender sender, String commandLine) {
+		if (sender == null) {
+			return;
+		}
+
+		if (!this.commandRegistry.handle(sender, commandLine)) {
+			sender.sendMessage("Unknown command: " + commandLine);
+		}
+	}
+
 	public void addPlayer(Player player) {
 		this.players.add(player);
 
 		List<PlayerListPacket.Entry> entries = new ArrayList<>();
 
 		this.players.forEach(target -> {
-			if (!target.equals(player)) {
-				entries.add(target.getPlayerListEntry());
-			}
+			entries.add(target.getPlayerListEntry());
 		});
 
 		this.updatePlayersList(PlayerListPacket.Action.ADD, entries, Collections.singleton(player));

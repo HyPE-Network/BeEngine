@@ -10,6 +10,7 @@ import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.distril.beengine.command.CommandSender;
 import org.distril.beengine.entity.EntityHuman;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryHolder;
@@ -25,11 +26,12 @@ import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Getter
 @Log4j2
-public class Player extends EntityHuman implements InventoryHolder {
+public class Player extends EntityHuman implements InventoryHolder, CommandSender {
 
 	private final Server server;
 	private final BedrockServerSession session;
@@ -50,16 +52,17 @@ public class Player extends EntityHuman implements InventoryHolder {
 		this.attributes = new Attributes(this);
 		this.inventory = new PlayerInventory(this);
 
-		this.setDevice(loginData.getDevice());
-		this.setXuid(loginData.getXuid());
 		this.setUsername(loginData.getUsername());
+		this.setXuid(loginData.getXuid());
+		this.setUuid(loginData.getUuid());
 		this.setSkin(loginData.getSkin());
+		this.setDevice(loginData.getDevice());
 	}
 
 	public void initialize() {
 		this.server.getScheduler().prepareTask(() -> {
 			try {
-				this.data = this.server.getPlayerDataProvider().load(this.getUuid());
+				this.data = this.server.getPlayerDataProvider().load(this.getUuidForData());
 
 				if (this.data == null) {
 					this.data = new PlayerData();
@@ -67,7 +70,7 @@ public class Player extends EntityHuman implements InventoryHolder {
 
 				this.completePlayerInitialization();
 			} catch (IOException exception) {
-				log.error("Failed to load data of " + this.getUuid(), exception);
+				log.error("Failed to load data of " + this.getUuidForData(), exception);
 				this.disconnect();
 			}
 		}).async().schedule();
@@ -89,7 +92,7 @@ public class Player extends EntityHuman implements InventoryHolder {
 				}
 			}
 
-			this.server.addPlayer(this);
+			// this.server.addPlayer(this);
 
 			this.setPitch(this.data.getPitch());
 			this.setYaw(this.data.getYaw());
@@ -142,6 +145,8 @@ public class Player extends EntityHuman implements InventoryHolder {
 			startGamePacket.setChatRestrictionLevel(ChatRestrictionLevel.NONE);
 			this.sendPacket(startGamePacket);
 
+			this.server.addPlayer(this);
+
 			var biomeDefinitionPacket = new BiomeDefinitionListPacket();
 			biomeDefinitionPacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
 			this.sendPacket(biomeDefinitionPacket);
@@ -157,12 +162,14 @@ public class Player extends EntityHuman implements InventoryHolder {
 			this.sendPacket(craftingDataPacket);
 
 			this.attributes.sendAttributes();
+			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
 			PlayStatusPacket playStatusPacket = new PlayStatusPacket();
 			playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
 			this.sendPacket(playStatusPacket);
 
 			this.inventory.sendSlots(this);
+
 
 			log.info("{} logged in [X = {}, Y = {}, Z = {}]", this.getUsername(), this.getPosition().getX(), this.getPosition().getY(), this.getPosition().getZ());
 
@@ -174,6 +181,10 @@ public class Player extends EntityHuman implements InventoryHolder {
 		if (!this.session.isClosed()) {
 			this.session.sendPacket(packet);
 		}
+	}
+
+	public UUID getUuidForData() {
+		return UUID.nameUUIDFromBytes(this.getUsername().getBytes(StandardCharsets.UTF_8));
 	}
 
 	public void setGamemode(Gamemode gamemode) {
@@ -217,9 +228,9 @@ public class Player extends EntityHuman implements InventoryHolder {
 
 			this.server.getScheduler().prepareTask(() -> {
 				try {
-					this.server.getPlayerDataProvider().save(this.getUuid(), this.data);
+					this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
 				} catch (IOException exception) {
-					log.error("Failed to save data of " + this.getUuid(), exception);
+					log.error("Failed to save data of " + this.getUuidForData(), exception);
 				}
 			}).async().schedule();
 		}
@@ -260,5 +271,20 @@ public class Player extends EntityHuman implements InventoryHolder {
 		packet.setGameType(this.data.getGamemode().getType());
 		packet.setHand(ItemData.AIR);
 		return packet;
+	}
+
+	@Override
+	public void sendMessage(String message) {
+		var packet = new TextPacket();
+		packet.setType(TextPacket.Type.RAW);
+		packet.setXuid(this.getXuid());
+		packet.setMessage(message);
+
+		this.sendPacket(packet);
+	}
+
+	@Override
+	public boolean hasPermission(String permission) {
+		return true; // todo
 	}
 }

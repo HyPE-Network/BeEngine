@@ -1199,6 +1199,10 @@ public enum Material {
 	}
 
 	public static Material fromIdentifier(String identifier) {
+		if (!identifier.startsWith("minecraft:")) {
+			identifier = "minecraft:" + identifier;
+		}
+
 		return BY_IDENTIFIER.get(identifier);
 	}
 
