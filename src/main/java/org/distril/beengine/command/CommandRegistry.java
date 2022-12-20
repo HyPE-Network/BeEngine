@@ -23,13 +23,16 @@ public class CommandRegistry {
 	}
 
 	public Command getCommand(String nameOrAlias) {
-		for (Command command : this.commands.values()) {
-			if (command.getName().equals(nameOrAlias) || List.of(command.getAliases()).contains(nameOrAlias)) {
-				return command;
+		var command = this.commands.get(nameOrAlias);
+		if (command == null) {
+			for (Command target : this.commands.values()) {
+				if (List.of(target.getAliases()).contains(nameOrAlias)) {
+					command = target;
+				}
 			}
 		}
 
-		return null;
+		return command;
 	}
 
 	public boolean handle(CommandSender sender, String commandLine) {
