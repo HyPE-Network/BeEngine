@@ -3,7 +3,7 @@ package org.distril.beengine.player.data.provider;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtUtils;
-import org.distril.beengine.player.data.Gamemode;
+import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
 
 import java.io.File;
@@ -46,7 +46,6 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 	}
 
 	private NbtMap getPlayerNBTDataFormat(PlayerData data) {
-		// todo
 		return NbtMap.builder()
 				.putFloat("pitch", data.getPitch())
 				.putFloat("yaw", data.getYaw())
@@ -54,7 +53,7 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 				.putFloat("x", data.getPosition().getX())
 				.putFloat("y", data.getPosition().getY())
 				.putFloat("z", data.getPosition().getZ())
-				.putInt("gamemode", data.getGamemode().ordinal())
+				.putInt("gamemode", data.getGameMode().ordinal())
 				.build();
 	}
 
@@ -64,7 +63,7 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 		playerData.setYaw(data.getFloat("yaw"));
 		playerData.setHeadYaw(data.getFloat("headYaw"));
 		playerData.setPosition(Vector3f.from(data.getFloat("x"), data.getFloat("y"), data.getFloat("z")));
-		playerData.setGamemode(Gamemode.values()[data.getInt("gamemode")]);
+		playerData.setGameMode(GameMode.values()[data.getInt("gamemode")]);
 
 		return playerData;
 	}

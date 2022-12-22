@@ -18,7 +18,10 @@ import org.distril.beengine.scheduler.Scheduler;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
@@ -39,7 +42,7 @@ public class Server {
 	private final ItemRegistry itemRegistry = new ItemRegistry();
 	private final CommandRegistry commandRegistry = new CommandRegistry();
 
-	private final Set<Player> players = new HashSet<>();
+	private final List<Player> players = new ArrayList<>();
 
 	@Setter
 	@Getter
@@ -143,8 +146,23 @@ public class Server {
 		}
 
 		if (!this.commandRegistry.handle(sender, commandLine)) {
-			sender.sendMessage("Unknown command: " + commandLine);
+			sender.sendMessage("Unknown command: " + commandLine + ". Please check that the command exists and that you have " +
+					"permission to use it.");
 		}
+	}
+
+	public Player getPlayer(String username) {
+		if (username == null || username.isEmpty()) {
+			return null;
+		}
+
+		for (Player player : this.players) {
+			if (player.getUsername().equalsIgnoreCase(username)) {
+				return player;
+			}
+		}
+
+		return null;
 	}
 
 	public void addPlayer(Player player) {
@@ -177,8 +195,8 @@ public class Server {
 		players.forEach(player -> player.sendPacket(packet));
 	}
 
-	public Set<Player> getPlayers() {
-		return Collections.unmodifiableSet(this.players);
+	public List<Player> getPlayers() {
+		return Collections.unmodifiableList(this.players);
 	}
 
 	public boolean isRunning() {

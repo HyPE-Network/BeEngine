@@ -10,5 +10,5 @@ public abstract class Parser {
 
 	private boolean optional;
 
-	public abstract Object parse(CommandSender sender, String input);
+	public abstract String parse(CommandSender sender, String input);
 }

@@ -5,6 +5,7 @@ import com.nukkitx.protocol.bedrock.data.command.CommandEnumData;
 import com.nukkitx.protocol.bedrock.data.command.CommandParamData;
 import lombok.Getter;
 import lombok.Setter;
+import org.distril.beengine.command.data.Args;
 import org.distril.beengine.command.data.CommandArgument;
 import org.distril.beengine.command.parser.EnumParser;
 import org.distril.beengine.command.parser.Parser;
@@ -36,7 +37,7 @@ public abstract class Command {
 		this.aliases = result;
 	}
 
-	public abstract void execute(CommandSender sender, Map<String, Object> args);
+	public abstract void execute(CommandSender sender, Args args);
 
 	public void addArguments(CommandArgument... arguments) {
 		this.arguments.add(arguments);

@@ -1,21 +1,19 @@
 package org.distril.beengine.command;
 
 import com.nukkitx.protocol.bedrock.packet.AvailableCommandsPacket;
-import org.distril.beengine.command.impl.GamemodeCommand;
+import org.distril.beengine.command.data.Args;
+import org.distril.beengine.command.impl.GameModeCommand;
 import org.distril.beengine.command.parser.Parser;
 import org.distril.beengine.player.Player;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CommandRegistry {
 
 	private final Map<String, Command> commands = new HashMap<>();
 
 	public CommandRegistry() {
-		this.register(new GamemodeCommand());
+		this.register(new GameModeCommand());
 	}
 
 	public void register(Command command) {
@@ -48,20 +46,18 @@ public class CommandRegistry {
 			return false;
 		}
 
-		Map<String, Object> args = new HashMap<>();
+		Map<String, String> args = new HashMap<>();
 
 		var parsersIterator = command.getParsers().iterator();
 
 		while (parsersIterator.hasNext()) {
 			var argsIterator = parsedArgs.iterator();
+
 			for (Map.Entry<String, Parser> entry : parsersIterator.next().entrySet()) {
 				Parser parser = entry.getValue();
 
 				if (argsIterator.hasNext()) {
-					var next = argsIterator.next();
-					if (next == null) {
-						break;
-					}
+					var next = this.getNext(argsIterator);
 
 					var result = parser.parse(sender, next);
 					if (result == null) {
@@ -73,8 +69,32 @@ public class CommandRegistry {
 			}
 		}
 
-		command.execute(sender, args);
+		command.execute(sender, new Args(args));
 		return true;
+	}
+
+	private String getNext(Iterator<String> iterator) {
+		var next = iterator.next();
+		if (next.startsWith("\"")) {
+			if (next.endsWith("\"")) {
+				return next.substring(1, next.length() - 1);
+			}
+
+			StringBuilder nameBuilder = new StringBuilder(next.substring(1));
+			while (iterator.hasNext()) {
+				var current = iterator.next();
+				if (current.endsWith("\"")) {
+					nameBuilder.append(" ").append(current, 0, current.length() - 1);
+					return nameBuilder.toString();
+				}
+
+				nameBuilder.append(" ").append(current);
+			}
+
+			return nameBuilder.toString();
+		}
+
+		return next;
 	}
 
 	private List<String> parseArguments(String cmdLine) {

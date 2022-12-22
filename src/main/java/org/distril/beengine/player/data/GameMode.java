@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum Gamemode {
+public enum GameMode {
 
 	SURVIVAL("Survival", "s", GameType.SURVIVAL),
 	CREATIVE("Creative", "c", GameType.CREATIVE),
@@ -16,13 +16,21 @@ public enum Gamemode {
 	private final String identifier, alias;
 	private final GameType type;
 
-	public static Gamemode fromIdOrAlias(String idOrAlias) {
-		for (Gamemode gamemode : Gamemode.values()) {
+	public static GameMode fromIdentifierOrAlias(String idOrAlias) {
+		for (GameMode gamemode : GameMode.values()) {
 			if (gamemode.getIdentifier().equalsIgnoreCase(idOrAlias) || gamemode.getAlias().equalsIgnoreCase(idOrAlias)) {
 				return gamemode;
 			}
 		}
 
 		return null;
+	}
+
+	public static GameMode fromId(int id) {
+		try {
+			return GameMode.values()[id];
+		} catch (ArrayIndexOutOfBoundsException exception) {
+			return null;
+		}
 	}
 }

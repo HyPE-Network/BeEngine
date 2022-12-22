@@ -15,4 +15,14 @@ public class ConsoleSender implements CommandSender {
 	public boolean hasPermission(String permission) {
 		return true;
 	}
+
+	@Override
+	public boolean isConsole() {
+		return true;
+	}
+
+	@Override
+	public String getName() {
+		return "CONSOLE";
+	}
 }
