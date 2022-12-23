@@ -27,6 +27,8 @@ import org.distril.beengine.util.BedrockResourceLoader;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -40,6 +42,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	private final Attributes attributes;
 
 	private final PlayerInventory inventory;
+
+	private final Set<String> permissions = new HashSet<>();
 	private Inventory openedInventory;
 
 	private PlayerData data;
@@ -282,9 +286,21 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.sendPacket(packet);
 	}
 
+	public void addPermission(String permission) {
+		if (this.permissions.add(permission)) {
+			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
+		}
+	}
+
+	public void removePermission(String permission) {
+		if (this.permissions.remove(permission)) {
+			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
+		}
+	}
+
 	@Override
 	public boolean hasPermission(String permission) {
-		return true; // todo
+		return this.permissions.contains(permission);
 	}
 
 	@Override
