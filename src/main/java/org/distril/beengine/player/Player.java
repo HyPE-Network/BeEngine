@@ -18,7 +18,7 @@ import org.distril.beengine.inventory.defaults.PlayerInventory;
 import org.distril.beengine.material.item.ItemPalette;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
-import org.distril.beengine.player.data.Gamemode;
+import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
 import org.distril.beengine.player.data.attribute.Attribute;
 import org.distril.beengine.player.data.attribute.Attributes;
@@ -27,6 +27,8 @@ import org.distril.beengine.util.BedrockResourceLoader;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -40,6 +42,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	private final Attributes attributes;
 
 	private final PlayerInventory inventory;
+
+	private final Set<String> permissions = new HashSet<>();
 	private Inventory openedInventory;
 
 	private PlayerData data;
@@ -92,19 +96,17 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 				}
 			}
 
-			// this.server.addPlayer(this);
-
 			this.setPitch(this.data.getPitch());
 			this.setYaw(this.data.getYaw());
 			this.setHeadYaw(this.data.getYaw());
 			this.setPosition(this.data.getPosition());
 
-			this.setGamemode(this.data.getGamemode());
+			this.setGameMode(this.data.getGameMode());
 
 			var startGamePacket = new StartGamePacket();
 			startGamePacket.setUniqueEntityId(this.getId());
 			startGamePacket.setRuntimeEntityId(this.getId());
-			startGamePacket.setPlayerGameType(this.data.getGamemode().getType());
+			startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
 			startGamePacket.setPlayerPosition(this.getPosition());
 			startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
 			startGamePacket.setSeed(-1L);
@@ -187,32 +189,32 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		return UUID.nameUUIDFromBytes(this.getUsername().getBytes(StandardCharsets.UTF_8));
 	}
 
-	public void setGamemode(Gamemode gamemode) {
-		var currentGamemode = this.data.getGamemode();
-		if (gamemode != currentGamemode) {
+	public void setGameMode(GameMode gameMode) {
+		var currentGamemode = this.data.getGameMode();
+		if (gameMode != currentGamemode) {
 
-			this.data.setGamemode(gamemode);
+			this.data.setGameMode(gameMode);
 
 			var packet = new SetPlayerGameTypePacket();
-			packet.setGamemode(gamemode.ordinal());
+			packet.setGamemode(gameMode.ordinal());
 			this.sendPacket(packet);
 		}
 	}
 
 	public boolean isSurvival() {
-		return this.data.getGamemode() == Gamemode.SURVIVAL;
+		return this.data.getGameMode() == GameMode.SURVIVAL;
 	}
 
 	public boolean isCreative() {
-		return this.data.getGamemode() == Gamemode.CREATIVE;
+		return this.data.getGameMode() == GameMode.CREATIVE;
 	}
 
 	public boolean isAdventure() {
-		return this.data.getGamemode() == Gamemode.ADVENTURE;
+		return this.data.getGameMode() == GameMode.ADVENTURE;
 	}
 
 	public boolean isSpectator() {
-		return this.data.getGamemode() == Gamemode.SPECTATOR;
+		return this.data.getGameMode() == GameMode.SPECTATOR;
 	}
 
 	public void sendAttribute(Attribute attribute) {
@@ -268,7 +270,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	@Override
 	protected AddPlayerPacket createSpawnPacket(Player player) {
 		var packet = super.createSpawnPacket(player);
-		packet.setGameType(this.data.getGamemode().getType());
+		packet.setGameType(this.data.getGameMode().getType());
 		packet.setHand(ItemData.AIR);
 		return packet;
 	}
@@ -279,12 +281,34 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		packet.setType(TextPacket.Type.RAW);
 		packet.setXuid(this.getXuid());
 		packet.setMessage(message);
+		packet.setNeedsTranslation(true);
 
 		this.sendPacket(packet);
 	}
 
+	public void addPermission(String permission) {
+		if (this.permissions.add(permission)) {
+			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
+		}
+	}
+
+	public void removePermission(String permission) {
+		if (this.permissions.remove(permission)) {
+			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
+		}
+	}
+
 	@Override
 	public boolean hasPermission(String permission) {
-		return true; // todo
+		return this.permissions.contains(permission);
+	}
+
+	@Override
+	public String getName() {
+		return this.getUsername();
+	}
+
+	public boolean equals(CommandSender sender) {
+		return sender.getName().equals(this.getName());
 	}
 }

@@ -5,7 +5,9 @@ import com.nukkitx.protocol.bedrock.data.command.CommandParam;
 import com.nukkitx.protocol.bedrock.data.command.CommandParamData;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.distril.beengine.command.parser.*;
+import org.distril.beengine.command.parser.EnumParser;
+import org.distril.beengine.command.parser.Parser;
+import org.distril.beengine.command.parser.StringParser;
 
 import java.util.Collections;
 
@@ -21,61 +23,16 @@ public class CommandArgument {
 
 	private final CommandEnumData enumData;
 
-	public CommandArgument(String name, boolean optional, Parser parser, String... values) {
-		this(name, CommandParam.TEXT, optional, parser, new CommandEnumData(name, values, false));
+	public CommandArgument(String name, boolean optional, String... values) {
+		this(name, CommandParam.TEXT, optional, EnumParser.INSTANCE, new CommandEnumData(name, values, false));
 	}
 
-	public CommandArgument(String name, CommandParam param, boolean optional, Parser parser) {
+	public CommandArgument(String name, CommandParam param, boolean optional) {
+		this(name, param, optional, StringParser.INSTANCE, null);
+	}
+
+	public CommandArgument(String name, CommandParam param, Parser parser, boolean optional) {
 		this(name, param, optional, parser, null);
-	}
-
-	public static CommandArgument integer(String name) {
-		return CommandArgument.integer(name, false);
-	}
-
-	public static CommandArgument integer(String name, boolean optional) {
-		return new CommandArgument(name, CommandParam.INT, optional, IntegerParser.INSTANCE);
-	}
-
-	public static CommandArgument floats(String name) {
-		return CommandArgument.floats(name, false);
-	}
-
-	public static CommandArgument floats(String name, boolean optional) {
-		return new CommandArgument(name, CommandParam.FLOAT, optional, FloatParser.INSTANCE);
-	}
-
-	public static CommandArgument string(String name) {
-		return CommandArgument.string(name, false);
-	}
-
-	public static CommandArgument string(String name, boolean optional) {
-		return new CommandArgument(name, CommandParam.STRING, optional, StringParser.INSTANCE);
-	}
-
-	public static CommandArgument target(String name, boolean optional) {
-		return new CommandArgument(name, CommandParam.TARGET, optional, StringParser.INSTANCE);
-	}
-
-	public static CommandArgument enums(String name, String... values) {
-		return CommandArgument.enums(name, false, values);
-	}
-
-	public static CommandArgument enums(String name, boolean optional, String... values) {
-		return new CommandArgument(name, optional, EnumParser.INSTANCE, values);
-	}
-
-	public static CommandArgument gameMode(String name) {
-		return CommandArgument.gameMode(name, false);
-	}
-
-	public static CommandArgument gameMode(String name, boolean optional) {
-		return CommandArgument.vanillaEnum(name, "GameMode", GameModeParser.INSTANCE, optional);
-	}
-
-	public static CommandArgument vanillaEnum(String name, String enumType, Parser parser, boolean optional) {
-		return new CommandArgument(name, CommandParam.TEXT, optional, parser, new CommandEnumData(enumType,
-				new String[0], false));
 	}
 
 	public CommandParamData toNetwork() {
