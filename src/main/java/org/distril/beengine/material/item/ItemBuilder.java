@@ -46,7 +46,8 @@ public class ItemBuilder {
 				.count(item.getCount())
 				.nbt(item.getNbt())
 				.blockingTicks(item.getBlockingTicks())
-				.blockRuntimeId(item.getBlockRuntimeId());
+				.blockRuntimeId(item.getBlockRuntimeId())
+				.behavior(item.getBehavior());
 	}
 
 	public ItemBuilder count(int count) {
