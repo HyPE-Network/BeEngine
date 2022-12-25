@@ -1,22 +1,21 @@
-package org.distril.beengine.inventory.defaults;
+package org.distril.beengine.inventory.impl;
 
 import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerId;
 import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.distril.beengine.inventory.InventoryType;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
 
 @Log4j2
 @Getter
-public class PlayerInventory extends EntityInventory {
+public class PlayerInventory extends CreatureInventory {
 
 	private final PlayerCursorInventory cursorInventory;
 
 	public PlayerInventory(Player player) {
-		super(player, InventoryType.PLAYER, ContainerId.INVENTORY);
+		super(player, ContainerId.INVENTORY);
 
 		this.cursorInventory = new PlayerCursorInventory(player);
 	}

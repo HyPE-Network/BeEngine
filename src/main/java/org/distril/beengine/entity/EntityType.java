@@ -2,6 +2,7 @@ package org.distril.beengine.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.distril.beengine.entity.impl.EntityHuman;
 
 @AllArgsConstructor
 public enum EntityType {

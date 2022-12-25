@@ -1,4 +1,4 @@
-package org.distril.beengine.inventory.defaults;
+package org.distril.beengine.inventory.impl;
 
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerId;
 import org.distril.beengine.inventory.Inventory;

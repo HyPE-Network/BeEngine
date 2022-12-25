@@ -1,4 +1,4 @@
-package org.distril.beengine.entity;
+package org.distril.beengine.entity.impl;
 
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.data.GameType;
@@ -10,6 +10,8 @@ import com.nukkitx.protocol.bedrock.packet.PlayerSkinPacket;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.distril.beengine.entity.EntityCreature;
+import org.distril.beengine.entity.EntityType;
 import org.distril.beengine.network.data.Device;
 import org.distril.beengine.player.Player;
 
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
-public class EntityHuman extends Entity {
+public class EntityHuman extends EntityCreature {
 
 	private String username;
 	private String xuid;
