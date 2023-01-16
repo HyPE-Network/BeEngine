@@ -18,7 +18,7 @@ public abstract class Tickable extends Thread {
 	private float maxTick = 20, maxUse;
 
 	public Tickable(String threadName) {
-		super(threadName);
+		super(threadName + " - Ticker");
 	}
 
 	@Override
