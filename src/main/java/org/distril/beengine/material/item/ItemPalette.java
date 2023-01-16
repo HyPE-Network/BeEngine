@@ -9,7 +9,7 @@ import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.CreativeContentPacket;
 import com.nukkitx.protocol.bedrock.packet.StartGamePacket;
 import org.distril.beengine.Bootstrap;
-import org.distril.beengine.util.ItemUtils;
+import org.distril.beengine.util.ItemUtil;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -52,7 +52,7 @@ public class ItemPalette {
 
 				netId++;
 				itemsData.add(
-						ItemUtils.fromJSON(itemObj)
+						ItemUtil.fromJSON(itemObj)
 								.toBuilder()
 								.netId(netId)
 								.build()

@@ -11,4 +11,6 @@ public class ServerSettings {
 	private final String motd = "test motd";
 
 	private final int maximumPlayers = 100;
+
+	private final int chunkRadius = 6;
 }

@@ -11,18 +11,18 @@ import org.distril.beengine.player.Player;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Setter
 @Getter
 public class Entity {
 
-	private static final AtomicInteger ID = new AtomicInteger(0);
+	private static final AtomicLong ID = new AtomicLong(0);
 
 	private final Set<Player> viewers = new HashSet<>();
 
 	private final EntityType type;
-	private final int id;
+	private final long id;
 
 	private float pitch, yaw, headYaw;
 	private Vector3f position = Vector3f.ZERO;
@@ -36,9 +36,7 @@ public class Entity {
 		this.id = ID.incrementAndGet();
 	}
 
-	public Set<Player> getViewers() {
-		return Collections.unmodifiableSet(this.viewers);
-	}
+	public void onUpdate(long currentTick) {/**/}
 
 	public void spawnTo(Player player) {
 		if (this.viewers.add(player)) {
@@ -69,5 +67,9 @@ public class Entity {
 
 	public void despawnFromAll() {
 		this.viewers.forEach(this::despawnFrom);
+	}
+
+	public Set<Player> getViewers() {
+		return Collections.unmodifiableSet(this.viewers);
 	}
 }

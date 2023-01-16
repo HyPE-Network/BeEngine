@@ -1,6 +1,8 @@
 package org.distril.beengine.material;
 
 import lombok.Getter;
+import org.distril.beengine.material.block.Block;
+import org.distril.beengine.material.block.BlockState;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.material.item.ItemPalette;
 import org.distril.beengine.server.Server;
@@ -1194,8 +1196,8 @@ public enum Material {
 		this.itemRuntimeId = itemRuntimeId;
 	}
 
-	public static Material fromRuntimeId(int runtimeId) {
-		return BY_RUNTIME_ID.get(runtimeId);
+	public static Material fromItemRuntimeId(int itemRuntimeId) {
+		return BY_RUNTIME_ID.get(itemRuntimeId);
 	}
 
 	public static Material fromIdentifier(String identifier) {
@@ -1208,5 +1210,13 @@ public enum Material {
 
 	public <T extends Item> T getItem() {
 		return Server.getInstance().getItemRegistry().from(this);
+	}
+
+	public <T extends Block> T getBlock() {
+		return Server.getInstance().getBlockRegistry().from(this);
+	}
+
+	public <T extends Block> T getBlock(BlockState state) {
+		return Server.getInstance().getBlockRegistry().from(this, state);
 	}
 }

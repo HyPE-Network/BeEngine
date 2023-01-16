@@ -7,7 +7,7 @@ import lombok.Getter;
 import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
-import org.distril.beengine.util.ItemUtils;
+import org.distril.beengine.util.ItemUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,7 +61,7 @@ public abstract class Inventory {
 			return false;
 		}
 
-		this.items[slot] = ItemUtils.getAirIfNull(item);
+		this.items[slot] = ItemUtil.getAirIfNull(item);
 
 		if (send) {
 			this.onSlotChange(slot);
@@ -81,7 +81,7 @@ public abstract class Inventory {
 	public void addItem(Item item) {
 		for (int slot = 0; slot < this.items.length; slot++) {
 			if (this.items[slot].getMaterial() == Material.AIR) {
-				this.items[slot] = ItemUtils.getAirIfNull(item);
+				this.items[slot] = ItemUtil.getAirIfNull(item);
 				this.onSlotChange(slot);
 
 				return;
@@ -129,7 +129,7 @@ public abstract class Inventory {
 		var packet = new InventorySlotPacket();
 		packet.setContainerId(this.getId());
 		packet.setSlot(slot);
-		packet.setItem(ItemUtils.toNetwork(this.getItem(slot)));
+		packet.setItem(ItemUtil.toNetwork(this.getItem(slot)));
 
 		Arrays.stream(players).forEach(player -> player.sendPacket(packet));
 	}
@@ -137,7 +137,7 @@ public abstract class Inventory {
 	public void sendSlots(Player player) {
 		var packet = new InventoryContentPacket();
 		packet.setContainerId(this.getId());
-		packet.setContents(Arrays.stream(this.items).map(ItemUtils::toNetwork).collect(Collectors.toList()));
+		packet.setContents(Arrays.stream(this.items).map(ItemUtil::toNetwork).collect(Collectors.toList()));
 		player.sendPacket(packet);
 	}
 

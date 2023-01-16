@@ -8,6 +8,7 @@ import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.command.CommandRegistry;
 import org.distril.beengine.command.CommandSender;
 import org.distril.beengine.console.Console;
+import org.distril.beengine.material.block.BlockRegistry;
 import org.distril.beengine.material.item.ItemRegistry;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.player.Player;
@@ -39,7 +40,10 @@ public class Server {
 	private final Network network;
 
 	private final Scheduler scheduler = new Scheduler();
+
 	private final ItemRegistry itemRegistry = new ItemRegistry();
+	private final BlockRegistry blockRegistry = new BlockRegistry();
+
 	private final CommandRegistry commandRegistry = new CommandRegistry();
 
 	private final List<Player> players = new ArrayList<>();
@@ -67,6 +71,7 @@ public class Server {
 		log.info("Starting server...");
 
 		this.itemRegistry.init();
+		this.blockRegistry.init();
 
 		try {
 			this.network.start();

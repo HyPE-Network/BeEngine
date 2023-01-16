@@ -14,7 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
 
-public class ItemUtils {
+public class ItemUtil {
 
 	public static ItemData fromJSON(JsonObject itemJSON) throws IOException {
 		var itemData = ItemData.builder();
@@ -22,7 +22,7 @@ public class ItemUtils {
 		itemData.id(ItemPalette.getRuntimeId(identifier));
 
 		if (itemJSON.has("block_state_b64")) {
-			var blockNbt = ItemUtils.decodeNbt(itemJSON.get("block_state_b64").getAsString());
+			var blockNbt = ItemUtil.decodeNbt(itemJSON.get("block_state_b64").getAsString());
 
 			itemData.blockRuntimeId(BlockPalette.getRuntimeId(blockNbt));
 		}
@@ -41,7 +41,7 @@ public class ItemUtils {
 		}
 
 		if (itemJSON.has("nbt_b64")) {
-			itemData.tag(ItemUtils.decodeNbt(itemJSON.get("nbt_b64").getAsString()));
+			itemData.tag(ItemUtil.decodeNbt(itemJSON.get("nbt_b64").getAsString()));
 		}
 
 		return itemData.usingNetId(false)
@@ -68,7 +68,7 @@ public class ItemUtils {
 	}
 
 	public static ItemData toNetwork(Item item) {
-		item = ItemUtils.getAirIfNull(item);
+		item = ItemUtil.getAirIfNull(item);
 
 		return ItemData.builder()
 				.id(item.getRuntimeId())
@@ -89,7 +89,7 @@ public class ItemUtils {
 			return Item.AIR;
 		}
 
-		var builder = ItemBuilder.builder(Material.fromRuntimeId(itemData.getId()));
+		var builder = ItemBuilder.builder(Material.fromItemRuntimeId(itemData.getId()));
 		builder.meta(itemData.getDamage());
 		builder.count(itemData.getCount());
 		builder.nbt(itemData.getTag());

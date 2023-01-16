@@ -10,7 +10,7 @@ import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.InventoryType;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
-import org.distril.beengine.util.ItemUtils;
+import org.distril.beengine.util.ItemUtil;
 
 import java.util.Collection;
 
@@ -63,7 +63,7 @@ public class CreatureInventory extends Inventory {
 		var itemInHand = this.getItemInHand();
 
 		var packet = new MobEquipmentPacket();
-		packet.setItem(ItemUtils.toNetwork(itemInHand));
+		packet.setItem(ItemUtil.toNetwork(itemInHand));
 		packet.setInventorySlot(this.getHeldItemIndex());
 		packet.setHotbarSlot(this.getHeldItemIndex());
 
@@ -93,22 +93,22 @@ public class CreatureInventory extends Inventory {
 	}
 
 	public void setHelmet(Item helmet) {
-		this.helmet = ItemUtils.getAirIfNull(helmet);
+		this.helmet = ItemUtil.getAirIfNull(helmet);
 		this.sendArmor();
 	}
 
 	public void setChestplate(Item chestplate) {
-		this.chestplate = ItemUtils.getAirIfNull(chestplate);
+		this.chestplate = ItemUtil.getAirIfNull(chestplate);
 		this.sendArmor();
 	}
 
 	public void setLeggings(Item leggings) {
-		this.leggings = ItemUtils.getAirIfNull(leggings);
+		this.leggings = ItemUtil.getAirIfNull(leggings);
 		this.sendArmor();
 	}
 
 	public void setBoots(Item boots) {
-		this.boots = ItemUtils.getAirIfNull(boots);
+		this.boots = ItemUtil.getAirIfNull(boots);
 		this.sendArmor();
 	}
 
@@ -124,10 +124,10 @@ public class CreatureInventory extends Inventory {
 
 		var packet = new MobArmorEquipmentPacket();
 		packet.setRuntimeEntityId(holder.getId());
-		packet.setHelmet(ItemUtils.toNetwork(this.helmet));
-		packet.setChestplate(ItemUtils.toNetwork(this.chestplate));
-		packet.setLeggings(ItemUtils.toNetwork(this.leggings));
-		packet.setBoots(ItemUtils.toNetwork(this.boots));
+		packet.setHelmet(ItemUtil.toNetwork(this.helmet));
+		packet.setChestplate(ItemUtil.toNetwork(this.chestplate));
+		packet.setLeggings(ItemUtil.toNetwork(this.leggings));
+		packet.setBoots(ItemUtil.toNetwork(this.boots));
 
 		holder.getViewers().forEach(viewer -> viewer.sendPacket(packet));
 	}

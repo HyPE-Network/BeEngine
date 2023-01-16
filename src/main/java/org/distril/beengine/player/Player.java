@@ -16,14 +16,17 @@ import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.PlayerInventory;
 import org.distril.beengine.material.item.ItemPalette;
-import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
 import org.distril.beengine.player.data.attribute.Attribute;
 import org.distril.beengine.player.data.attribute.Attributes;
+import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
+import org.distril.beengine.world.Dimension;
+import org.distril.beengine.world.World;
+import org.distril.beengine.world.generator.impl.FlatGenerator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,8 +46,12 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	private final PlayerInventory inventory;
 
+	private final PlayerChunkManager chunkManager = new PlayerChunkManager(this);
+
 	private final Set<String> permissions = new HashSet<>();
 	private Inventory openedInventory;
+
+	private World world;
 
 	private PlayerData data;
 
@@ -63,6 +70,21 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.setDevice(loginData.getDevice());
 	}
 
+	@Override
+	public void onUpdate(long currentTick) {
+		var packet = new NetworkChunkPublisherUpdatePacket();
+		packet.setRadius(12);
+		packet.setPosition(this.getPosition().toInt());
+
+		this.sendPacket(packet);
+
+		/*MethodWatcher.watch(() -> {
+			this.chunkManager.queueNewChunks();
+
+			this.chunkManager.sendQueued();
+		}, "Get and send chunks");*/
+	}
+
 	public void initialize() {
 		this.server.getScheduler().prepareTask(() -> {
 			try {
@@ -71,6 +93,9 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 				if (this.data == null) {
 					this.data = new PlayerData();
 				}
+
+				this.world = new World("test world", Dimension.OVERWORLD, new FlatGenerator());
+				this.world.addEntity(this);
 
 				this.completePlayerInitialization();
 			} catch (IOException exception) {
@@ -121,7 +146,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 			startGamePacket.setGeneratorId(1);
 			startGamePacket.setDefaultPlayerPermission(PlayerPermission.MEMBER);
 			startGamePacket.setServerChunkTickRange(8);
-			startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
+			// startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
+			startGamePacket.setVanillaVersion("1.17.40");
 			startGamePacket.setPremiumWorldTemplateId("");
 			startGamePacket.setInventoriesServerAuthoritative(true);
 			startGamePacket.getGamerules().add(new GameRuleData<>("showcoordinates", true));
@@ -149,6 +175,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 			this.server.addPlayer(this);
 
+			this.sendPacket(ItemPalette.getCreativeContentPacket());
+
 			var biomeDefinitionPacket = new BiomeDefinitionListPacket();
 			biomeDefinitionPacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
 			this.sendPacket(biomeDefinitionPacket);
@@ -157,21 +185,14 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 			availableEntityIdentifiersPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
 			this.sendPacket(availableEntityIdentifiersPacket);
 
-			this.sendPacket(ItemPalette.getCreativeContentPacket());
-
-			var craftingDataPacket = new CraftingDataPacket();
-			// todo: crafting data
-			this.sendPacket(craftingDataPacket);
-
 			this.attributes.sendAttributes();
-			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
 			PlayStatusPacket playStatusPacket = new PlayStatusPacket();
 			playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
 			this.sendPacket(playStatusPacket);
 
 			this.inventory.sendSlots(this);
-
+			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
 			log.info("{} logged in [X = {}, Y = {}, Z = {}]", this.getUsername(), this.getPosition().getX(), this.getPosition().getY(), this.getPosition().getZ());
 

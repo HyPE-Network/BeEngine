@@ -34,6 +34,12 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 	}
 
 	@Override
+	public boolean handle(MovePlayerPacket packet) {
+		this.player.setPosition(packet.getPosition());
+		return true;
+	}
+
+	@Override
 	public boolean handle(ItemStackRequestPacket packet) {
 		return this.inventoryPacketHandler.handle(packet);
 	}
