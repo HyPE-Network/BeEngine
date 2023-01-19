@@ -10,5 +10,5 @@ public class PlayerData {
 
 	private float pitch, yaw, headYaw;
 	private Vector3f position = Vector3f.from(0, 60, 0);
-	private GameMode gameMode = GameMode.SURVIVAL;
+	private GameMode gameMode = GameMode.CREATIVE;
 }

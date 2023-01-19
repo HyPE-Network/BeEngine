@@ -12,5 +12,5 @@ public class ServerSettings {
 
 	private final int maximumPlayers = 100;
 
-	private final int chunkRadius = 6;
+	private final int chunkRadius = 32;
 }

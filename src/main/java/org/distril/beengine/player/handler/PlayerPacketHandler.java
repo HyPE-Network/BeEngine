@@ -35,7 +35,16 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 
 	@Override
 	public boolean handle(MovePlayerPacket packet) {
-		this.player.setPosition(packet.getPosition());
+		if (this.player.isSpawned()) {
+			this.player.setPosition(packet.getPosition());
+		}
+
+		return true;
+	}
+
+	@Override
+	public boolean handle(RequestChunkRadiusPacket packet) {
+		this.player.getChunkManager().setChunkRadius(packet.getRadius());
 		return true;
 	}
 

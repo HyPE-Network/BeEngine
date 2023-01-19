@@ -9,9 +9,9 @@ import org.distril.beengine.world.generator.Generator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 public class World extends Tickable {
@@ -23,10 +23,10 @@ public class World extends Tickable {
 	private final Generator generator;
 
 	private final ChunkManager chunkManager = new ChunkManager(this);
-	private final Map<Long, Entity> entities = new HashMap<>();
+	private final Map<Long, Entity> entities = new ConcurrentHashMap<>();
 
 	public World(String worldName, Dimension dimension, Generator generator) {
-		super(worldName + " - world");
+		super(worldName + " - World");
 		this.path = Path.of("./worlds/" + worldName);
 
 		try {
