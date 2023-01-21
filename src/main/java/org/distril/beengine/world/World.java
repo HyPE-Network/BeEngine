@@ -1,8 +1,10 @@
 package org.distril.beengine.world;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.Tickable;
 import org.distril.beengine.entity.Entity;
+import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.chunk.ChunkManager;
 import org.distril.beengine.world.generator.Generator;
 
@@ -14,6 +16,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
+@Log4j2
 public class World extends Tickable {
 
 	private final Path path;
@@ -49,12 +52,46 @@ public class World extends Tickable {
 	}
 
 	public void addEntity(Entity entity) {
-		if (!this.entities.containsKey(entity.getId())) {
-			this.entities.put(entity.getId(), entity);
+		this.addEntity(entity, false);
+	}
+
+	public void addEntity(Entity entity, boolean addInChunk) {
+		this.entities.put(entity.getId(), entity);
+
+		if (addInChunk) {
+			var location = entity.getLocation();
+
+			location.getChunk().addEntity(entity);
 		}
 	}
 
 	public void removeEntity(Entity entity) {
 		this.entities.remove(entity.getId());
+	}
+
+	public void removeEntity(Entity entity, boolean removeInChunk) {
+		this.entities.remove(entity.getId());
+
+		if (removeInChunk) {
+			var location = entity.getLocation();
+
+			location.getChunk().removeEntity(entity);
+		}
+	}
+
+	public Chunk getLoadedChunk(int x, int z) {
+		return this.chunkManager.getLoadedChunk(x, z);
+	}
+
+	public Chunk getLoadedChunk(long key) {
+		return this.chunkManager.getLoadedChunk(key);
+	}
+
+	public Chunk getChunk(int x, int z) {
+		return this.chunkManager.getChunk(x, z);
+	}
+
+	public Chunk getChunk(long key) {
+		return this.chunkManager.getChunk(key);
 	}
 }

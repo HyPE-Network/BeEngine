@@ -15,6 +15,7 @@ import org.distril.beengine.player.Player;
 import org.distril.beengine.player.data.provider.NBTPlayerDataProvider;
 import org.distril.beengine.player.data.provider.PlayerDataProvider;
 import org.distril.beengine.scheduler.Scheduler;
+import org.distril.beengine.world.WorldRegistry;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,6 +47,8 @@ public class Server {
 
 	private final CommandRegistry commandRegistry = new CommandRegistry();
 
+	private final WorldRegistry worldRegistry = new WorldRegistry();
+
 	private final List<Player> players = new ArrayList<>();
 
 	@Setter
@@ -72,6 +75,8 @@ public class Server {
 
 		this.itemRegistry.init();
 		this.blockRegistry.init();
+
+		this.worldRegistry.init();
 
 		try {
 			this.network.start();

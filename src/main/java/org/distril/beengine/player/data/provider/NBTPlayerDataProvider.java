@@ -5,6 +5,8 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtUtils;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
+import org.distril.beengine.server.Server;
+import org.distril.beengine.world.util.Location;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,24 +19,24 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 
 	@Override
 	public void save(UUID uuid, PlayerData data) throws IOException {
-		File playerFile = this.resolvePlayerNBTFile(uuid);
+		var playerFile = this.resolvePlayerNBTFile(uuid);
 		if (playerFile.exists() && !playerFile.delete()) {
 			throw new IOException("Failed to delete existing player data file for " + uuid);
 		}
 
 		try (var writer = NbtUtils.createWriter(new FileOutputStream(playerFile))) {
-			writer.writeTag(this.getPlayerNBTDataFormat(data));
+			writer.writeTag(this.createPlayerSaveData(data));
 		}
 	}
 
 	@Override
 	public PlayerData load(UUID uuid) throws IOException {
-		File playerFile = this.resolvePlayerNBTFile(uuid);
+		var playerFile = this.resolvePlayerNBTFile(uuid);
 
 		PlayerData playerData = null;
 		if (playerFile.exists()) {
 			try (var reader = NbtUtils.createReader(new FileInputStream(playerFile))) {
-				playerData = this.getPlayerDataFormat((NbtMap) reader.readTag());
+				playerData = this.readPlayerData((NbtMap) reader.readTag());
 			}
 		}
 
@@ -45,24 +47,30 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 		return Paths.get("players", uuid.toString() + ".dat").toFile();
 	}
 
-	private NbtMap getPlayerNBTDataFormat(PlayerData data) {
+	private NbtMap createPlayerSaveData(PlayerData data) {
+		var location = data.getLocation();
 		return NbtMap.builder()
 				.putFloat("pitch", data.getPitch())
 				.putFloat("yaw", data.getYaw())
 				.putFloat("headYaw", data.getHeadYaw())
-				.putFloat("x", data.getPosition().getX())
-				.putFloat("y", data.getPosition().getY())
-				.putFloat("z", data.getPosition().getZ())
+				.putFloat("x", location.getX())
+				.putFloat("y", location.getY())
+				.putFloat("z", location.getZ())
+				.putString("worldName", location.getWorld().getWorldName())
 				.putInt("gamemode", data.getGameMode().ordinal())
 				.build();
 	}
 
-	private PlayerData getPlayerDataFormat(NbtMap data) {
+	private PlayerData readPlayerData(NbtMap data) {
 		var playerData = new PlayerData();
 		playerData.setPitch(data.getFloat("pitch"));
 		playerData.setYaw(data.getFloat("yaw"));
 		playerData.setHeadYaw(data.getFloat("headYaw"));
-		playerData.setPosition(Vector3f.from(data.getFloat("x"), data.getFloat("y"), data.getFloat("z")));
+
+		var position = Vector3f.from(data.getFloat("x"), data.getFloat("y"), data.getFloat("z"));
+		var defaultWorld = Server.getInstance().getWorldRegistry().getDefaultWorld();
+		// todo: Server.getInstance().getWorldRegistry().getWorld("worldName");
+		playerData.setLocation(Location.from(position, defaultWorld));
 		playerData.setGameMode(GameMode.values()[data.getInt("gamemode")]);
 
 		return playerData;

@@ -11,12 +11,14 @@ import org.distril.beengine.entity.Entity;
 import org.distril.beengine.material.Material;
 import org.distril.beengine.material.block.Block;
 import org.distril.beengine.material.block.BlockState;
+import org.distril.beengine.player.Player;
 import org.distril.beengine.server.Server;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Getter
@@ -30,7 +32,9 @@ public class Chunk {
 	private final int x, z;
 	private final SubChunk[] subChunks = new SubChunk[16];
 
-	private final Map<Long, Entity> entities = new HashMap<>();
+	private final Set<Entity> entities = new HashSet<>();
+
+	private final Set<ChunkLoader> loaders = new HashSet<>();
 
 	private static void checkBounds(int x, int y, int z) {
 		Preconditions.checkElementIndex(x, 16, "X coordinate");
@@ -83,6 +87,30 @@ public class Chunk {
 		return this.subChunks[index];
 	}
 
+	public void addEntity(Entity entity) {
+		this.entities.add(entity);
+	}
+
+	public void removeEntity(Entity entity) {
+		this.entities.remove(entity);
+	}
+
+	public void addLoader(ChunkLoader loader) {
+		if (loader != null) {
+			this.loaders.add(loader);
+		}
+	}
+
+	public void removeLoader(ChunkLoader loader) {
+		if (loader != null) {
+			this.loaders.remove(loader);
+		}
+	}
+
+	public Set<ChunkLoader> getPlayersLoader() {
+		return this.loaders.stream().filter(Player.class::isInstance).collect(Collectors.toSet());
+	}
+
 	public LevelChunkPacket createPacket() {
 		var packet = new LevelChunkPacket();
 		packet.setChunkX(this.x);
@@ -112,5 +140,32 @@ public class Chunk {
 		} finally {
 			buffer.release();
 		}
+	}
+
+	public void close() {
+		Arrays.fill(this.subChunks, null);
+
+		this.entities.forEach(Entity::close);
+
+		this.entities.clear();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+
+		Chunk that = (Chunk) obj;
+		return this.x == that.getX() && this.z == that.getZ();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.x, this.z);
 	}
 }

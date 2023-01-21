@@ -14,6 +14,7 @@ import org.distril.beengine.entity.EntityCreature;
 import org.distril.beengine.entity.EntityType;
 import org.distril.beengine.network.data.Device;
 import org.distril.beengine.player.Player;
+import org.distril.beengine.world.util.Location;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -29,8 +30,8 @@ public class EntityHuman extends EntityCreature {
 	private SerializedSkin skin;
 	private Device device;
 
-	public EntityHuman() {
-		super(EntityType.HUMAN);
+	public EntityHuman(Location location) {
+		super(EntityType.HUMAN, location);
 	}
 
 	public void setSkin(SerializedSkin skin) {
@@ -68,7 +69,7 @@ public class EntityHuman extends EntityCreature {
 		packet.setUsername(this.getUsername());
 		packet.setRuntimeEntityId(this.getId());
 		packet.setUniqueEntityId(this.getId());
-		packet.setPosition(this.getPosition());
+		packet.setPosition(this.getLocation().getPosition());
 		packet.setGameType(GameType.SURVIVAL);
 		packet.setMotion(Vector3f.ZERO);
 		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getHeadYaw()));

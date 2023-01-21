@@ -5,11 +5,8 @@ import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket;
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket;
 import com.nukkitx.protocol.bedrock.packet.NetworkChunkPublisherUpdatePacket;
 import it.unimi.dsi.fastutil.longs.*;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.distril.beengine.entity.Entity;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.util.ChunkUtil;
 import org.distril.beengine.world.chunk.Chunk;
@@ -22,17 +19,28 @@ public class PlayerChunkManager {
 
 	private final Player player;
 
-	private final AroundPlayerChunkComparator comparator;
+	private final AroundPlayerChunkComparator chunkComparator;
+
+	private final LongConsumer removeChunkLoader;
 
 	private final LongSet loadedChunks = new LongOpenHashSet();
 	private final Long2ObjectMap<LevelChunkPacket> sendQueue = new Long2ObjectOpenHashMap<>();
+
 	private final AtomicLong chunksSentCounter = new AtomicLong();
 
-	private volatile  int radius;
+	private volatile int radius;
 
 	public PlayerChunkManager(Player player) {
 		this.player = player;
-		this.comparator = new AroundPlayerChunkComparator(player);
+		this.chunkComparator = new AroundPlayerChunkComparator(player);
+
+		this.removeChunkLoader = chunkKey -> {
+			var chunk = player.getWorld().getLoadedChunk(chunkKey);
+			if (chunk != null) {
+				chunk.removeLoader(this.player);
+				chunk.getEntities().forEach(entity -> entity.despawnFrom(this.player));
+			}
+		};
 	}
 
 	public void setRadius(int radius) {
@@ -50,38 +58,50 @@ public class PlayerChunkManager {
 	public synchronized void sendQueued() {
 		int chunksPerTick = 16; // this.player.getServer().getConfig("chunk-sending.per-tick", 4);
 
+		var sendQueueIterator = this.sendQueue.long2ObjectEntrySet().iterator();
+		// Remove chunks which are out of range
+		while (sendQueueIterator.hasNext()) {
+			var entry = sendQueueIterator.next();
+			var key = entry.getLongKey();
+			if (!this.loadedChunks.contains(key)) {
+				sendQueueIterator.remove();
+
+				var chunk = this.player.getWorld().getLoadedChunk(key);
+				if (chunk != null) {
+					chunk.removeLoader(this.player);
+				}
+			}
+		}
+
+
 		LongList list = new LongArrayList(this.sendQueue.keySet());
 
 		// Order chunks around player.
-		list.unstableSort(this.comparator);
+		list.unstableSort(this.chunkComparator);
 
 		for (long key : list.toLongArray()) {
-			if (chunksPerTick < 0) {
-				break;
-			}
-
-			LevelChunkPacket packet = this.sendQueue.get(key);
-			if (packet == null) {
-				// Next packet is not available.
+			var packet = this.sendQueue.get(key);
+			if (chunksPerTick < 0 || packet == null) {
 				break;
 			}
 
 			this.sendQueue.remove(key);
+
 			this.player.sendPacket(packet);
 
 			var chunk = this.player.getWorld().getChunkManager().getLoadedChunk(key);
 			if (chunk == null) {
-				log.warn("Attempted to send unloaded chunk ({}, {}) to {}", ChunkUtil.fromKeyX(key), ChunkUtil.fromKeyZ(key)
-						, this.player.getName());
+				log.warn("Attempted to send unloaded chunk ({}, {}) to {}",
+						ChunkUtil.fromKeyX(key), ChunkUtil.fromKeyZ(key), this.player.getName());
 				return;
 			}
 
 			// Spawn entities
-			for (Entity entity : chunk.getEntities().values()) {
-				if (entity != this.player && !entity.isSpawned()) {
+			chunk.getEntities().forEach(entity -> {
+				if (!entity.equals(this.player) && !entity.isSpawned()) {
 					entity.spawnTo(this.player);
 				}
-			}
+			});
 
 			chunksPerTick--;
 			this.chunksSentCounter.incrementAndGet();
@@ -97,8 +117,8 @@ public class PlayerChunkManager {
 	}
 
 	public synchronized void queueNewChunks(int chunkX, int chunkZ) {
-		int radius = this.getChunkRadius();
-		int radiusSqr = radius * radius;
+		var radius = this.getChunkRadius();
+		var radiusSqr = radius * radius;
 
 		LongSet chunksForRadius = new LongOpenHashSet();
 
@@ -113,10 +133,10 @@ public class PlayerChunkManager {
 					continue;
 				}
 
-				int cx = chunkX + x;
-				int cz = chunkZ + z;
+				var cx = chunkX + x;
+				var cz = chunkZ + z;
 
-				final long key = ChunkUtil.key(cx, cz);
+				var key = ChunkUtil.key(cx, cz);
 
 				chunksForRadius.add(key);
 				if (this.loadedChunks.add(key)) {
@@ -125,46 +145,47 @@ public class PlayerChunkManager {
 			}
 		}
 
-		boolean loadedChunksChanged = this.loadedChunks.retainAll(chunksForRadius);
+		var loadedChunksChanged = this.loadedChunks.retainAll(chunksForRadius);
 		if (loadedChunksChanged || !chunksToLoad.isEmpty()) {
-			NetworkChunkPublisherUpdatePacket packet = new NetworkChunkPublisherUpdatePacket();
+			var packet = new NetworkChunkPublisherUpdatePacket();
 			packet.setPosition(this.player.getPosition().toInt());
 			packet.setRadius(this.radius);
 			this.player.sendPacket(packet);
 		}
 
 		// Order chunks for smoother loading
-		chunksToLoad.sort(this.comparator);
+		chunksToLoad.sort(this.chunkComparator);
 
-		for (final long key : chunksToLoad.toLongArray()) {
-			final int cx = ChunkUtil.fromKeyX(key);
-			final int cz = ChunkUtil.fromKeyZ(key);
+		for (long key : chunksToLoad.toLongArray()) {
+			var cx = ChunkUtil.fromKeyX(key);
+			var cz = ChunkUtil.fromKeyZ(key);
 
 			if (this.sendQueue.putIfAbsent(key, null) == null) {
-				this.player.getWorld().getChunkManager().generateChunk(cx, cz).thenApply(Chunk::createPacket)
-						.whenComplete((packet, throwable) -> {
-							synchronized (PlayerChunkManager.this) {
-								if (throwable != null) {
-									if (this.sendQueue.remove(key, null)) {
-										this.loadedChunks.remove(key);
-									}
-
-									log.error("Unable to create chunk packet for " + this.player.getName(), throwable);
-								} else if (!this.sendQueue.replace(key, null, packet)) {
-									// The chunk was already loaded!?
-									if (this.sendQueue.containsKey(key)) {
-										log.warn("Chunk ({},{}) already loaded for {}, value {}", cx, cz,
-												this.player.getName(), this.sendQueue.get(key));
-									}
-								}
+				this.player.getWorld().getChunkManager().generateChunk(cx, cz).thenApply(chunk -> {
+					chunk.addLoader(this.player);
+					return chunk;
+				}).thenApplyAsync(Chunk::createPacket).whenComplete((packet, throwable) -> {
+					synchronized (PlayerChunkManager.this) {
+						if (throwable != null) {
+							if (this.sendQueue.remove(key, null)) {
+								this.loadedChunks.remove(key);
 							}
-						});
+
+							log.error("Unable to create chunk packet for " + this.player.getName(), throwable);
+						} else if (!this.sendQueue.replace(key, null, packet)) {
+							// The chunk was already loaded!?
+							if (this.sendQueue.containsKey(key)) {
+								log.warn("Chunk ({},{}) already loaded for {}, value {}", cx, cz, this.player.getName(), this.sendQueue.get(key));
+							}
+						}
+					}
+				});
 			}
 		}
 
 		sentCopy.removeAll(chunksForRadius);
 		// Remove player from chunk loaders
-		// sentCopy.forEach(this.removeChunkLoader);
+		sentCopy.forEach(this.removeChunkLoader);
 	}
 
 	public long getChunksSent() {
@@ -180,26 +201,31 @@ public class PlayerChunkManager {
 		this.setRadius(chunkRadius << 4);
 	}
 
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-	private static class AroundPlayerChunkComparator implements LongComparator {
+	public void close() {
+		this.loadedChunks.forEach(this.removeChunkLoader);
 
-		private final Player player;
+		this.loadedChunks.clear();
+	}
+
+	private record AroundPlayerChunkComparator(Player player) implements LongComparator {
 
 		@Override
-		public int compare(long o1, long o2) {
-			int x1 = ChunkUtil.fromKeyX(o1);
-			int z1 = ChunkUtil.fromKeyZ(o1);
-			int x2 = ChunkUtil.fromKeyX(o2);
-			int z2 = ChunkUtil.fromKeyZ(o2);
-			int spawnX = this.player.getPosition().getFloorX() >> 4;
-			int spawnZ = this.player.getPosition().getFloorZ() >> 4;
+		public int compare(long chunkHash1, long chunkHash2) {
+			int spawnX = this.player.getLocation().getFloorX() >> 4;
+			int spawnZ = this.player.getLocation().getFloorZ() >> 4;
+
+			int x1 = ChunkUtil.fromKeyX(chunkHash1);
+			int z1 = ChunkUtil.fromKeyZ(chunkHash1);
+
+			int x2 = ChunkUtil.fromKeyX(chunkHash2);
+			int z2 = ChunkUtil.fromKeyZ(chunkHash2);
 
 			return Integer.compare(this.distance(spawnX, spawnZ, x1, z1), this.distance(spawnX, spawnZ, x2, z2));
 		}
 
 		private int distance(int centerX, int centerZ, int x, int z) {
-			int dx = centerX - x;
-			int dz = centerZ - z;
+			var dx = centerX - x;
+			var dz = centerZ - z;
 			return dx * dx + dz * dz;
 		}
 	}

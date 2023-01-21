@@ -24,9 +24,8 @@ import org.distril.beengine.player.data.attribute.Attributes;
 import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
-import org.distril.beengine.world.Dimension;
-import org.distril.beengine.world.World;
-import org.distril.beengine.world.generator.impl.FlatGenerator;
+import org.distril.beengine.world.chunk.ChunkLoader;
+import org.distril.beengine.world.util.Location;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +35,7 @@ import java.util.UUID;
 
 @Getter
 @Log4j2
-public class Player extends EntityHuman implements InventoryHolder, CommandSender {
+public class Player extends EntityHuman implements InventoryHolder, CommandSender, ChunkLoader {
 
 	private final Server server;
 	private final BedrockServerSession session;
@@ -51,13 +50,12 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	private final Set<String> permissions = new HashSet<>();
 	private Inventory openedInventory;
 
-	private World world;
-
 	private PlayerData data;
 
 	private boolean loggedIn;
 
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
+		super(Location.from(server.getWorldRegistry().getDefaultWorld()));
 		this.server = server;
 		this.session = session;
 		this.loginData = loginData;
@@ -98,9 +96,6 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 					this.data = new PlayerData();
 				}
 
-				this.world = new World("test world", Dimension.OVERWORLD, new FlatGenerator());
-				this.world.addEntity(this);
-
 				this.completePlayerInitialization();
 			} catch (IOException exception) {
 				log.error("Failed to load data of " + this.getUuidForData(), exception);
@@ -127,7 +122,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.setPitch(this.data.getPitch());
 		this.setYaw(this.data.getYaw());
 		this.setHeadYaw(this.data.getYaw());
-		this.setPosition(this.data.getPosition());
+		this.setLocation(this.data.getLocation());
 
 		this.setGameMode(this.data.getGameMode());
 
@@ -135,7 +130,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setUniqueEntityId(this.getId());
 		startGamePacket.setRuntimeEntityId(this.getId());
 		startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
-		startGamePacket.setPlayerPosition(this.getPosition());
+		startGamePacket.setPlayerPosition(this.getLocation().getPosition());
 		startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
 		startGamePacket.setSeed(-1L);
 		startGamePacket.setDimensionId(0);
@@ -190,7 +185,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		this.loggedIn = true;
 
-		log.info("{} logged in [X = {}, Y = {}, Z = {}]", this.getUsername(), this.getPosition().getX(), this.getPosition().getY(), this.getPosition().getZ());
+		log.info("{} logged in [X = {}, Y = {}, Z = {}]", this.getUsername(), this.getLocation().getX(), this.getLocation().getY(), this.getLocation().getZ());
 	}
 
 	private void doFirstSpawn() {
@@ -263,7 +258,9 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 					log.error("Failed to save data of " + this.getUuidForData(), exception);
 				}
 
-				this.world.removeEntity(this);
+				this.getWorld().removeEntity(this, true);
+
+				this.chunkManager.close();
 			}).async().schedule();
 		}
 

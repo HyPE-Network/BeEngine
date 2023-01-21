@@ -52,6 +52,27 @@ public class ChunkManager {
 		});
 	}
 
+	public void unloadChunk(long key, boolean save) {
+		var chunk = this.getLoadedChunk(key);
+		if (chunk == null) {
+			return;
+		}
+
+		if (!chunk.getLoaders().isEmpty()) {
+			return;
+		}
+
+		if (save) {
+			// this.saveChunk(chunk);
+		}
+
+		chunk.close();
+	}
+
+	public synchronized void gc() {
+
+	}
+
 	public Map<Long, Chunk> getChunks() {
 		return Collections.unmodifiableMap(chunks);
 	}
