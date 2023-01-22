@@ -1,6 +1,7 @@
 package org.distril.beengine.player;
 
 import com.nukkitx.math.vector.Vector2f;
+import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
@@ -121,7 +122,6 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		this.setPitch(this.data.getPitch());
 		this.setYaw(this.data.getYaw());
-		this.setHeadYaw(this.data.getYaw());
 		this.setLocation(this.data.getLocation());
 
 		this.setGameMode(this.data.getGameMode());
@@ -130,7 +130,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setUniqueEntityId(this.getId());
 		startGamePacket.setRuntimeEntityId(this.getId());
 		startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
-		startGamePacket.setPlayerPosition(this.getLocation().getPosition());
+		startGamePacket.setPlayerPosition(this.getPosition());
 		startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
 		startGamePacket.setSeed(-1L);
 		startGamePacket.setDimensionId(0);
@@ -249,7 +249,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	public void onDisconnect() {
 		if (this.isSpawned()) {
-			this.despawnFromAll();
+
+			this.close();
 
 			this.server.getScheduler().prepareTask(() -> {
 				try {
@@ -257,8 +258,6 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 				} catch (IOException exception) {
 					log.error("Failed to save data of " + this.getUuidForData(), exception);
 				}
-
-				this.getWorld().removeEntity(this, true);
 
 				this.chunkManager.close();
 			}).async().schedule();
@@ -331,11 +330,38 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	@Override
-	public String getName() {
-		return this.getUsername();
+	public void setPosition(Vector3f position) {
+		var from = this.getChunk();
+		var to = this.getWorld().getChunk(position.toInt());
+
+		if (!from.equals(to)) {
+			from.removeEntity(this);
+			to.addEntity(this);
+		}
+
+		super.setPosition(position);
 	}
 
-	public boolean equals(CommandSender sender) {
-		return sender.getName().equals(this.getName());
+	public void sendPosition(MovePlayerPacket.Mode mode) {
+		var packet = new MovePlayerPacket();
+		packet.setRuntimeEntityId(this.getId());
+		packet.setPosition(this.getPosition().add(0, this.getEyeHeight(), 0));
+		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getYaw()));
+		packet.setMode(mode);
+
+		if (mode == MovePlayerPacket.Mode.TELEPORT) {
+			packet.setTeleportationCause(MovePlayerPacket.TeleportationCause.BEHAVIOR);
+		}
+
+		this.sendPacket(packet);
+	}
+
+	public float getEyeHeight() {
+		return 1.62F;
+	}
+
+	@Override
+	public String getName() {
+		return this.getUsername();
 	}
 }

@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.world.World;
+import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.util.Location;
 
 import java.util.Collections;
@@ -26,7 +27,7 @@ public class Entity {
 	private final EntityType type;
 	private final long id;
 
-	private float pitch, yaw, headYaw;
+	private float pitch, yaw;
 	private Location location;
 
 	private float maxHealth = 20f, health = 20f;
@@ -65,7 +66,7 @@ public class Entity {
 		packet.setIdentifier(this.type.getIdentifier());
 		packet.setPosition(this.getPosition());
 		packet.setMotion(Vector3f.ZERO);
-		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getHeadYaw()));
+		packet.setRotation(Vector3f.from(this.pitch, this.yaw, this.yaw));
 
 		return packet;
 	}
@@ -91,12 +92,21 @@ public class Entity {
 		return this.location.getWorld();
 	}
 
+	public Chunk getChunk() {
+		return this.location.getChunk();
+	}
+
 	public Vector3f getPosition() {
 		return this.location.getPosition();
 	}
 
 	public void setPosition(Vector3f position) {
 		this.location = Location.from(position, this.getWorld());
+	}
+
+	public void setRotation(float pitch, float yaw) {
+		this.pitch = pitch;
+		this.yaw = yaw;
 	}
 
 	public void close() {

@@ -1,5 +1,6 @@
 package org.distril.beengine.world;
 
+import com.nukkitx.math.vector.Vector3i;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.Tickable;
@@ -85,6 +86,10 @@ public class World extends Tickable {
 
 	public Chunk getLoadedChunk(long key) {
 		return this.chunkManager.getLoadedChunk(key);
+	}
+
+	public Chunk getChunk(Vector3i position) {
+		return this.chunkManager.getChunk(position.getX() >> 4, position.getZ() >> 4);
 	}
 
 	public Chunk getChunk(int x, int z) {

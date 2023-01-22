@@ -16,7 +16,6 @@ import org.distril.beengine.network.data.Device;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.world.util.Location;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Getter
@@ -69,32 +68,13 @@ public class EntityHuman extends EntityCreature {
 		packet.setUsername(this.getUsername());
 		packet.setRuntimeEntityId(this.getId());
 		packet.setUniqueEntityId(this.getId());
-		packet.setPosition(this.getLocation().getPosition());
+		packet.setPosition(this.getPosition());
 		packet.setGameType(GameType.SURVIVAL);
 		packet.setMotion(Vector3f.ZERO);
-		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getHeadYaw()));
+		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getYaw()));
 		packet.setDeviceId("");
 		packet.setPlatformChatId("");
 		packet.setHand(ItemData.AIR);
 		return packet;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-
-		if (obj == null || this.getClass() != obj.getClass()) {
-			return false;
-		}
-
-		EntityHuman that = (EntityHuman) obj;
-		return Objects.equals(this.uuid, that.getUuid());
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.uuid);
 	}
 }
