@@ -1,5 +1,6 @@
 package org.distril.beengine.server;
 
+import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -211,5 +212,9 @@ public class Server {
 
 	public boolean isRunning() {
 		return this.running.get();
+	}
+
+	public void broadcastPackets(Collection<Player> targets, Collection<? extends BedrockPacket> packets) {
+		targets.forEach(target -> packets.forEach(target::sendPacket));
 	}
 }

@@ -14,10 +14,7 @@ import org.distril.beengine.material.block.BlockState;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.server.Server;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -109,6 +106,17 @@ public class Chunk {
 
 	public Set<ChunkLoader> getPlayersLoader() {
 		return this.loaders.stream().filter(Player.class::isInstance).collect(Collectors.toSet());
+	}
+
+	public List<Player> getPlayers() {
+		List<Player> players = new ArrayList<>();
+		this.entities.forEach(entity -> {
+			if (entity instanceof Player player) {
+				players.add(player);
+			}
+		});
+
+		return players;
 	}
 
 	public LevelChunkPacket createPacket() {

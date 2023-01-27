@@ -6,16 +6,17 @@ import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.StackRequ
 import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.SwapStackRequestActionData;
 import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.TakeStackRequestActionData;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
-import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket;
-import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket;
-import com.nukkitx.protocol.bedrock.packet.ItemStackRequestPacket;
-import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket;
+import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.inventory.transaction.ItemStackTransaction;
 import org.distril.beengine.inventory.transaction.action.PlaceItemStackAction;
 import org.distril.beengine.inventory.transaction.action.SwapItemStackAction;
 import org.distril.beengine.inventory.transaction.action.TakeItemStackAction;
+import org.distril.beengine.network.data.transaction.ItemUseTransaction;
 import org.distril.beengine.player.Player;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Log4j2
 public class InventoryPacketHandler implements BedrockPacketHandler {
@@ -91,6 +92,76 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 
 	@Override
 	public boolean handle(InventoryTransactionPacket packet) {
+		if (this.player.isSpectator()) {
+			return true;
+		}
+
+		switch (packet.getTransactionType()) {
+			case ITEM_USE -> {
+				var transaction = ItemUseTransaction.read(packet);
+
+				switch (transaction.getType()) {
+					case CLICK_BLOCK -> {
+						// player.setUsingItem(false);
+
+						var blockPosition = transaction.getBlockPosition();
+						var world = player.getWorld();
+						var blockFace = transaction.getBlockFace();
+						if (player.canInteract(blockPosition.toFloat().add(0.5, 0.5, 0.5))) {
+							var clientItem = transaction.getItemInHand();
+							var serverItem = player.getInventory().getItemInHand();
+							if (player.isCreative()) {
+								if (world.useItemOn(blockPosition, serverItem, blockFace, packet.getClickPosition(), player) != null) {
+									return true;
+								}
+							} else if (serverItem.equals(clientItem)) {
+								var oldServerItem = serverItem;
+								if ((serverItem = world.useItemOn(blockPosition, serverItem, blockFace, packet.getClickPosition(), player)) != null) {
+									if (!serverItem.equals(oldServerItem) ||
+											serverItem.getCount() != oldServerItem.getCount()) {
+										player.getInventory().setItemInHand(serverItem);
+										player.getInventory().sendHeldItem(player.getViewers());
+									}
+
+									return true;
+								}
+							}
+						}
+
+						player.getInventory().sendHeldItem(Collections.singleton(player));
+
+						if (blockPosition.distanceSquared(player.getPosition().toInt()) > 10000) {
+							return true;
+						}
+
+						var target = world.getBlock(blockPosition);
+						var block = target.getSide(blockFace);
+
+						world.sendBlocks(Collections.singleton(player), Arrays.asList(target, block), UpdateBlockPacket.FLAG_ALL_PRIORITY);
+						return true;
+					}
+
+					case CLICK_AIR -> {
+
+					}
+
+					case BREAK_BLOCK -> {
+
+					}
+				}
+			}
+
+			case ITEM_USE_ON_ENTITY -> {
+
+			}
+
+			case ITEM_RELEASE -> {
+
+			}
+
+			default -> log.info("Unhandled transaction type: {}", packet.getTransactionType());
+		}
+
 		log.info(packet.toString());
 		return true;
 	}

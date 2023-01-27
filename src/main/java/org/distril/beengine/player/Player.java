@@ -16,6 +16,7 @@ import org.distril.beengine.entity.impl.EntityHuman;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.PlayerInventory;
+import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.ItemPalette;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.GameMode;
@@ -63,6 +64,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		this.attributes = new Attributes(this);
 		this.inventory = new PlayerInventory(this);
+
+		this.inventory.addItem(Material.BEDROCK.getItem());
 
 		this.setUsername(loginData.getUsername());
 		this.setXuid(loginData.getXuid());
@@ -354,6 +357,30 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		}
 
 		this.sendPacket(packet);
+	}
+
+	public boolean canInteract(Vector3f position) {
+		return this.canInteract(position, this.isCreative() ? 13 : 7);
+	}
+
+	public boolean canInteract(Vector3f position, double maxDistance) {
+		return this.canInteract(position, maxDistance, 6D);
+	}
+
+	public boolean canInteract(Vector3f position, double maxDistance, double maxDiff) {
+		if (this.getPosition().distanceSquared(position) > maxDistance * maxDistance) {
+			return false;
+		}
+
+		var directionPlane = this.getDirectionPlane();
+		var fromDirection = directionPlane.dot(this.getPosition().toVector2(true));
+		var toDirection = directionPlane.dot(position.toVector2(true));
+		return (toDirection - fromDirection) >= -maxDiff;
+	}
+
+	private Vector2f getDirectionPlane() {
+		var plane = Math.toRadians(this.getYaw()) - Math.PI / 2;
+		return Vector2f.from(-Math.cos(plane), -Math.sin(plane)).normalize();
 	}
 
 	public float getEyeHeight() {
