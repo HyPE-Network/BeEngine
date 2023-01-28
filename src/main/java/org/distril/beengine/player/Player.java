@@ -7,7 +7,6 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -26,6 +25,7 @@ import org.distril.beengine.player.data.attribute.Attributes;
 import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
+import org.distril.beengine.util.ItemUtil;
 import org.distril.beengine.world.chunk.ChunkLoader;
 import org.distril.beengine.world.util.Location;
 
@@ -94,11 +94,29 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	public void initialize() {
 		this.server.getScheduler().prepareTask(() -> {
 			try {
+				if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
+					var packet = new PlayStatusPacket();
+					packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
+					this.session.sendPacket(packet);
+					return;
+				}
+
+				// Disconnect the player's other session if they're logged in on another device
+				for (Player player : this.server.getPlayers()) {
+					if (player.getUuid().equals(this.getUuid()) || player.getXuid().equals(this.getXuid())) {
+						player.disconnect();
+					}
+				}
+
 				this.data = this.server.getPlayerDataProvider().load(this.getUuidForData());
 
 				if (this.data == null) {
 					this.data = new PlayerData();
 				}
+
+				this.setPitch(this.data.getPitch());
+				this.setYaw(this.data.getYaw());
+				this.setLocation(this.data.getLocation());
 
 				this.completePlayerInitialization();
 			} catch (IOException exception) {
@@ -109,26 +127,6 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	private void completePlayerInitialization() {
-		if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
-			var packet = new PlayStatusPacket();
-			packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
-			this.session.sendPacket(packet);
-			return;
-		}
-
-		// Disconnect the player's other session if they're logged in on another device
-		for (Player player : this.server.getPlayers()) {
-			if (player.getUuid().equals(this.getUuid()) || player.getXuid().equals(this.getXuid())) {
-				player.disconnect();
-			}
-		}
-
-		this.setPitch(this.data.getPitch());
-		this.setYaw(this.data.getYaw());
-		this.setLocation(this.data.getLocation());
-
-		this.setGameMode(this.data.getGameMode());
-
 		var startGamePacket = new StartGamePacket();
 		startGamePacket.setUniqueEntityId(this.getId());
 		startGamePacket.setRuntimeEntityId(this.getId());
@@ -174,25 +172,28 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setChatRestrictionLevel(ChatRestrictionLevel.NONE);
 		this.sendPacket(startGamePacket);
 
-		this.server.addPlayer(this);
-
 		this.sendPacket(ItemPalette.getCreativeContentPacket());
 
-		var biomeDefinitionPacket = new BiomeDefinitionListPacket();
-		biomeDefinitionPacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
-		this.sendPacket(biomeDefinitionPacket);
+		var biomePacket = new BiomeDefinitionListPacket();
+		biomePacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
+		this.sendPacket(biomePacket);
 
-		var availableEntityIdentifiersPacket = new AvailableEntityIdentifiersPacket();
-		availableEntityIdentifiersPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
-		this.sendPacket(availableEntityIdentifiersPacket);
+		var entityPacket = new AvailableEntityIdentifiersPacket();
+		entityPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
+		this.sendPacket(entityPacket);
 
 		this.loggedIn = true;
-
-		log.info("{} logged in [X = {}, Y = {}, Z = {}]", this.getUsername(), this.getLocation().getX(), this.getLocation().getY(), this.getLocation().getZ());
 	}
 
 	private void doFirstSpawn() {
-		this.setSpawned(true);
+		var packet = new PlayStatusPacket();
+		packet.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
+		this.sendPacket(packet);
+
+		this.server.addPlayer(this);
+
+		var position = this.getPosition();
+		log.info("{} logged in [X ={}, Y ={}, Z ={}]", this.getName(), position.getX(), position.getY(), position.getZ());
 
 		this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
@@ -200,9 +201,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		this.inventory.sendSlots(this);
 
-		PlayStatusPacket playStatusPacket = new PlayStatusPacket();
-		playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
-		this.sendPacket(playStatusPacket);
+		this.setSpawned(true);
 	}
 
 	public void sendPacket(BedrockPacket packet) {
@@ -218,11 +217,10 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	public void setGameMode(GameMode gameMode) {
 		var currentGamemode = this.data.getGameMode();
 		if (gameMode != currentGamemode) {
-
 			this.data.setGameMode(gameMode);
 
 			var packet = new SetPlayerGameTypePacket();
-			packet.setGamemode(gameMode.ordinal());
+			packet.setGamemode(gameMode.getType().ordinal());
 			this.sendPacket(packet);
 		}
 	}
@@ -300,7 +298,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	protected AddPlayerPacket createSpawnPacket(Player player) {
 		var packet = super.createSpawnPacket(player);
 		packet.setGameType(this.data.getGameMode().getType());
-		packet.setHand(ItemData.AIR);
+		packet.setHand(ItemUtil.toNetwork(this.inventory.getItemInHand()));
 		return packet;
 	}
 
