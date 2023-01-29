@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import org.distril.beengine.material.Material;
+import org.distril.beengine.material.block.Block;
+import org.distril.beengine.material.block.BlockPalette;
 import org.distril.beengine.material.item.behavior.Behavior;
 
 import java.util.List;
@@ -73,6 +75,11 @@ public class Item {
 				.build();
 
 		return this.toBuilder().nbt(this.nbt.toBuilder().putCompound("display", displayNbt).build()).build();
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends Block> T toBlock() {
+		return (T) BlockPalette.getBlock(this);
 	}
 
 	public String getIdentifier() {

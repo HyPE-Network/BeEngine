@@ -34,12 +34,12 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public enum Direction {
 
-	UP(0, -1, "up", AxisDirection.POSITIVE, Vector3i.from(0, 1, 0)),
 	DOWN(1, -1, "down", AxisDirection.NEGATIVE, Vector3i.from(0, -1, 0)),
-	SOUTH(2, 0, "south", AxisDirection.POSITIVE, Vector3i.from(0, 0, 1)),
+	UP(0, -1, "up", AxisDirection.POSITIVE, Vector3i.from(0, 1, 0)),
 	NORTH(3, 2, "north", AxisDirection.NEGATIVE, Vector3i.from(0, 0, -1)),
-	EAST(4, 3, "east", AxisDirection.POSITIVE, Vector3i.from(1, 0, 0)),
-	WEST(5, 1, "west", AxisDirection.NEGATIVE, Vector3i.from(-1, 0, 0));
+	SOUTH(2, 0, "south", AxisDirection.POSITIVE, Vector3i.from(0, 0, 1)),
+	WEST(5, 1, "west", AxisDirection.NEGATIVE, Vector3i.from(-1, 0, 0)),
+	EAST(4, 3, "east", AxisDirection.POSITIVE, Vector3i.from(1, 0, 0));
 
 	/**
 	 * All faces in D-U-N-S-W-E order
@@ -80,7 +80,7 @@ public enum Direction {
 	private final int horizontalIndex;
 
 	/**
-	 * The name of this BlockFace (up, down, south, etc.)
+	 * The name of this BlockFace (up, down, north, etc.)
 	 */
 	private final String name;
 	private final AxisDirection axisDirection;

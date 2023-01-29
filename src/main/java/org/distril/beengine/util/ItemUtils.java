@@ -14,7 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
 
-public class ItemUtil {
+public class ItemUtils {
 
 	public static ItemData fromJSON(JsonObject itemJSON) throws IOException {
 		var itemData = ItemData.builder();
@@ -22,7 +22,7 @@ public class ItemUtil {
 		itemData.id(ItemPalette.getRuntimeId(identifier));
 
 		if (itemJSON.has("block_state_b64")) {
-			var blockNbt = ItemUtil.decodeNbt(itemJSON.get("block_state_b64").getAsString());
+			var blockNbt = ItemUtils.decodeNbt(itemJSON.get("block_state_b64").getAsString());
 
 			itemData.blockRuntimeId(BlockPalette.getRuntimeId(blockNbt));
 		}
@@ -32,8 +32,8 @@ public class ItemUtil {
 		}
 
 		if (itemJSON.has("damage")) {
-			int meta = itemJSON.get("damage").getAsInt();
-			if ((meta & 0x7fff) == 0x7fff) {
+			var meta = itemJSON.get("damage").getAsInt();
+			if ((meta & 0x7FFF) == 0x7FFF) {
 				meta = -1;
 			}
 
@@ -41,7 +41,7 @@ public class ItemUtil {
 		}
 
 		if (itemJSON.has("nbt_b64")) {
-			itemData.tag(ItemUtil.decodeNbt(itemJSON.get("nbt_b64").getAsString()));
+			itemData.tag(ItemUtils.decodeNbt(itemJSON.get("nbt_b64").getAsString()));
 		}
 
 		return itemData.usingNetId(false)
@@ -68,7 +68,7 @@ public class ItemUtil {
 	}
 
 	public static ItemData toNetwork(Item item) {
-		item = ItemUtil.getAirIfNull(item);
+		item = ItemUtils.getAirIfNull(item);
 
 		return ItemData.builder()
 				.id(item.getRuntimeId())

@@ -7,9 +7,13 @@ import com.nukkitx.nbt.NbtType;
 import com.nukkitx.nbt.NbtUtils;
 import org.distril.beengine.Bootstrap;
 import org.distril.beengine.material.Material;
+import org.distril.beengine.material.item.Item;
+import org.distril.beengine.server.Server;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BlockPalette {
@@ -17,6 +21,7 @@ public class BlockPalette {
 	private static final BiMap<NbtMap, Integer> STATES = HashBiMap.create();
 
 	private static final Map<String, BlockState> DEFAULT_STATES = new HashMap<>();
+	private static final Map<String, List<BlockState>> META2STATE = new HashMap<>();
 
 	static {
 		try (var reader = NbtUtils.createGZIPReader(Bootstrap.getResource("data/block_palette.nbt"))) {
@@ -30,7 +35,10 @@ public class BlockPalette {
 
 				STATES.put(fullState, runtimeId);
 
-				DEFAULT_STATES.putIfAbsent(fullState.getString("name"), new BlockState(fullState));
+				var identifier = fullState.getString("name");
+				DEFAULT_STATES.putIfAbsent(identifier, new BlockState(fullState));
+
+				META2STATE.computeIfAbsent(identifier, $ -> new ArrayList<>()).add(new BlockState(fullState));
 
 				runtimeId++;
 			}
@@ -59,5 +67,11 @@ public class BlockPalette {
 
 	public static BlockState getDefaultState(Material material) {
 		return DEFAULT_STATES.get(material.getIdentifier());
+	}
+
+	public static Block getBlock(Item item) {
+		var blockStates = META2STATE.get(item.getMaterial().getIdentifier());
+
+		return Server.getInstance().getBlockRegistry().getBlockFromState(blockStates.get(item.getMeta()));
 	}
 }

@@ -25,7 +25,7 @@ import org.distril.beengine.player.data.attribute.Attributes;
 import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
-import org.distril.beengine.util.ItemUtil;
+import org.distril.beengine.util.ItemUtils;
 import org.distril.beengine.world.chunk.ChunkLoader;
 import org.distril.beengine.world.util.Location;
 
@@ -193,7 +193,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.server.addPlayer(this);
 
 		var position = this.getPosition();
-		log.info("{} logged in [X ={}, Y ={}, Z ={}]", this.getName(), position.getX(), position.getY(), position.getZ());
+		log.info("{} logged in [X={}, Y={}, Z={}]", this.getName(), position.getX(), position.getY(), position.getZ());
 
 		this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
@@ -298,7 +298,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	protected AddPlayerPacket createSpawnPacket(Player player) {
 		var packet = super.createSpawnPacket(player);
 		packet.setGameType(this.data.getGameMode().getType());
-		packet.setHand(ItemUtil.toNetwork(this.inventory.getItemInHand()));
+		packet.setHand(ItemUtils.toNetwork(this.inventory.getItemInHand()));
 		return packet;
 	}
 

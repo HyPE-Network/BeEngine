@@ -1,7 +1,7 @@
 package org.distril.beengine.world.chunk;
 
 import lombok.RequiredArgsConstructor;
-import org.distril.beengine.util.ChunkUtil;
+import org.distril.beengine.util.ChunkUtils;
 import org.distril.beengine.world.World;
 
 import java.util.Collections;
@@ -18,7 +18,7 @@ public class ChunkManager {
 	private final World world;
 
 	public Chunk getLoadedChunk(int x, int z) {
-		return this.getLoadedChunk(ChunkUtil.key(x, z));
+		return this.getLoadedChunk(ChunkUtils.key(x, z));
 	}
 
 	public Chunk getLoadedChunk(long key) {
@@ -26,7 +26,7 @@ public class ChunkManager {
 	}
 
 	public Chunk getChunk(int x, int z) {
-		return this.getChunk(ChunkUtil.key(x, z));
+		return this.getChunk(ChunkUtils.key(x, z));
 	}
 
 	public Chunk getChunk(long key) {
@@ -39,13 +39,13 @@ public class ChunkManager {
 	}
 
 	public CompletableFuture<Chunk> generateChunk(int x, int z) {
-		return this.generateChunk(ChunkUtil.key(x, z));
+		return this.generateChunk(ChunkUtils.key(x, z));
 	}
 
 	public CompletableFuture<Chunk> generateChunk(long key) {
 		return CompletableFuture.supplyAsync(() -> {
-			var chunk = this.chunks.computeIfAbsent(key, chunkKey -> new Chunk(ChunkUtil.fromKeyX(chunkKey),
-					ChunkUtil.fromKeyZ(chunkKey)));
+			var chunk = this.chunks.computeIfAbsent(key, chunkKey -> new Chunk(ChunkUtils.fromKeyX(chunkKey),
+					ChunkUtils.fromKeyZ(chunkKey)));
 
 			world.getGenerator().generate(ThreadLocalRandom.current(), chunk);
 			return chunk;

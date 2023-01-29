@@ -9,7 +9,7 @@ import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.CreativeContentPacket;
 import com.nukkitx.protocol.bedrock.packet.StartGamePacket;
 import org.distril.beengine.Bootstrap;
-import org.distril.beengine.util.ItemUtil;
+import org.distril.beengine.util.ItemUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -33,8 +33,10 @@ public class ItemPalette {
 
 			items.forEach(item -> {
 				var itemObj = item.getAsJsonObject();
+
 				var identifier = itemObj.get("name").getAsString();
 				var runtimeId = itemObj.get("id").getAsInt();
+
 				ITEMS.put(identifier, runtimeId);
 				ENTRIES.add(new StartGamePacket.ItemEntry(identifier, (short) runtimeId, false));
 			});
@@ -51,12 +53,7 @@ public class ItemPalette {
 				var itemObj = itemElement.getAsJsonObject();
 
 				netId++;
-				itemsData.add(
-						ItemUtil.fromJSON(itemObj)
-								.toBuilder()
-								.netId(netId)
-								.build()
-				);
+				itemsData.add(ItemUtils.fromJSON(itemObj).toBuilder().netId(netId).build());
 			}
 
 

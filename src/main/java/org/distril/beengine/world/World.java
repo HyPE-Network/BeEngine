@@ -220,9 +220,12 @@ public class World extends Tickable {
 		var target = this.getBlock(blockPosition);
 		var block = target.getSide(blockFace);
 
+		var itemBlock = item.toBlock();
+		itemBlock.setPosition(this, block.getPosition());
+
 		Vector3i blockPos = block.getPosition();
 
-		if (blockPos.getY() >= MAX_Y || blockPos.getY() < MIN_Y) {
+		if (blockPos.getY() < MIN_Y || blockPos.getY() >= MAX_Y) {
 			return null;
 		}
 
@@ -230,7 +233,7 @@ public class World extends Tickable {
 			return null;
 		}
 
-		this.setBlock(blockPos, 0, target);
+		this.setBlock(blockPos, 0, itemBlock);
 
 		return item;
 	}

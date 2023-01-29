@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.util.Direction;
-import org.distril.beengine.util.ItemUtil;
+import org.distril.beengine.util.ItemUtils;
 
 @Getter
 @RequiredArgsConstructor
@@ -32,7 +32,7 @@ public class ItemUseTransaction {
 		var blockFace = Direction.fromIndex(packet.getBlockFace());
 
 		var hotbarSlot = packet.getHotbarSlot();
-		var itemInHand = ItemUtil.fromNetwork(packet.getItemInHand());
+		var itemInHand = ItemUtils.fromNetwork(packet.getItemInHand());
 
 		var playerPosition = packet.getPlayerPosition();
 		var clickPosition = packet.getClickPosition();

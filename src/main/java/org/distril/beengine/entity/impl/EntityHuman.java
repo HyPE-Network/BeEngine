@@ -7,7 +7,6 @@ import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
 import com.nukkitx.protocol.bedrock.packet.AddPlayerPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerSkinPacket;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.distril.beengine.entity.EntityCreature;
@@ -25,7 +24,6 @@ public class EntityHuman extends EntityCreature {
 	private String username;
 	private String xuid;
 	private UUID uuid;
-	@Setter(value = AccessLevel.NONE)
 	private SerializedSkin skin;
 	private Device device;
 

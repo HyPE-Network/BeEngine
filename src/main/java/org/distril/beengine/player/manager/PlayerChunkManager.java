@@ -8,7 +8,7 @@ import it.unimi.dsi.fastutil.longs.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.player.Player;
-import org.distril.beengine.util.ChunkUtil;
+import org.distril.beengine.util.ChunkUtils;
 import org.distril.beengine.world.chunk.Chunk;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -92,7 +92,7 @@ public class PlayerChunkManager {
 			var chunk = this.player.getWorld().getChunkManager().getLoadedChunk(key);
 			if (chunk == null) {
 				log.warn("Attempted to send unloaded chunk ({}, {}) to {}",
-						ChunkUtil.fromKeyX(key), ChunkUtil.fromKeyZ(key), this.player.getName());
+						ChunkUtils.fromKeyX(key), ChunkUtils.fromKeyZ(key), this.player.getName());
 				return;
 			}
 
@@ -136,7 +136,7 @@ public class PlayerChunkManager {
 				var cx = chunkX + x;
 				var cz = chunkZ + z;
 
-				var key = ChunkUtil.key(cx, cz);
+				var key = ChunkUtils.key(cx, cz);
 
 				chunksForRadius.add(key);
 				if (this.loadedChunks.add(key)) {
@@ -157,8 +157,8 @@ public class PlayerChunkManager {
 		chunksToLoad.sort(this.chunkComparator);
 
 		for (long key : chunksToLoad.toLongArray()) {
-			var cx = ChunkUtil.fromKeyX(key);
-			var cz = ChunkUtil.fromKeyZ(key);
+			var cx = ChunkUtils.fromKeyX(key);
+			var cz = ChunkUtils.fromKeyZ(key);
 
 			if (this.sendQueue.putIfAbsent(key, null) == null) {
 				this.player.getWorld().getChunkManager().generateChunk(cx, cz).thenApply(chunk -> {
@@ -214,11 +214,11 @@ public class PlayerChunkManager {
 			int spawnX = this.player.getLocation().getFloorX() >> 4;
 			int spawnZ = this.player.getLocation().getFloorZ() >> 4;
 
-			int x1 = ChunkUtil.fromKeyX(chunkHash1);
-			int z1 = ChunkUtil.fromKeyZ(chunkHash1);
+			int x1 = ChunkUtils.fromKeyX(chunkHash1);
+			int z1 = ChunkUtils.fromKeyZ(chunkHash1);
 
-			int x2 = ChunkUtil.fromKeyX(chunkHash2);
-			int z2 = ChunkUtil.fromKeyZ(chunkHash2);
+			int x2 = ChunkUtils.fromKeyX(chunkHash2);
+			int z2 = ChunkUtils.fromKeyZ(chunkHash2);
 
 			return Integer.compare(this.distance(spawnX, spawnZ, x1, z1), this.distance(spawnX, spawnZ, x2, z2));
 		}

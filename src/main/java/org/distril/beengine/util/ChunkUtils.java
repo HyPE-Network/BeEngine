@@ -1,6 +1,6 @@
 package org.distril.beengine.util;
 
-public class ChunkUtil {
+public class ChunkUtils {
 
 	public static int fromKeyX(long key) {
 		return (int) (key >> 32);
