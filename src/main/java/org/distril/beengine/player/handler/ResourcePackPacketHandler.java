@@ -2,8 +2,11 @@ package org.distril.beengine.player.handler;
 
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
-import com.nukkitx.protocol.bedrock.packet.*;
+import com.nukkitx.protocol.bedrock.packet.PacketViolationWarningPacket;
+import com.nukkitx.protocol.bedrock.packet.ResourcePackClientResponsePacket;
+import com.nukkitx.protocol.bedrock.packet.ResourcePackStackPacket;
 import lombok.extern.log4j.Log4j2;
+import org.distril.beengine.material.Material;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.Player;
@@ -20,13 +23,8 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 	public ResourcePackPacketHandler(Server server, BedrockServerSession session, LoginData loginData) {
 		this.server = server;
 		this.session = session;
-		this.session.getHardcodedBlockingId().set(355);
+		this.session.getHardcodedBlockingId().set(Material.SHIELD.getItemRuntimeId());
 		this.loginData = loginData;
-
-		// Notify client about all resource packs on the server
-		var packet = new ResourcePacksInfoPacket();
-		packet.setForcedToAccept(false);
-		this.session.sendPacket(packet);
 	}
 
 	@Override
@@ -43,15 +41,14 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 			}
 
 			case HAVE_ALL_PACKS -> {
-				var stackPacket = new ResourcePackStackPacket();
-				stackPacket.setForcedToAccept(false);
-				stackPacket.setGameVersion(Network.CODEC.getMinecraftVersion());
-				this.session.sendPacket(stackPacket);
+				var resourcePackStackPacket = new ResourcePackStackPacket();
+				resourcePackStackPacket.setGameVersion(Network.CODEC.getMinecraftVersion());
+				this.session.sendPacket(resourcePackStackPacket);
 				return true;
 			}
 
 			case COMPLETED -> {
-				Player player = new Player(this.server, this.session, this.loginData);
+				var player = new Player(this.server, this.session, this.loginData);
 				player.initialize();
 
 				this.session.addDisconnectHandler(reason -> this.server.getScheduler().prepareTask(() -> {
@@ -69,14 +66,8 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 	}
 
 	@Override
-	public boolean handle(ResourcePackChunkRequestPacket packet) {
-		// todo
-		return BedrockPacketHandler.super.handle(packet);
-	}
-
-	@Override
 	public boolean handle(PacketViolationWarningPacket packet) {
-		log.debug("Packet violation for " + packet.getPacketType() + ": " + packet.getContext());
+		log.debug("Packet violation: {}", packet);
 		return true;
 	}
 }

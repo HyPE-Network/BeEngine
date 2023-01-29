@@ -97,13 +97,15 @@ public class LoginPacketHandler implements BedrockPacketHandler {
 
 	private void completeLogin() {
 		if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
-			PlayStatusPacket playStatusPacket = new PlayStatusPacket();
-			playStatusPacket.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
-			this.session.sendPacket(playStatusPacket);
+			var packet = new PlayStatusPacket();
+			packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
+			this.session.sendPacket(packet);
 		} else {
-			PlayStatusPacket playStatusPacket = new PlayStatusPacket();
-			playStatusPacket.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);
-			this.session.sendPacket(playStatusPacket);
+			var packet = new PlayStatusPacket();
+			packet.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);
+			this.session.sendPacket(packet);
+
+			this.session.sendPacket(new ResourcePacksInfoPacket()); // todo: add resource packs
 
 			this.session.setPacketHandler(new ResourcePackPacketHandler(this.server, this.session, this.loginData));
 		}

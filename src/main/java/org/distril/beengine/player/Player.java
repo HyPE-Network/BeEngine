@@ -127,35 +127,34 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	private void completePlayerInitialization() {
+		this.loggedIn = true;
+
 		var startGamePacket = new StartGamePacket();
 		startGamePacket.setUniqueEntityId(this.getId());
 		startGamePacket.setRuntimeEntityId(this.getId());
 		startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
 		startGamePacket.setPlayerPosition(this.getPosition());
 		startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
-		startGamePacket.setSeed(-1L);
+		startGamePacket.setSeed(0L);
 		startGamePacket.setDimensionId(0);
-		startGamePacket.setTrustingPlayers(false);
+		startGamePacket.setGeneratorId(1);
 		startGamePacket.setLevelGameType(GameType.SURVIVAL);
 		startGamePacket.setDifficulty(1);
+		startGamePacket.setTrustingPlayers(false);
 		startGamePacket.setDefaultSpawn(Vector3i.from(0, 60, 0));
 		startGamePacket.setDayCycleStopTime(7000);
 		startGamePacket.setLevelName(this.server.getSettings().getMotd());
-		startGamePacket.setLevelId("");
-		startGamePacket.setGeneratorId(1);
+		startGamePacket.setLevelId(this.getWorld().getWorldName());
 		startGamePacket.setDefaultPlayerPermission(PlayerPermission.MEMBER);
 		startGamePacket.setServerChunkTickRange(8);
 		// startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
 		startGamePacket.setVanillaVersion("1.17.40");
 		startGamePacket.setPremiumWorldTemplateId("");
 		startGamePacket.setInventoriesServerAuthoritative(true);
-		startGamePacket.getGamerules().add(new GameRuleData<>("showcoordinates", true));
 		startGamePacket.setItemEntries(ItemPalette.getItemEntries());
 
 		var movementSettings = new SyncedPlayerMovementSettings();
 		movementSettings.setMovementMode(AuthoritativeMovementMode.CLIENT);
-		movementSettings.setRewindHistorySize(0);
-		movementSettings.setServerAuthoritativeBlockBreaking(false);
 
 		startGamePacket.setPlayerMovementSettings(movementSettings);
 		startGamePacket.setCommandsEnabled(true);
@@ -165,7 +164,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setXblBroadcastMode(GamePublishSetting.PUBLIC);
 		startGamePacket.setPlatformBroadcastMode(GamePublishSetting.PUBLIC);
 		startGamePacket.setCurrentTick(this.server.getCurrentTick());
-		startGamePacket.setServerEngine("");
+		startGamePacket.setServerEngine("BeEngine");
 		startGamePacket.setPlayerPropertyData(NbtMap.EMPTY);
 		startGamePacket.setWorldTemplateId(new UUID(0, 0));
 		startGamePacket.setWorldEditor(false);
@@ -181,8 +180,6 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		var entityPacket = new AvailableEntityIdentifiersPacket();
 		entityPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
 		this.sendPacket(entityPacket);
-
-		this.loggedIn = true;
 	}
 
 	private void doFirstSpawn() {
