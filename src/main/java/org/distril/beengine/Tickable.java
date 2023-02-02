@@ -21,6 +21,7 @@ public abstract class Tickable extends Thread {
 		super(threadName + " Ticker");
 	}
 
+	@SuppressWarnings("BusyWait")
 	@Override
 	public void run() {
 		Arrays.fill(this.tickAverage, 20F);
