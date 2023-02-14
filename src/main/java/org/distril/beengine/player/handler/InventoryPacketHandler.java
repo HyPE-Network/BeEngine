@@ -102,7 +102,7 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 
 				switch (transaction.getType()) {
 					case CLICK_BLOCK -> {
-						// player.setUsingItem(false);
+						player.setUsingItem(false);
 
 						var blockPosition = transaction.getBlockPosition();
 						var world = player.getWorld();
@@ -138,6 +138,7 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 						var block = target.getSide(blockFace);
 
 						world.sendBlocks(Collections.singleton(player), Arrays.asList(target, block), UpdateBlockPacket.FLAG_ALL_PRIORITY);
+						player.setUsingItem(false);
 						return true;
 					}
 

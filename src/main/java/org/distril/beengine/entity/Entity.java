@@ -2,11 +2,17 @@ package org.distril.beengine.entity;
 
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
+import com.nukkitx.protocol.bedrock.data.entity.EntityData;
+import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap;
+import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import com.nukkitx.protocol.bedrock.packet.AddEntityPacket;
 import com.nukkitx.protocol.bedrock.packet.RemoveEntityPacket;
+import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket;
 import lombok.Getter;
 import lombok.Setter;
+import org.distril.beengine.entity.data.SyncedEntityData;
 import org.distril.beengine.player.Player;
+import org.distril.beengine.server.Server;
 import org.distril.beengine.world.World;
 import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.util.Location;
@@ -18,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Setter
 @Getter
-public class Entity {
+public abstract class Entity {
 
 	private static final AtomicLong NEXT_ID = new AtomicLong(0);
 
@@ -27,10 +33,12 @@ public class Entity {
 	private final EntityType type;
 	private final long id;
 
+	private final SyncedEntityData metadata = new SyncedEntityData(this::onDataChange);
+
 	private float pitch, yaw;
 	private Location location;
 
-	private float maxHealth = 20f, health = 20f;
+	private float maxHealth = 20F, health = 20F;
 
 	private boolean spawned;
 
@@ -43,14 +51,55 @@ public class Entity {
 		this.init();
 	}
 
-	public void onUpdate(long currentTick) {/**/}
+	public void onUpdate(long currentTick) {
+		this.metadata.update();
+	}
+
+	public abstract float getHeight();
+
+	public abstract float getWidth();
 
 	protected void init() {
 		if (this.location == null) {
 			throw new IllegalArgumentException("Invalid garbage Location given to Entity");
 		}
 
+		this.metadata.setFlag(EntityFlag.HAS_COLLISION, true);
+		this.metadata.setShort(EntityData.AIR_SUPPLY, 400);
+		this.metadata.setShort(EntityData.MAX_AIR_SUPPLY, 400);
+		this.metadata.setLong(EntityData.LEASH_HOLDER_EID, -1L);
+		this.metadata.setFloat(EntityData.SCALE, 1F);
+		this.metadata.setFloat(EntityData.BOUNDING_BOX_HEIGHT, this.getHeight());
+		this.metadata.setFloat(EntityData.BOUNDING_BOX_WIDTH, this.getWidth());
+		this.metadata.setInt(EntityData.HEALTH, (int) this.getHealth());
+
 		this.getWorld().addEntity(this, true);
+	}
+
+	private void onDataChange(EntityDataMap changeSet) {
+		this.sendDataToViewers(changeSet);
+
+		if (this instanceof Player player) {
+			var packet = new SetEntityDataPacket();
+			packet.setRuntimeEntityId(this.id);
+			packet.getMetadata().putAll(changeSet);
+			player.sendPacket(packet);
+		}
+	}
+
+	private void sendDataToViewers(EntityDataMap dataMap) {
+		var packet = new SetEntityDataPacket();
+		packet.setRuntimeEntityId(this.id);
+		packet.getMetadata().putAll(dataMap);
+
+		Server.getInstance().broadcastPacket(this.getViewers(), packet);
+	}
+
+	public void sendData(Player player) {
+		var packet = new SetEntityDataPacket();
+		packet.setRuntimeEntityId(this.id);
+		this.metadata.putAllIn(packet.getMetadata());
+		player.sendPacket(packet);
 	}
 
 	public void spawnTo(Player player) {
@@ -107,6 +156,22 @@ public class Entity {
 	public void setRotation(float pitch, float yaw) {
 		this.pitch = pitch;
 		this.yaw = yaw;
+	}
+
+	public void setHealth(float health) {
+		if (this.health == health) {
+			return;
+		}
+
+		if (health < 1) {
+			this.close();
+		} else if (health <= this.maxHealth || health < this.health) {
+			this.health = health;
+		} else {
+			this.health = this.maxHealth;
+		}
+
+		this.metadata.setInt(EntityData.HEALTH, (int) this.health);
 	}
 
 	public void close() {

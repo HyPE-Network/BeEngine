@@ -7,6 +7,7 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
+import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -380,6 +381,10 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	public float getEyeHeight() {
 		return 1.62F;
+	}
+
+	public void setUsingItem(boolean value) {
+		this.getMetadata().setFlag(EntityFlag.USING_ITEM, value);
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package org.distril.beengine.entity.impl;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.data.PlayerPermission;
 import com.nukkitx.protocol.bedrock.data.command.CommandPermission;
+import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
 import com.nukkitx.protocol.bedrock.packet.AddPlayerPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
@@ -29,6 +30,23 @@ public class EntityHuman extends EntityCreature {
 
 	public EntityHuman(Location location) {
 		super(EntityType.HUMAN, location);
+	}
+
+	@Override
+	protected void init() {
+		this.getMetadata().setFlag(EntityFlag.HAS_GRAVITY, true);
+
+		super.init();
+	}
+
+	@Override
+	public float getHeight() {
+		return 1.8F;
+	}
+
+	@Override
+	public float getWidth() {
+		return 0.6F;
 	}
 
 	public void setSkin(SerializedSkin skin) {

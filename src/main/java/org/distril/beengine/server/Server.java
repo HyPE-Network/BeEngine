@@ -217,4 +217,8 @@ public class Server {
 	public void broadcastPackets(Collection<Player> targets, Collection<? extends BedrockPacket> packets) {
 		targets.forEach(target -> packets.forEach(target::sendPacket));
 	}
+
+	public void broadcastPacket(Collection<Player> targets, BedrockPacket packet) {
+		targets.forEach(target -> target.sendPacket(packet));
+	}
 }
