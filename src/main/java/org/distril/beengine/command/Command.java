@@ -45,12 +45,12 @@ public abstract class Command {
 		Map<String, Parser> parsers = new LinkedHashMap<>();
 		for (CommandArgument argument : arguments) {
 			var parser = argument.getParser();
+			parser.setOptional(argument.isOptional());
 
 			if (parser instanceof EnumParser enumParser) {
 				enumParser.setValues(argument.getEnumData());
 			}
 
-			parser.setOptional(argument.isOptional());
 			parsers.put(argument.getName(), parser);
 		}
 
