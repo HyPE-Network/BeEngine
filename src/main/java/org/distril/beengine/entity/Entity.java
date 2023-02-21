@@ -10,7 +10,7 @@ import com.nukkitx.protocol.bedrock.packet.RemoveEntityPacket;
 import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket;
 import lombok.Getter;
 import lombok.Setter;
-import org.distril.beengine.entity.data.SyncedEntityData;
+import org.distril.beengine.entity.data.EntityMetadata;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.world.World;
@@ -33,7 +33,7 @@ public abstract class Entity {
 	private final EntityType type;
 	private final long id;
 
-	private final SyncedEntityData metadata = new SyncedEntityData(this::onDataChange);
+	private final EntityMetadata metadata = new EntityMetadata(this::onDataChange);
 
 	private float pitch, yaw;
 	private Location location;
@@ -98,7 +98,7 @@ public abstract class Entity {
 	public void sendData(Player player) {
 		var packet = new SetEntityDataPacket();
 		packet.setRuntimeEntityId(this.id);
-		this.metadata.putAllIn(packet.getMetadata());
+		packet.getMetadata().putAll(this.metadata.getData());
 		player.sendPacket(packet);
 	}
 

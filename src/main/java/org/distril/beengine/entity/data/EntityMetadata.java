@@ -27,12 +27,15 @@ import com.nukkitx.protocol.bedrock.data.entity.EntityData;
 import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap;
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlags;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class SyncedEntityData {
+public class EntityMetadata {
 
+	@Getter
 	private final EntityDataMap data = new EntityDataMap();
+	@Getter
 	private final EntityFlags flags = new EntityFlags();
 
 	private final EntityDataMap dataChangeSet = new EntityDataMap();
