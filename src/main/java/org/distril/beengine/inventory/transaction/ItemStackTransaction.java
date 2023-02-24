@@ -29,13 +29,11 @@ public class ItemStackTransaction {
 		if (!action.isValid(this.player)) {
 			log.warn("Failed validation check on {}", action.getClass().getSimpleName());
 			action.onExecuteFail(this.player);
-
 			return false;
 		}
 
 		if (action.execute(this.player)) {
 			action.onExecuteSuccess(this.player);
-
 			return true;
 		}
 
@@ -49,7 +47,7 @@ public class ItemStackTransaction {
 
 	public void addContainers(Collection<ContainerEntry> containers) {
 		containers.forEach(entry -> {
-			var list = this.containers.computeIfAbsent(entry.getContainer(), x -> new ArrayList<>());
+			var list = this.containers.computeIfAbsent(entry.getContainer(), $ -> new ArrayList<>());
 			list.addAll(entry.getItems());
 		});
 	}

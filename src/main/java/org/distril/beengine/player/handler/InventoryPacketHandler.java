@@ -1,17 +1,12 @@
 package org.distril.beengine.player.handler;
 
 import com.nukkitx.protocol.bedrock.data.inventory.ItemStackRequest;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.PlaceStackRequestActionData;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.StackRequestActionData;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.SwapStackRequestActionData;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.TakeStackRequestActionData;
+import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.*;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.inventory.transaction.ItemStackTransaction;
-import org.distril.beengine.inventory.transaction.action.PlaceItemStackAction;
-import org.distril.beengine.inventory.transaction.action.SwapItemStackAction;
-import org.distril.beengine.inventory.transaction.action.TakeItemStackAction;
+import org.distril.beengine.inventory.transaction.action.*;
 import org.distril.beengine.network.data.transaction.ItemUseTransaction;
 import org.distril.beengine.player.Player;
 
@@ -43,35 +38,49 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 
 				switch (action.getType()) {
 					case TAKE -> {
-						var source = ((TakeStackRequestActionData) action).getSource();
-						var target = ((TakeStackRequestActionData) action).getDestination();
+						var takeAction = (TakeStackRequestActionData) action;
 
 						continueActions = this.transaction.handle(new TakeItemStackAction(
-								source,
-								target,
-								this.transaction,
-								((TakeStackRequestActionData) action).getCount()
-						));
+								takeAction.getSource(), takeAction.getDestination(),
+								this.transaction, takeAction.getCount(), request.getRequestId()));
 					}
 
 					case PLACE -> {
-						var source = ((PlaceStackRequestActionData) action).getSource();
-						var target = ((PlaceStackRequestActionData) action).getDestination();
+						var placeAction = (PlaceStackRequestActionData) action;
 
 						continueActions = this.transaction.handle(new PlaceItemStackAction(
-								source,
-								target,
-								this.transaction,
-								((PlaceStackRequestActionData) action).getCount()
-						));
+								placeAction.getSource(), placeAction.getDestination(),
+								this.transaction, placeAction.getCount(), request.getRequestId()));
 					}
 
 					case SWAP -> {
-						var source = ((SwapStackRequestActionData) action).getSource();
-						var target = ((SwapStackRequestActionData) action).getDestination();
+						var swapAction = (SwapStackRequestActionData) action;
 
-						continueActions = this.transaction.handle(new SwapItemStackAction(source, target, this.transaction));
+						continueActions = this.transaction.handle(new SwapItemStackAction(
+								swapAction.getSource(), swapAction.getDestination(), this.transaction));
 					}
+
+					case DROP -> {
+						// todo when i added player and world method for drop items
+					}
+
+					case DESTROY -> {
+						var destroyAction = (DestroyStackRequestActionData) action;
+
+						continueActions = this.transaction.handle(new DestroyItemStackAction(
+								destroyAction.getSource(), destroyAction.getCount(), this.transaction));
+					}
+
+					case CRAFT_CREATIVE -> {
+						var craftCreativeAction = (CraftCreativeStackRequestActionData) action;
+
+						continueActions = this.transaction.handle(new CraftCreativeItemStackAction(craftCreativeAction.getCreativeItemNetworkId(), this.transaction));
+					}
+
+					case CRAFT_RESULTS_DEPRECATED -> {
+						// skip it because deprecated
+					}
+
 
 					default -> log.warn("Missing inventory action handler: " + action.getType());
 				}
@@ -164,6 +173,12 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 		}
 
 		log.info(packet.toString());
+		return true;
+	}
+
+	@Override
+	public boolean handle(MobEquipmentPacket packet) {
+		this.player.getInventory().setHeldItemIndex(packet.getHotbarSlot());
 		return true;
 	}
 

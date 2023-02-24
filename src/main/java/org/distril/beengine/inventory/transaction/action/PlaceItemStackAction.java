@@ -7,8 +7,8 @@ import org.distril.beengine.player.Player;
 public class PlaceItemStackAction extends MoveItemStackAction {
 
 	public PlaceItemStackAction(StackRequestSlotInfoData from, StackRequestSlotInfoData to,
-	                            ItemStackTransaction transaction, int count) {
-		super(from, to, transaction, count);
+	                            ItemStackTransaction transaction, int count, int requestId) {
+		super(from, to, transaction, count, requestId);
 	}
 
 	@Override

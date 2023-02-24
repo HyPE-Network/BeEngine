@@ -4,20 +4,21 @@ import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerId;
 import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
 
-@Log4j2
 @Getter
 public class PlayerInventory extends CreatureInventory {
 
 	private final PlayerCursorInventory cursorInventory;
 
+	private final PlayerCraftingInventory craftingInventory;
+
 	public PlayerInventory(Player player) {
 		super(player, ContainerId.INVENTORY);
 
 		this.cursorInventory = new PlayerCursorInventory(player);
+		this.craftingInventory = new PlayerCraftingInventory(player);
 	}
 
 	@Override
@@ -46,6 +47,13 @@ public class PlayerInventory extends CreatureInventory {
 		player.sendPacket(packet);
 
 		this.sendSlots(player);
+	}
+
+	@Override
+	public void sendSlots(Player player) {
+		super.sendSlots(player);
+
+		this.cursorInventory.sendSlots(player);
 	}
 
 	@Override

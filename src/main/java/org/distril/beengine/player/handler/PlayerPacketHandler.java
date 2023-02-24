@@ -68,6 +68,7 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 		return true;
 	}
 
+
 	@Override
 	public boolean handle(RequestChunkRadiusPacket packet) {
 		this.player.getChunkManager().setChunkRadius(packet.getRadius());
@@ -85,13 +86,18 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 	}
 
 	@Override
+	public boolean handle(MobEquipmentPacket packet) {
+		return this.inventoryPacketHandler.handle(packet);
+	}
+
+	@Override
 	public boolean handle(ContainerClosePacket packet) {
 		return this.inventoryPacketHandler.handle(packet);
 	}
 
 	@Override
 	public boolean handle(PacketViolationWarningPacket packet) {
-		log.debug("Packet violation for " + packet.getPacketType() + ": " + packet.getContext());
+		log.warn("Packet violation for {}: {}", packet.getPacketType(), packet.getContext());
 		return true;
 	}
 }

@@ -25,8 +25,17 @@ public abstract class ItemStackAction {
 		this.to = to;
 		this.transaction = transaction;
 
-		this.fromItem = this.getItem(this.getFromInventory(), from.getSlot());
-		this.toItem = this.getItem(this.getToInventory(), to.getSlot());
+		if (this.from != null) {
+			this.fromItem = this.getItem(this.getFromInventory(), from.getSlot());
+		} else {
+			this.fromItem = null;
+		}
+
+		if (to != null) {
+			this.toItem = this.getItem(this.getToInventory(), to.getSlot());
+		} else {
+			this.toItem = null;
+		}
 	}
 
 	public abstract boolean isValid(Player player);
@@ -51,6 +60,7 @@ public abstract class ItemStackAction {
 
 	public void onExecuteFail(Player player) {
 		log.debug("Failed on transaction action: {}", this.getClass().getSimpleName());
+
 		this.transaction.setStatus(ItemStackResponsePacket.ResponseStatus.ERROR);
 		this.transaction.addContainers(this.getContainers(player));
 	}
