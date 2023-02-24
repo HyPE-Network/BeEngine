@@ -1,8 +1,6 @@
 package org.distril.beengine.inventory.impl;
 
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerId;
-import lombok.Getter;
-import lombok.Setter;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryType;
 import org.distril.beengine.material.item.Item;
@@ -11,10 +9,6 @@ import org.distril.beengine.player.Player;
 public class PlayerCraftingInventory extends Inventory {
 
 	private static final int SLOT_OFFSET = 28;
-
-	@Setter
-	@Getter
-	private Item creativeOutput;
 
 	public PlayerCraftingInventory(Player holder) {
 		super(holder, InventoryType.PLAYER, ContainerId.NONE);

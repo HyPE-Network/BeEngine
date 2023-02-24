@@ -43,7 +43,7 @@ public abstract class MoveItemStackAction extends ItemStackAction {
 	public Item getFromItem() {
 		if (this.requestId == this.getFrom().getStackNetworkId()) {
 			// Unique situation when client doesn't know the Stack Net ID of the crafted item, so it sends the same as the item stack request id
-			return this.getTransaction().getPlayer().getInventory().getCraftingInventory().getCreativeOutput();
+			return this.getTransaction().getCreativeOutput();
 		}
 
 		return super.getFromItem();

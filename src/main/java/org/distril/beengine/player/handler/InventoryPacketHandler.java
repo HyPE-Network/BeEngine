@@ -7,6 +7,7 @@ import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.inventory.transaction.ItemStackTransaction;
 import org.distril.beengine.inventory.transaction.action.*;
+import org.distril.beengine.material.item.ItemPalette;
 import org.distril.beengine.network.data.transaction.ItemUseTransaction;
 import org.distril.beengine.player.Player;
 
@@ -74,7 +75,8 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 					case CRAFT_CREATIVE -> {
 						var craftCreativeAction = (CraftCreativeStackRequestActionData) action;
 
-						continueActions = this.transaction.handle(new CraftCreativeItemStackAction(craftCreativeAction.getCreativeItemNetworkId(), this.transaction));
+						this.transaction.setCreativeOutput(ItemPalette.getCreativeItem(craftCreativeAction.getCreativeItemNetworkId()));
+						continueActions = this.transaction.handle(new CraftCreativeItemStackAction(this.transaction));
 					}
 
 					case CRAFT_RESULTS_DEPRECATED -> {
