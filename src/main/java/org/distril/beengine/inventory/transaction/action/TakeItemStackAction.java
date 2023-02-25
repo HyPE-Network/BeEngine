@@ -21,13 +21,9 @@ public class TakeItemStackAction extends MoveItemStackAction {
 		// double-click
 		if (toItem.getMaterial() != Material.AIR) {
 			// todo check count from and to items
-			toItem.incrementCount(Math.min(fromItem.getCount(), this.getCount()));
+			toItem = toItem.incrementCount(Math.min(fromItem.getCount(), this.getCount()));
 
 			fromItem = Item.AIR;
-
-			this.setToItem(toItem);
-			this.setFromItem(fromItem);
-			return true;
 		}
 
 		this.setFromItem(toItem);

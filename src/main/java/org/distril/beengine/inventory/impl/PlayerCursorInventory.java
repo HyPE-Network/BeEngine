@@ -26,4 +26,9 @@ public class PlayerCursorInventory extends Inventory {
 	protected void sendSlot(int slot, Player... players) {
 		super.sendSlot(0, players);
 	}
+
+	@Override
+	public void sendSlots(Player player) {
+		super.sendSlot(0, player);
+	}
 }
