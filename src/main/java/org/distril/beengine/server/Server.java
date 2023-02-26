@@ -141,13 +141,11 @@ public class Server {
 	}
 
 	public void dispatchCommand(CommandSender sender, String commandLine) {
-		if (sender == null) {
-			return;
-		}
-
-		if (!this.commandRegistry.handle(sender, commandLine)) {
-			sender.sendMessage("Unknown command: " + commandLine + ". Please check that the command exists and that you have " +
-					"permission to use it.");
+		if (sender != null) {
+			if (!this.commandRegistry.handle(sender, commandLine)) {
+				sender.sendMessage("Unknown command: " + commandLine + ". Please check that the command exists and that you have " +
+						"permission to use it.");
+			}
 		}
 	}
 
