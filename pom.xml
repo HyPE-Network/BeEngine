@@ -136,6 +136,14 @@
 			<scope>compile</scope>
 		</dependency>
 
+		<!-- Yaml -->
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.33</version>
+			<scope>compile</scope>
+		</dependency>
+
 		<!-- Other -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
