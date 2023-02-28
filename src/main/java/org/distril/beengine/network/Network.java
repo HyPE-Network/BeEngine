@@ -19,7 +19,6 @@ public class Network implements BedrockServerEventHandler {
 	static {
 		PONG.setEdition("MCPE");
 		PONG.setGameType("Survival");
-		PONG.setPlayerCount(0);
 		PONG.setProtocolVersion(CODEC.getProtocolVersion());
 		PONG.setVersion(CODEC.getMinecraftVersion());
 	}
@@ -72,8 +71,8 @@ public class Network implements BedrockServerEventHandler {
 
 	@Override
 	public void onSessionCreation(BedrockServerSession session) {
+		session.setCompressionLevel(this.server.getSettings().getCompressionLevel());
 		session.setLogging(false);
-		session.setCompressionLevel(7);
 		session.setPacketHandler(new LoginPacketHandler(session, this.server));
 	}
 

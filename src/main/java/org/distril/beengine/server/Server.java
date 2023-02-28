@@ -6,6 +6,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.distril.beengine.Bootstrap;
 import org.distril.beengine.command.CommandRegistry;
 import org.distril.beengine.command.CommandSender;
 import org.distril.beengine.console.Console;
@@ -38,7 +42,7 @@ public class Server {
 	private final AtomicBoolean running = new AtomicBoolean(true);
 
 	private final Console console;
-	private final ServerSettings settings = new ServerSettings();
+	private final ServerSettings settings;
 	private final Network network;
 
 	private final Scheduler scheduler = new Scheduler();
@@ -60,6 +64,28 @@ public class Server {
 
 	public Server() {
 		Server.instance = this;
+
+		try {
+			var serverFile = Path.of("settings.yml").toFile();
+			if (!serverFile.exists()) {
+				Files.copy(Bootstrap.getResource(serverFile.getName()), serverFile.toPath());
+			}
+
+			this.settings = new ServerSettings(serverFile.toPath());
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
+		}
+
+		if (this.settings.isDebugEnabled()) {
+			var context = (LoggerContext) LogManager.getContext(false);
+			var configuration = context.getConfiguration();
+
+			var loggerConfig = configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+			loggerConfig.setLevel(Level.DEBUG);
+
+			context.updateLoggers();
+		}
+
 		this.console = new Console(this);
 
 		this.network = new Network(this, this.settings.getIp(), this.settings.getPort());
@@ -152,13 +178,11 @@ public class Server {
 	}
 
 	public void dispatchCommand(CommandSender sender, String commandLine) {
-		if (sender == null) {
-			return;
-		}
-
-		if (!this.commandRegistry.handle(sender, commandLine)) {
-			sender.sendMessage("Unknown command: " + commandLine + ". Please check that the command exists and that you have " +
-					"permission to use it.");
+		if (sender != null) {
+			if (!this.commandRegistry.handle(sender, commandLine)) {
+				sender.sendMessage("Unknown command: " + commandLine + ". Please check that the command exists and that you have " +
+						"permission to use it.");
+			}
 		}
 	}
 

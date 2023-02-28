@@ -11,9 +11,13 @@ import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.server.Server;
 
+import java.util.regex.Pattern;
+
 @Log4j2
 @RequiredArgsConstructor
 public class LoginPacketHandler implements BedrockPacketHandler {
+
+	private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,16}$");
 
 	private final BedrockServerSession session;
 
@@ -53,6 +57,35 @@ public class LoginPacketHandler implements BedrockPacketHandler {
 
 		if (this.loginData == null) {
 			this.session.disconnect();
+			return true;
+		}
+
+		if (!loginData.isAuthenticated() && this.server.getSettings().isOnlineModeEnabled()) {
+			this.session.disconnect("disconnectionScreen.notAuthenticated");
+			return true;
+		}
+
+
+		var username = loginData.getUsername();
+		if (!NAME_PATTERN.matcher(username).matches() || username.equalsIgnoreCase("rcon") || username.equalsIgnoreCase("console")) {
+			session.disconnect("disconnectionScreen.invalidName");
+			return true;
+		}
+
+		if (!this.loginData.getSkin().isValid()) {
+			this.session.disconnect("disconnectionScreen.invalidSkin");
+			return true;
+		}
+
+
+		if (!this.server.getSettings().isEncryptionEnabled()) {
+			this.completeLogin();
+			return true;
+		}
+
+		if (!EncryptionUtils.canUseEncryption()) {
+			log.error("Packet encryption is not supported on this machine.");
+			this.session.getConnection().disconnect();
 			return true;
 		}
 

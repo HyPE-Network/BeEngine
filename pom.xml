@@ -10,7 +10,7 @@
 
 	<properties>
 		<log4j.version>2.17.2</log4j.version>
-		<jline.version>3.21.0</jline.version>
+		<jline.version>3.22.0</jline.version>
 
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
@@ -102,7 +102,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.24</version>
+			<version>1.18.26</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -110,7 +110,7 @@
 		<dependency>
 			<groupId>com.nukkitx.protocol</groupId>
 			<artifactId>bedrock-v560</artifactId>
-			<version>2.9.15-SNAPSHOT</version>
+			<version>2.9.17-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -132,7 +132,15 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.10</version>
+			<version>2.10.1</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- Yaml -->
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.33</version>
 			<scope>compile</scope>
 		</dependency>
 
