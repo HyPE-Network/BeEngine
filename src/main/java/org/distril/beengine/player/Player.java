@@ -8,7 +8,6 @@ import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -17,15 +16,18 @@ import org.distril.beengine.entity.impl.EntityHuman;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.PlayerInventory;
+import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.ItemPalette;
-import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
 import org.distril.beengine.player.data.attribute.Attribute;
 import org.distril.beengine.player.data.attribute.Attributes;
+import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
+import org.distril.beengine.util.ItemUtils;
+import org.distril.beengine.world.util.Location;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -55,6 +57,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	private boolean connected, loggedIn;
 
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
+		super(Location.from(server.getWorldRegistry().getDefaultWorld()));
 		this.server = server;
 		this.session = session;
 		this.loginData = loginData;
@@ -195,7 +198,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		var realAddress = this.session.getRealAddress();
 		log.info("{}[{}, {}] logged in [X={}, Y={}, Z={}]",
 				this.getName(), realAddress.getHostName(), realAddress.getPort(),
-				position.getX(),position.getY(), position.getZ());
+				position.getX(), position.getY(), position.getZ());
 	}
 
 	public void sendPacket(BedrockPacket packet) {

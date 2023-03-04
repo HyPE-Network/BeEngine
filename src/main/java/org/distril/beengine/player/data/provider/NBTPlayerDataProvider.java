@@ -5,6 +5,8 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtUtils;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
+import org.distril.beengine.server.Server;
+import org.distril.beengine.world.util.Location;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +38,7 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 			PlayerData playerData = new PlayerData();
 			if (playerFile.exists()) {
 				try (var reader = NbtUtils.createReader(new FileInputStream(playerFile))) {
-					playerData = this.getPlayerDataFormat((NbtMap) reader.readTag());
+					playerData = this.readPlayerData((NbtMap) reader.readTag());
 				} catch (IOException exception) {
 					throw new RuntimeException(exception);
 				}

@@ -2,8 +2,12 @@ package org.distril.beengine.player.handler;
 
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
-import com.nukkitx.protocol.bedrock.packet.*;
+import com.nukkitx.protocol.bedrock.packet.PacketViolationWarningPacket;
+import com.nukkitx.protocol.bedrock.packet.ResourcePackChunkRequestPacket;
+import com.nukkitx.protocol.bedrock.packet.ResourcePackClientResponsePacket;
+import com.nukkitx.protocol.bedrock.packet.ResourcePackStackPacket;
 import lombok.extern.log4j.Log4j2;
+import org.distril.beengine.material.Material;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.Player;
@@ -38,9 +42,9 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 			}
 
 			case HAVE_ALL_PACKS -> {
-				ResourcePackStackPacket resourcePackStackPacket = new ResourcePackStackPacket();
-				resourcePackStackPacket.setGameVersion(Network.CODEC.getMinecraftVersion());
-				this.session.sendPacket(resourcePackStackPacket);
+				ResourcePackStackPacket stackPacket = new ResourcePackStackPacket();
+				stackPacket.setGameVersion(Network.CODEC.getMinecraftVersion());
+				this.session.sendPacket(stackPacket);
 				return true;
 			}
 
