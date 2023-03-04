@@ -3,7 +3,7 @@ package org.distril.beengine.command;
 import com.nukkitx.protocol.bedrock.packet.AvailableCommandsPacket;
 import org.distril.beengine.command.data.Args;
 import org.distril.beengine.command.impl.GameModeCommand;
-import org.distril.beengine.command.impl.TestCommand;
+import org.distril.beengine.command.impl.StopCommand;
 import org.distril.beengine.command.parser.Parser;
 import org.distril.beengine.player.Player;
 
@@ -15,7 +15,7 @@ public class CommandRegistry {
 
 	public CommandRegistry() {
 		this.register(new GameModeCommand());
-		this.register(new TestCommand());
+		this.register(new StopCommand());
 	}
 
 	public void register(Command command) {

@@ -60,7 +60,7 @@ public class LoginPacketHandler implements BedrockPacketHandler {
 			return true;
 		}
 
-		if (!loginData.isAuthenticated() && this.server.getSettings().isOnlineModeEnabled()) {
+		if (!loginData.isAuthenticated() && this.server.getSettings().isXboxRequired()) {
 			this.session.disconnect("disconnectionScreen.notAuthenticated");
 			return true;
 		}

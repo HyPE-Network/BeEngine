@@ -2,11 +2,8 @@ package org.distril.beengine.player.handler;
 
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
-import com.nukkitx.protocol.bedrock.packet.PacketViolationWarningPacket;
-import com.nukkitx.protocol.bedrock.packet.ResourcePackClientResponsePacket;
-import com.nukkitx.protocol.bedrock.packet.ResourcePackStackPacket;
+import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.extern.log4j.Log4j2;
-import org.distril.beengine.material.Material;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.Player;
@@ -41,21 +38,17 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 			}
 
 			case HAVE_ALL_PACKS -> {
-				var resourcePackStackPacket = new ResourcePackStackPacket();
+				ResourcePackStackPacket resourcePackStackPacket = new ResourcePackStackPacket();
 				resourcePackStackPacket.setGameVersion(Network.CODEC.getMinecraftVersion());
 				this.session.sendPacket(resourcePackStackPacket);
 				return true;
 			}
 
 			case COMPLETED -> {
-				var player = new Player(this.server, this.session, this.loginData);
+				Player player = new Player(this.server, this.session, this.loginData);
+				this.session.addDisconnectHandler(reason -> player.disconnect(reason.name()));
+
 				player.initialize();
-
-				this.session.addDisconnectHandler(reason -> this.server.getScheduler().prepareTask(() -> {
-					this.server.removePlayer(player);
-
-					player.onDisconnect();
-				}).async().schedule());
 
 				this.session.setPacketHandler(new PlayerPacketHandler(player));
 				return true;
@@ -63,6 +56,12 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean handle(ResourcePackChunkRequestPacket packet) {
+		// todo
+		return BedrockPacketHandler.super.handle(packet);
 	}
 
 	@Override

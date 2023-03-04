@@ -8,6 +8,7 @@ import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
+import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -16,19 +17,15 @@ import org.distril.beengine.entity.impl.EntityHuman;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.PlayerInventory;
-import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.ItemPalette;
+import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
 import org.distril.beengine.player.data.attribute.Attribute;
 import org.distril.beengine.player.data.attribute.Attributes;
-import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
-import org.distril.beengine.util.ItemUtils;
-import org.distril.beengine.world.chunk.ChunkLoader;
-import org.distril.beengine.world.util.Location;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +35,7 @@ import java.util.UUID;
 
 @Getter
 @Log4j2
-public class Player extends EntityHuman implements InventoryHolder, CommandSender, ChunkLoader {
+public class Player extends EntityHuman implements InventoryHolder, CommandSender {
 
 	private final Server server;
 	private final BedrockServerSession session;
@@ -55,10 +52,9 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	private PlayerData data;
 
-	private boolean loggedIn;
+	private boolean connected, loggedIn;
 
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
-		super(Location.from(server.getWorldRegistry().getDefaultWorld()));
 		this.server = server;
 		this.session = session;
 		this.loginData = loginData;
@@ -93,38 +89,35 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public void initialize() {
-		this.server.getScheduler().prepareTask(() -> {
-			try {
-				if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
-					var packet = new PlayStatusPacket();
-					packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
-					this.session.sendPacket(packet);
-					return;
-				}
+		if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
+			var packet = new PlayStatusPacket();
+			packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
+			this.session.sendPacket(packet);
+			return;
+		}
 
-				// Disconnect the player's other session if they're logged in on another device
-				for (Player player : this.server.getPlayers()) {
-					if (player.getUuid().equals(this.getUuid()) || player.getXuid().equals(this.getXuid())) {
-						player.disconnect();
-					}
-				}
-
-				this.data = this.server.getPlayerDataProvider().load(this.getUuidForData());
-
-				if (this.data == null) {
-					this.data = new PlayerData();
-				}
-
-				this.setPitch(this.data.getPitch());
-				this.setYaw(this.data.getYaw());
-				this.setLocation(this.data.getLocation());
-
-				this.completePlayerInitialization();
-			} catch (IOException exception) {
-				log.error("Failed to load data of " + this.getUuidForData(), exception);
-				this.disconnect();
+		// Disconnect the player's other session if they're logged in on another device
+		for (Player player : this.server.getPlayers()) {
+			if (player.getUuid().equals(this.getUuid()) || player.getXuid().equals(this.getXuid())) {
+				player.disconnect();
 			}
-		}).async().schedule();
+		}
+
+		this.server.getPlayerDataProvider().load(this.getUuidForData()).whenComplete((data, throwable) -> {
+			if (throwable != null) {
+				log.error("Failed to load data of " + this.getUuidForData(), throwable);
+				this.disconnect();
+				return;
+			}
+
+			this.data = data;
+
+			this.setPitch(data.getPitch());
+			this.setYaw(data.getYaw());
+			this.setLocation(data.getLocation());
+
+			this.completePlayerInitialization();
+		});
 	}
 
 	private void completePlayerInitialization() {
@@ -190,9 +183,6 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		this.server.addPlayer(this);
 
-		var position = this.getPosition();
-		log.info("{} logged in [X={}, Y={}, Z={}]", this.getName(), position.getX(), position.getY(), position.getZ());
-
 		this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
 		this.attributes.sendAttributes();
@@ -200,11 +190,23 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.inventory.sendSlots(this);
 
 		this.setSpawned(true);
+
+		var position = this.getPosition();
+		var realAddress = this.session.getRealAddress();
+		log.info("{}[{}, {}] logged in [X={}, Y={}, Z={}]",
+				this.getName(), realAddress.getHostName(), realAddress.getPort(),
+				position.getX(),position.getY(), position.getZ());
 	}
 
 	public void sendPacket(BedrockPacket packet) {
 		if (!this.session.isClosed()) {
 			this.session.sendPacket(packet);
+		}
+	}
+
+	public void sendPacketImmediately(BedrockPacket packet) {
+		if (!this.session.isClosed()) {
+			this.session.sendPacketImmediately(packet);
 		}
 	}
 
@@ -215,10 +217,11 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	public void setGameMode(GameMode gameMode) {
 		var currentGamemode = this.data.getGameMode();
 		if (gameMode != currentGamemode) {
+
 			this.data.setGameMode(gameMode);
 
 			var packet = new SetPlayerGameTypePacket();
-			packet.setGamemode(gameMode.getType().ordinal());
+			packet.setGamemode(gameMode.ordinal());
 			this.sendPacket(packet);
 		}
 	}
@@ -246,31 +249,49 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.sendPacket(packet);
 	}
 
-	public void onDisconnect() {
-		if (this.isSpawned()) {
-
-			this.close();
-
-			this.server.getScheduler().prepareTask(() -> {
-				try {
-					this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
-				} catch (IOException exception) {
-					log.error("Failed to save data of " + this.getUuidForData(), exception);
-				}
-
-				this.chunkManager.close();
-			}).async().schedule();
-		}
-
-		log.info("{} player left the server", this.getUsername());
+	public boolean isConnected() {
+		return this.connected && this.loggedIn;
 	}
 
 	public void disconnect() {
-		this.session.disconnect();
+		this.disconnect("", true);
 	}
 
 	public void disconnect(String reason) {
-		this.session.disconnect(reason);
+		this.disconnect(reason, true);
+	}
+
+	public void disconnect(String reason, boolean showReason) {
+		if (!this.isConnected()) {
+			if (showReason && reason.length() > 0) {
+				DisconnectPacket packet = new DisconnectPacket();
+				packet.setKickMessage(reason);
+				this.sendPacketImmediately(packet);
+			}
+
+			this.connected = false;
+			this.closeOpenedInventory();
+
+			if (!this.session.isClosed()) {
+				this.session.disconnect(showReason ? reason : "");
+			}
+
+			super.close();
+		}
+
+		this.chunkManager.close();
+
+		this.server.removePlayer(this);
+
+		try {
+			this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
+		} catch (IOException exception) {
+			log.error("Failed to save data of " + this.getUuidForData(), exception);
+		}
+
+		var realAddress = this.session.getRealAddress();
+		log.info("{}[{}:{}] logged out due to {}", this.getName(), realAddress.getHostName(),
+				realAddress.getPort(), reason);
 	}
 
 	public void openInventory(Inventory inventory) {
@@ -326,6 +347,11 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	@Override
 	public boolean hasPermission(String permission) {
 		return this.permissions.contains(permission);
+	}
+
+	@Override
+	public String getName() {
+		return this.getUsername();
 	}
 
 	@Override
@@ -387,8 +413,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.getMetadata().setFlag(EntityFlag.USING_ITEM, value);
 	}
 
-	@Override
-	public String getName() {
-		return this.getUsername();
+	public boolean equals(CommandSender sender) {
+		return sender.getName().equals(this.getName());
 	}
 }

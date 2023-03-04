@@ -17,6 +17,7 @@ import org.distril.beengine.world.World;
 import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.util.Location;
 
+import java.io.Closeable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Setter
 @Getter
-public abstract class Entity {
+public abstract class Entity implements Closeable {
 
 	private static final AtomicLong NEXT_ID = new AtomicLong(0);
 
@@ -174,6 +175,7 @@ public abstract class Entity {
 		this.metadata.setInt(EntityData.HEALTH, (int) this.health);
 	}
 
+	@Override
 	public void close() {
 		if (this.spawned) {
 			this.spawned = false;

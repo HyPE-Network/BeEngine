@@ -25,6 +25,10 @@ public class GameModeCommand extends Command {
 
 	@Override
 	public void execute(CommandSender sender, Args args) {
+		if (!sender.hasPermission(this.getPermission())) {
+			return;
+		}
+
 		if (args.isEmpty()) {
 			sender.sendMessage("Use: /gamemode <gameMode> [player]");
 			return;
