@@ -19,8 +19,8 @@ import org.distril.beengine.world.util.Location;
 
 import java.io.Closeable;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Setter
@@ -29,7 +29,7 @@ public abstract class Entity implements Closeable {
 
 	private static final AtomicLong NEXT_ID = new AtomicLong(0);
 
-	private final Set<Player> viewers = new HashSet<>();
+	private final Set<Player> viewers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	private final EntityType type;
 	private final long id;
@@ -49,7 +49,9 @@ public abstract class Entity implements Closeable {
 
 		this.location = location;
 
-		this.init();
+		if (!(this instanceof Player)) {
+			this.init();
+		}
 	}
 
 	public void onUpdate(long currentTick) {

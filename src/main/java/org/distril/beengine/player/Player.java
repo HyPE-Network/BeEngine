@@ -125,6 +125,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	private void completePlayerInitialization() {
+		this.init();
 		this.loggedIn = true;
 
 		var startGamePacket = new StartGamePacket();
@@ -197,7 +198,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		var position = this.getPosition();
 		var realAddress = this.session.getRealAddress();
-		log.info("{}[{}, {}] logged in [X={}, Y={}, Z={}]",
+		log.info("{}[{}:{}] logged in [X={}, Y={}, Z={}]",
 				this.getName(), realAddress.getHostName(), realAddress.getPort(),
 				position.getX(), position.getY(), position.getZ());
 	}

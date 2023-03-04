@@ -20,13 +20,15 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 
 	@Override
 	public void save(UUID uuid, PlayerData data) throws IOException {
-		var playerFile = this.resolvePlayerNBTFile(uuid);
-		if (playerFile.exists() && !playerFile.delete()) {
-			throw new IOException("Failed to delete existing player data file for " + uuid);
-		}
+		if (data != null) {
+			var playerFile = this.resolvePlayerNBTFile(uuid);
+			if (playerFile.exists() && !playerFile.delete()) {
+				throw new IOException("Failed to delete existing player data file for " + uuid);
+			}
 
-		try (var writer = NbtUtils.createWriter(new FileOutputStream(playerFile))) {
-			writer.writeTag(this.createPlayerSaveData(data));
+			try (var writer = NbtUtils.createWriter(new FileOutputStream(playerFile))) {
+				writer.writeTag(this.createPlayerSaveData(data));
+			}
 		}
 	}
 

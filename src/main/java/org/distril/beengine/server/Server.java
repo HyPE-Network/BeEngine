@@ -25,10 +25,8 @@ import org.distril.beengine.world.WorldRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
@@ -54,7 +52,7 @@ public class Server {
 
 	private final WorldRegistry worldRegistry = new WorldRegistry();
 
-	private final List<Player> players = new ArrayList<>();
+	private final Set<Player> players = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	@Setter
 	@Getter
@@ -207,9 +205,7 @@ public class Server {
 
 		List<PlayerListPacket.Entry> entries = new ArrayList<>();
 
-		this.players.forEach(target -> {
-			entries.add(target.getPlayerListEntry());
-		});
+		this.players.forEach(target -> entries.add(target.getPlayerListEntry()));
 
 		this.updatePlayersList(PlayerListPacket.Action.ADD, entries, Collections.singleton(player));
 
@@ -232,8 +228,8 @@ public class Server {
 		players.forEach(player -> player.sendPacket(packet));
 	}
 
-	public List<Player> getPlayers() {
-		return Collections.unmodifiableList(this.players);
+	public Set<Player> getPlayers() {
+		return Collections.unmodifiableSet(this.players);
 	}
 
 	public boolean isRunning() {

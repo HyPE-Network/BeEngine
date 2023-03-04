@@ -12,6 +12,7 @@ import org.distril.beengine.material.block.Block;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.server.Server;
+import org.distril.beengine.util.CompletableFutureArray;
 import org.distril.beengine.util.Direction;
 import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.chunk.ChunkManager;
@@ -56,10 +57,14 @@ public class World extends Tickable {
 
 	@Override
 	protected void onUpdate(long currentTick) {
-		this.entities.values()
-				.stream()
-				.filter(Objects::nonNull)
-				.forEach(entity -> entity.onUpdate(currentTick));
+		var futureArray = new CompletableFutureArray();
+		this.entities.forEach((id, entity) -> {
+			if (entity != null) {
+				futureArray.add(() -> entity.onUpdate(currentTick));
+			}
+		});
+
+		futureArray.execute().join();
 	}
 
 	public void addEntity(Entity entity) {
