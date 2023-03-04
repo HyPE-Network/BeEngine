@@ -27,6 +27,7 @@ import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
 import org.distril.beengine.util.ItemUtils;
+import org.distril.beengine.world.chunk.ChunkLoader;
 import org.distril.beengine.world.util.Location;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ import java.util.UUID;
 
 @Getter
 @Log4j2
-public class Player extends EntityHuman implements InventoryHolder, CommandSender {
+public class Player extends EntityHuman implements InventoryHolder, CommandSender, ChunkLoader {
 
 	private final Server server;
 	private final BedrockServerSession session;
