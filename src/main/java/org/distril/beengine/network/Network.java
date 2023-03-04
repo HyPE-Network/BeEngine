@@ -1,7 +1,7 @@
 package org.distril.beengine.network;
 
 import com.nukkitx.protocol.bedrock.*;
-import com.nukkitx.protocol.bedrock.v560.Bedrock_v560;
+import com.nukkitx.protocol.bedrock.v567.Bedrock_v567patch;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.player.handler.LoginPacketHandler;
 import org.distril.beengine.server.Server;
@@ -12,7 +12,7 @@ import java.util.concurrent.CompletionException;
 @Log4j2
 public class Network implements BedrockServerEventHandler {
 
-	public static final BedrockPacketCodec CODEC = Bedrock_v560.V560_CODEC;
+	public static final BedrockPacketCodec CODEC = Bedrock_v567patch.BEDROCK_V567PATCH;
 
 	private static final BedrockPong PONG = new BedrockPong();
 
@@ -21,6 +21,7 @@ public class Network implements BedrockServerEventHandler {
 		PONG.setGameType("Survival");
 		PONG.setProtocolVersion(CODEC.getProtocolVersion());
 		PONG.setVersion(CODEC.getMinecraftVersion());
+		PONG.setPlayerCount(0);
 	}
 
 	private final Server server;

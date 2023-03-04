@@ -48,6 +48,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	private PlayerData data;
 
+	private boolean connected;
+
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
 		this.server = server;
 		this.session = session;
@@ -64,124 +66,127 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public void initialize() {
-		this.server.getScheduler().prepareTask(() -> {
-			try {
-				this.data = this.server.getPlayerDataProvider().load(this.getUuidForData());
-
-				if (this.data == null) {
-					this.data = new PlayerData();
-				}
-
-				this.completePlayerInitialization();
-			} catch (IOException exception) {
-				log.error("Failed to load data of " + this.getUuidForData(), exception);
+		this.server.getPlayerDataProvider().load(this.getUuidForData()).whenComplete((data, throwable) -> {
+			if (throwable != null) {
+				log.error("Failed to load data of " + this.getUuidForData(), throwable);
 				this.disconnect();
-			}
-		}).async().schedule();
-	}
-
-	private void completePlayerInitialization() {
-		this.server.getScheduler().prepareTask(() -> {
-			if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
-				var packet = new PlayStatusPacket();
-				packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
-				this.session.sendPacket(packet);
 				return;
 			}
 
-			// Disconnect the player's other session if they're logged in on another device
-			for (Player player : this.server.getPlayers()) {
-				if (player.getUuid().equals(this.getUuid()) || player.getXuid().equals(this.getXuid())) {
-					player.disconnect();
-				}
+			this.data = data;
+
+			this.completePlayerInitialization();
+		});
+	}
+
+	private void completePlayerInitialization() {
+		if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
+			var packet = new PlayStatusPacket();
+			packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
+			this.session.sendPacket(packet);
+			return;
+		}
+
+		// Disconnect the player's other session if they're logged in on another device
+		for (Player player : this.server.getPlayers()) {
+			if (player.getUuid().equals(this.getUuid()) || player.getXuid().equals(this.getXuid())) {
+				player.disconnect();
 			}
+		}
 
-			this.setPitch(this.data.getPitch());
-			this.setYaw(this.data.getYaw());
-			this.setHeadYaw(this.data.getYaw());
-			this.setPosition(this.data.getPosition());
+		this.setPitch(this.data.getPitch());
+		this.setYaw(this.data.getYaw());
+		this.setHeadYaw(this.data.getYaw());
+		this.setPosition(this.data.getPosition());
 
-			this.setGameMode(this.data.getGameMode());
+		this.setGameMode(this.data.getGameMode());
 
-			var startGamePacket = new StartGamePacket();
-			startGamePacket.setUniqueEntityId(this.getId());
-			startGamePacket.setRuntimeEntityId(this.getId());
-			startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
-			startGamePacket.setPlayerPosition(this.getPosition());
-			startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
-			startGamePacket.setSeed(-1L);
-			startGamePacket.setDimensionId(0);
-			startGamePacket.setTrustingPlayers(false);
-			startGamePacket.setLevelGameType(GameType.SURVIVAL);
-			startGamePacket.setDifficulty(1);
-			startGamePacket.setDefaultSpawn(Vector3i.from(0, 60, 0));
-			startGamePacket.setDayCycleStopTime(7000);
-			startGamePacket.setLevelName(this.server.getSettings().getMotd());
-			startGamePacket.setLevelId("");
-			startGamePacket.setGeneratorId(1);
-			startGamePacket.setDefaultPlayerPermission(PlayerPermission.MEMBER);
-			startGamePacket.setServerChunkTickRange(8);
-			startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
-			startGamePacket.setPremiumWorldTemplateId("");
-			startGamePacket.setInventoriesServerAuthoritative(true);
-			startGamePacket.getGamerules().add(new GameRuleData<>("showcoordinates", true));
-			startGamePacket.setItemEntries(ItemPalette.getItemEntries());
+		var startGamePacket = new StartGamePacket();
+		startGamePacket.setUniqueEntityId(this.getId());
+		startGamePacket.setRuntimeEntityId(this.getId());
+		startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
+		startGamePacket.setPlayerPosition(this.getPosition());
+		startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
+		startGamePacket.setSeed(-1L);
+		startGamePacket.setDimensionId(0);
+		startGamePacket.setTrustingPlayers(false);
+		startGamePacket.setLevelGameType(GameType.SURVIVAL);
+		startGamePacket.setDifficulty(1);
+		startGamePacket.setDefaultSpawn(Vector3i.from(0, 60, 0));
+		startGamePacket.setDayCycleStopTime(7000);
+		startGamePacket.setLevelName(this.server.getSettings().getMotd());
+		startGamePacket.setLevelId("");
+		startGamePacket.setGeneratorId(1);
+		startGamePacket.setDefaultPlayerPermission(PlayerPermission.MEMBER);
+		startGamePacket.setServerChunkTickRange(8);
+		startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
+		startGamePacket.setPremiumWorldTemplateId("");
+		startGamePacket.setInventoriesServerAuthoritative(true);
+		startGamePacket.getGamerules().add(new GameRuleData<>("showcoordinates", true));
+		startGamePacket.setItemEntries(ItemPalette.getItemEntries());
 
-			var movementSettings = new SyncedPlayerMovementSettings();
-			movementSettings.setMovementMode(AuthoritativeMovementMode.CLIENT);
-			movementSettings.setRewindHistorySize(0);
-			movementSettings.setServerAuthoritativeBlockBreaking(false);
+		var movementSettings = new SyncedPlayerMovementSettings();
+		movementSettings.setMovementMode(AuthoritativeMovementMode.CLIENT);
+		movementSettings.setRewindHistorySize(0);
+		movementSettings.setServerAuthoritativeBlockBreaking(false);
 
-			startGamePacket.setPlayerMovementSettings(movementSettings);
-			startGamePacket.setCommandsEnabled(true);
-			startGamePacket.setMultiplayerGame(true);
-			startGamePacket.setBroadcastingToLan(true);
-			startGamePacket.setMultiplayerCorrelationId(UUID.randomUUID().toString());
-			startGamePacket.setXblBroadcastMode(GamePublishSetting.PUBLIC);
-			startGamePacket.setPlatformBroadcastMode(GamePublishSetting.PUBLIC);
-			startGamePacket.setCurrentTick(this.server.getCurrentTick());
-			startGamePacket.setServerEngine("");
-			startGamePacket.setPlayerPropertyData(NbtMap.EMPTY);
-			startGamePacket.setWorldTemplateId(new UUID(0, 0));
-			startGamePacket.setWorldEditor(false);
-			startGamePacket.setChatRestrictionLevel(ChatRestrictionLevel.NONE);
-			this.sendPacket(startGamePacket);
+		startGamePacket.setPlayerMovementSettings(movementSettings);
+		startGamePacket.setCommandsEnabled(true);
+		startGamePacket.setMultiplayerGame(true);
+		startGamePacket.setBroadcastingToLan(true);
+		startGamePacket.setMultiplayerCorrelationId(UUID.randomUUID().toString());
+		startGamePacket.setXblBroadcastMode(GamePublishSetting.PUBLIC);
+		startGamePacket.setPlatformBroadcastMode(GamePublishSetting.PUBLIC);
+		startGamePacket.setCurrentTick(this.server.getCurrentTick());
+		startGamePacket.setServerEngine("");
+		startGamePacket.setPlayerPropertyData(NbtMap.EMPTY);
+		startGamePacket.setWorldTemplateId(new UUID(0, 0));
+		startGamePacket.setWorldEditor(false);
+		startGamePacket.setChatRestrictionLevel(ChatRestrictionLevel.NONE);
+		this.sendPacket(startGamePacket);
 
-			this.server.addPlayer(this);
+		this.server.addPlayer(this);
 
-			var biomeDefinitionPacket = new BiomeDefinitionListPacket();
-			biomeDefinitionPacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
-			this.sendPacket(biomeDefinitionPacket);
+		var biomeDefinitionPacket = new BiomeDefinitionListPacket();
+		biomeDefinitionPacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
+		this.sendPacket(biomeDefinitionPacket);
 
-			var availableEntityIdentifiersPacket = new AvailableEntityIdentifiersPacket();
-			availableEntityIdentifiersPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
-			this.sendPacket(availableEntityIdentifiersPacket);
+		var availableEntityIdentifiersPacket = new AvailableEntityIdentifiersPacket();
+		availableEntityIdentifiersPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
+		this.sendPacket(availableEntityIdentifiersPacket);
 
-			this.sendPacket(ItemPalette.getCreativeContentPacket());
+		this.sendPacket(ItemPalette.getCreativeContentPacket());
 
-			var craftingDataPacket = new CraftingDataPacket();
-			// todo: crafting data
-			this.sendPacket(craftingDataPacket);
+		var craftingDataPacket = new CraftingDataPacket();
+		// todo: crafting data
+		this.sendPacket(craftingDataPacket);
 
-			this.attributes.sendAttributes();
-			this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
+		this.attributes.sendAttributes();
+		this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
-			PlayStatusPacket playStatusPacket = new PlayStatusPacket();
-			playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
-			this.sendPacket(playStatusPacket);
+		PlayStatusPacket playStatusPacket = new PlayStatusPacket();
+		playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
+		this.sendPacket(playStatusPacket);
 
-			this.inventory.sendSlots(this);
+		this.inventory.sendSlots(this);
 
+		var realAddress = this.session.getRealAddress();
+		log.info("{}[{}, {}] logged in [X={}, Y={}, Z={}]",
+				this.getName(), realAddress.getHostName(), realAddress.getPort(),
+				this.getPosition().getX(), this.getPosition().getY(), this.getPosition().getZ());
 
-			log.info("{} logged in [X = {}, Y = {}, Z = {}]", this.getUsername(), this.getPosition().getX(), this.getPosition().getY(), this.getPosition().getZ());
-
-			this.setSpawned(true);
-		}).schedule();
+		this.setSpawned(true);
 	}
 
 	public void sendPacket(BedrockPacket packet) {
 		if (!this.session.isClosed()) {
 			this.session.sendPacket(packet);
+		}
+	}
+
+	public void sendPacketImmediately(BedrockPacket packet) {
+		if (!this.session.isClosed()) {
+			this.session.sendPacketImmediately(packet);
 		}
 	}
 
@@ -224,28 +229,47 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.sendPacket(packet);
 	}
 
-	public void onDisconnect() {
-		if (this.isSpawned()) {
-			this.despawnFromAll();
-
-			this.server.getScheduler().prepareTask(() -> {
-				try {
-					this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
-				} catch (IOException exception) {
-					log.error("Failed to save data of " + this.getUuidForData(), exception);
-				}
-			}).async().schedule();
-		}
-
-		log.info("{} player left the server", this.getUsername());
+	public boolean isConnected() {
+		return this.connected; // todo add is loggedIn
 	}
 
 	public void disconnect() {
-		this.session.disconnect();
+		this.disconnect("", true);
 	}
 
 	public void disconnect(String reason) {
-		this.session.disconnect(reason);
+		this.disconnect(reason, true);
+	}
+
+	public void disconnect(String reason, boolean showReason) {
+		if (!this.isConnected()) {
+			if (showReason && reason.length() > 0) {
+				DisconnectPacket packet = new DisconnectPacket();
+				packet.setKickMessage(reason);
+				this.sendPacketImmediately(packet);
+			}
+
+			this.connected = false;
+			this.closeOpenedInventory();
+
+			if (!this.session.isClosed()) {
+				this.session.disconnect(showReason ? reason : "");
+			}
+
+			super.close();
+		}
+
+		this.server.removePlayer(this);
+
+		try {
+			this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
+		} catch (IOException exception) {
+			log.error("Failed to save data of " + this.getUuidForData(), exception);
+		}
+
+		var realAddress = this.session.getRealAddress();
+		log.info("{}[{}:{}] logged out due to {}", this.getName(), realAddress.getHostName(),
+				realAddress.getPort(), reason);
 	}
 
 	public void openInventory(Inventory inventory) {

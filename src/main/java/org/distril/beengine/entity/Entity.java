@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.distril.beengine.player.Player;
 
+import java.io.Closeable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Setter
 @Getter
-public class Entity {
+public class Entity implements Closeable {
 
 	private static final AtomicInteger ID = new AtomicInteger(0);
 
@@ -69,5 +70,14 @@ public class Entity {
 
 	public void despawnFromAll() {
 		this.viewers.forEach(this::despawnFrom);
+	}
+
+	@Override
+	public void close() {
+		if (this.isSpawned()) {
+			this.despawnFromAll();
+
+			this.setSpawned(false);
+		}
 	}
 }

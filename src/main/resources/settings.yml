@@ -1,7 +1,7 @@
 server:
   motd: "BeEngine is Good :)"
   max-players: 100
-  online-mode: true
+  xbox-require: true
   enable-encryption: true
   debug: false
 

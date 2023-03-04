@@ -109,7 +109,7 @@
 		<!-- Network -->
 		<dependency>
 			<groupId>com.nukkitx.protocol</groupId>
-			<artifactId>bedrock-v560</artifactId>
+			<artifactId>bedrock-v567</artifactId>
 			<version>2.9.17-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>

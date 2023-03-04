@@ -160,6 +160,8 @@ public class Server {
 		log.info("Cancel all tasks...");
 		this.scheduler.cancelAllTasks();
 
+		this.settings.save();
+
 		log.info("Server stopped!");
 		this.console.interrupt();
 

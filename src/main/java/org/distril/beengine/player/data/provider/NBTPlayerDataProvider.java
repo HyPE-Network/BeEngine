@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class NBTPlayerDataProvider implements PlayerDataProvider {
 
@@ -28,17 +29,21 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 	}
 
 	@Override
-	public PlayerData load(UUID uuid) throws IOException {
-		File playerFile = this.resolvePlayerNBTFile(uuid);
+	public CompletableFuture<PlayerData> load(UUID uuid) {
+		return CompletableFuture.supplyAsync(() -> {
+			var playerFile = this.resolvePlayerNBTFile(uuid);
 
-		PlayerData playerData = null;
-		if (playerFile.exists()) {
-			try (var reader = NbtUtils.createReader(new FileInputStream(playerFile))) {
-				playerData = this.getPlayerDataFormat((NbtMap) reader.readTag());
+			PlayerData playerData = new PlayerData();
+			if (playerFile.exists()) {
+				try (var reader = NbtUtils.createReader(new FileInputStream(playerFile))) {
+					playerData = this.getPlayerDataFormat((NbtMap) reader.readTag());
+				} catch (IOException exception) {
+					throw new RuntimeException(exception);
+				}
 			}
-		}
 
-		return playerData;
+			return playerData;
+		});
 	}
 
 	private File resolvePlayerNBTFile(UUID uuid) {

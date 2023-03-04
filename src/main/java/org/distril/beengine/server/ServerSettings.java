@@ -14,7 +14,7 @@ public class ServerSettings {
 
 	private String motd;
 	private int maximumPlayers;
-	private boolean onlineModeEnabled;
+	private boolean xboxRequired;
 	private boolean encryptionEnabled;
 	private boolean debugEnabled;
 
@@ -27,7 +27,7 @@ public class ServerSettings {
 
 		this.motd = this.config.get("server.motd", String.class);
 		this.maximumPlayers = this.config.get("server.max-players", Integer.class);
-		this.onlineModeEnabled = this.config.get("server.online-mode", Boolean.class);
+		this.xboxRequired = this.config.get("server.xbox-require", Boolean.class);
 		this.encryptionEnabled = this.config.get("server.enable-encryption", Boolean.class);
 		this.debugEnabled = this.config.get("server.debug", Boolean.class);
 

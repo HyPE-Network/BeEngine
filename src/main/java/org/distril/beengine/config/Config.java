@@ -106,8 +106,8 @@ public class Config {
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public void save() {
-		if (!this.file.getParentFile().exists()) {
-			this.file.getParentFile().mkdirs();
+		if (!this.file.exists()) {
+			this.file.mkdirs();
 		}
 
 		try (var writer = new FileWriter(this.file)) {
