@@ -20,12 +20,12 @@ package org.distril.beengine.util;
  * A copy of the license can be found in the project or at <https://www.gnu.org/licenses/lgpl-3.0.txt>.
  */
 
-import com.google.common.collect.Iterators;
 import com.nukkitx.math.GenericMath;
 import com.nukkitx.math.vector.Vector3i;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -367,7 +367,7 @@ public enum Direction {
 		@SuppressWarnings("NullableProblems")
 		@Override
 		public Iterator<Direction> iterator() {
-			return Iterators.forArray(this.faces);
+			return Arrays.stream(this.faces).iterator();
 		}
 	}
 }

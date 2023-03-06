@@ -46,7 +46,8 @@ public class LoginPacketHandler implements BedrockPacketHandler {
 		networkSettingsPacket.setCompressionThreshold(0);
 		networkSettingsPacket.setCompressionAlgorithm(PacketCompressionAlgorithm.ZLIB);
 
-		this.session.setCompression(PacketCompressionAlgorithm.ZLIB);
+		this.session.setCompression(networkSettingsPacket.getCompressionAlgorithm());
+
 		this.session.sendPacketImmediately(networkSettingsPacket);
 		return true;
 	}

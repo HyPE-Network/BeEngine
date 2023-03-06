@@ -1,6 +1,8 @@
 package org.distril.beengine.world.chunk;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.distril.beengine.util.AsyncArrayValue;
 import org.distril.beengine.util.ChunkUtils;
 import org.distril.beengine.world.World;
 
@@ -10,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Log4j2
 @RequiredArgsConstructor
 public class ChunkManager {
 
@@ -52,13 +55,33 @@ public class ChunkManager {
 		});
 	}
 
-	public void unloadChunk(long key, boolean save) {
+	public synchronized void tick() {
+		if (this.chunks.isEmpty()) {
+			return;
+		}
+
+		AsyncArrayValue<Boolean> futureArray = new AsyncArrayValue<>();
+		this.chunks.forEach((key, chunk) -> futureArray.add(chunk.tick().whenComplete((close, throwable) -> {
+			if (throwable != null) {
+				log.error("Error when ticking chunk {}", chunk, throwable);
+				return;
+			}
+
+			if (close) {
+				this.unloadChunk(key, true, false);
+			}
+		})));
+
+		futureArray.execute().join();
+	}
+
+	public void unloadChunk(long key, boolean save, boolean force) {
 		var chunk = this.getLoadedChunk(key);
 		if (chunk == null) {
 			return;
 		}
 
-		if (!chunk.getLoaders().isEmpty()) {
+		if (!force && !chunk.getLoaders().isEmpty()) {
 			return;
 		}
 
@@ -67,6 +90,8 @@ public class ChunkManager {
 		}
 
 		chunk.close();
+
+		this.chunks.remove(key);
 	}
 
 	public synchronized void gc() {

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class CompletableFutureArray {
+public class AsyncArray {
 
 	private final List<CompletableFuture<Void>> futures = new ArrayList<>();
 

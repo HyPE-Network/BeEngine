@@ -46,7 +46,7 @@ public class Console extends Thread {
 				} catch (EndOfFileException ignored) {/**/}
 			}
 		} catch (UserInterruptException | IOException exception) {
-			this.server.stop();
+			this.server.shutdown();
 		}
 	}
 }

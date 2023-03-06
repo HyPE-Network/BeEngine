@@ -22,6 +22,10 @@ public class ServerSettings {
 	private int port;
 	private int compressionLevel;
 
+	private String defaultWorldName;
+
+	private int chunkExpiryTime;
+
 	public ServerSettings(Path path) {
 		this.config = Config.load(path.toFile());
 
@@ -34,6 +38,10 @@ public class ServerSettings {
 		this.ip = this.config.get("network.ip", String.class);
 		this.port = this.config.get("network.port", Integer.class);
 		this.compressionLevel = this.config.get("network.compression-level", Integer.class);
+
+		this.defaultWorldName = this.config.get("world.default", String.class);
+
+		this.chunkExpiryTime = this.config.get("world.chunk.expiry-time", Integer.class);
 	}
 
 	public void save() {

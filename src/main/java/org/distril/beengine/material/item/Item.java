@@ -109,7 +109,7 @@ public class Item {
 
 	public boolean equals(Item that, boolean checkMeta, boolean checkData) {
 		checkMeta = !checkMeta || (this.meta == that.getMeta() && this.blockRuntimeId == that.getBlockRuntimeId());
-		checkData = !checkData || Objects.equals(this.nbt, that.getNbt());
+		checkData = !checkData || this.nbt.equals(that.getNbt());
 		return this.material == that.getMaterial() && checkMeta && checkData;
 	}
 

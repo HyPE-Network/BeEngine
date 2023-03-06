@@ -2,14 +2,18 @@ package org.distril.beengine.util;
 
 import lombok.extern.log4j.Log4j2;
 
+import java.util.function.Supplier;
+
 @Log4j2
 public class MethodWatcher {
 
-	public static void watch(Runnable runnable, String testName) {
-		long startTime = System.currentTimeMillis();
-		runnable.run();
-		long endTime = System.currentTimeMillis();
+	public static <T> T watch(Supplier<T> supplier, String testName) {
+		var startTime = System.currentTimeMillis();
+		var result = supplier.get();
+		var endTime = System.currentTimeMillis();
 
-		log.info(testName + " took " + (endTime - startTime) + " ms!");
+		log.info("{} took {} ms!", testName, endTime - startTime);
+
+		return result;
 	}
 }

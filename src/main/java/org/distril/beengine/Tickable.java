@@ -19,14 +19,14 @@ public abstract class Tickable extends Thread {
 
 	public Tickable(String threadName) {
 		super(threadName + " Ticker");
+
+		Arrays.fill(this.tickAverage, 20F);
+		Arrays.fill(this.useAverage, 0F);
 	}
 
 	@SuppressWarnings("BusyWait")
 	@Override
 	public void run() {
-		Arrays.fill(this.tickAverage, 20F);
-		Arrays.fill(this.useAverage, 0F);
-
 		this.nextTick = System.currentTimeMillis();
 		try {
 			while (this.running.get()) {
@@ -42,11 +42,11 @@ public abstract class Tickable extends Thread {
 						}
 					}
 				} catch (RuntimeException exception) {
-					log.error("Error whilst ticking server or world", exception);
+					log.error("Error whilst ticking {}", this.getName(), exception);
 				}
 			}
 		} catch (Throwable throwable) {
-			log.fatal("Exception happened while ticking server or world", throwable);
+			log.fatal("Exception happened while ticking {}", this.getName(), throwable);
 		}
 	}
 
@@ -61,7 +61,7 @@ public abstract class Tickable extends Thread {
 			try {
 				Thread.sleep(Math.max(5, -time - 25));
 			} catch (InterruptedException exception) {
-				log.error("Server or world interrupted whilst sleeping", exception);
+				log.error("{} interrupted whilst sleeping", this.getName(), exception);
 			}
 		}
 

@@ -43,7 +43,7 @@ public abstract class Command {
 		this.arguments.add(arguments);
 
 		Map<String, Parser> parsers = new LinkedHashMap<>();
-		for (CommandArgument argument : arguments) {
+		for (var argument : arguments) {
 			var parser = argument.getParser();
 			parser.setOptional(argument.isOptional());
 
@@ -61,7 +61,7 @@ public abstract class Command {
 		CommandParamData[][] parametersData = new CommandParamData[this.arguments.size()][];
 
 		for (int i = 0; i < parametersData.length; i++) {
-			CommandArgument[] parameters = this.arguments.get(i);
+			var parameters = this.arguments.get(i);
 
 			parametersData[i] = Arrays.stream(parameters)
 					.map(CommandArgument::toNetwork)

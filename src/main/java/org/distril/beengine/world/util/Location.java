@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.distril.beengine.world.World;
 import org.distril.beengine.world.chunk.Chunk;
 
+import java.util.Objects;
+
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class Location {
@@ -56,5 +58,24 @@ public class Location {
 
 	public int getChunkZ() {
 		return this.getFloorZ() >> 4;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+
+		Location that = (Location) obj;
+		return this.position.equals(that.getPosition()) && this.world.equals(that.getWorld());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.position, this.world);
 	}
 }

@@ -3,6 +3,7 @@ package org.distril.beengine.player.data.provider;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtUtils;
+import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
 import org.distril.beengine.server.Server;
@@ -12,46 +13,42 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
+@Log4j2
 public class NBTPlayerDataProvider implements PlayerDataProvider {
 
 	@Override
-	public void save(UUID uuid, PlayerData data) throws IOException {
-		if (data != null) {
-			var playerFile = this.resolvePlayerNBTFile(uuid);
-			if (playerFile.exists() && !playerFile.delete()) {
-				throw new IOException("Failed to delete existing player data file for " + uuid);
-			}
+	public void save(UUID uuid, PlayerData data) {
+		var playerFile = this.resolvePlayerNBTFile(uuid);
+		if (playerFile.exists() && !playerFile.delete()) {
+			log.error("Failed to save data of {}. Failed to delete existing player data file", uuid);
+		}
 
-			try (var writer = NbtUtils.createWriter(new FileOutputStream(playerFile))) {
-				writer.writeTag(this.createPlayerSaveData(data));
-			}
+		try (var writer = NbtUtils.createWriter(new FileOutputStream(playerFile))) {
+			writer.writeTag(this.createPlayerSaveData(data));
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
 		}
 	}
 
 	@Override
-	public CompletableFuture<PlayerData> load(UUID uuid) {
-		return CompletableFuture.supplyAsync(() -> {
-			var playerFile = this.resolvePlayerNBTFile(uuid);
+	public PlayerData load(UUID uuid) throws IOException {
+		var playerFile = this.resolvePlayerNBTFile(uuid);
 
-			PlayerData playerData = new PlayerData();
-			if (playerFile.exists()) {
-				try (var reader = NbtUtils.createReader(new FileInputStream(playerFile))) {
-					playerData = this.readPlayerData((NbtMap) reader.readTag());
-				} catch (IOException exception) {
-					throw new RuntimeException(exception);
-				}
+		PlayerData playerData = new PlayerData();
+		if (playerFile.exists()) {
+			try (var reader = NbtUtils.createReader(new FileInputStream(playerFile))) {
+				playerData = this.readPlayerData((NbtMap) reader.readTag());
 			}
+		}
 
-			return playerData;
-		});
+		return playerData;
 	}
 
 	private File resolvePlayerNBTFile(UUID uuid) {
-		return Paths.get("players", uuid.toString() + ".dat").toFile();
+		return Path.of("players", uuid.toString() + ".dat").toFile();
 	}
 
 	private NbtMap createPlayerSaveData(PlayerData data) {
@@ -75,9 +72,9 @@ public class NBTPlayerDataProvider implements PlayerDataProvider {
 		playerData.setHeadYaw(data.getFloat("headYaw"));
 
 		var position = Vector3f.from(data.getFloat("x"), data.getFloat("y"), data.getFloat("z"));
-		var defaultWorld = Server.getInstance().getWorldRegistry().getDefaultWorld();
-		// todo: Server.getInstance().getWorldRegistry().getWorld("worldName");
-		playerData.setLocation(Location.from(position, defaultWorld));
+		var world = Server.getInstance().getWorldRegistry().getWorld(data.getString("worldName"));
+		playerData.setLocation(Location.from(position, world));
+
 		playerData.setGameMode(GameMode.values()[data.getInt("gamemode")]);
 
 		return playerData;

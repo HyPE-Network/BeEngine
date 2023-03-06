@@ -55,7 +55,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	private PlayerData data;
 
-	private boolean connected, loggedIn;
+	private boolean connected = true, loggedIn;
 
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
 		super(Location.from(server.getWorldRegistry().getDefaultWorld()));
@@ -107,21 +107,18 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 			}
 		}
 
-		this.server.getPlayerDataProvider().load(this.getUuidForData()).whenComplete((data, throwable) -> {
-			if (throwable != null) {
-				log.error("Failed to load data of " + this.getUuidForData(), throwable);
-				this.disconnect();
-				return;
-			}
-
-			this.data = data;
+		try {
+			this.data = this.server.getPlayerDataProvider().load(this.getUuidForData());
 
 			this.setPitch(data.getPitch());
 			this.setYaw(data.getYaw());
 			this.setLocation(data.getLocation());
 
 			this.completePlayerInitialization();
-		});
+		} catch (IOException exception) {
+			log.error("Failed to load data of " + this.getUuidForData(), exception);
+			this.disconnect();
+		}
 	}
 
 	private void completePlayerInitialization() {
@@ -186,7 +183,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		packet.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
 		this.sendPacket(packet);
 
-		this.server.addPlayer(this);
+		this.server.addOnlinePlayer(this);
 
 		this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
@@ -198,9 +195,9 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		var position = this.getPosition();
 		var realAddress = this.session.getRealAddress();
-		log.info("{}[{}:{}] logged in [X={}, Y={}, Z={}]",
-				this.getName(), realAddress.getHostName(), realAddress.getPort(),
-				position.getX(), position.getY(), position.getZ());
+		log.info("{}[{}:{}] logged in with entity id {} at ({}, {}, {}, {})",
+				this.getName(), realAddress.getHostName(), realAddress.getPort(), this.getId(),
+				this.getWorld().getWorldName(), position.getX(), position.getY(), position.getZ());
 	}
 
 	public void sendPacket(BedrockPacket packet) {
@@ -267,36 +264,25 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public void disconnect(String reason, boolean showReason) {
-		if (!this.isConnected()) {
-			if (showReason && reason.length() > 0) {
-				DisconnectPacket packet = new DisconnectPacket();
-				packet.setKickMessage(reason);
-				this.sendPacketImmediately(packet);
-			}
+		this.server.removeOnlinePlayer(this);
 
-			this.connected = false;
+		if (this.isSpawned()) {
 			this.closeOpenedInventory();
-
-			if (!this.session.isClosed()) {
-				this.session.disconnect(showReason ? reason : "");
-			}
 
 			super.close();
 		}
 
-		this.chunkManager.close();
+		this.connected = false;
 
-		this.server.removePlayer(this);
-
-		try {
-			this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
-		} catch (IOException exception) {
-			log.error("Failed to save data of " + this.getUuidForData(), exception);
+		if (!this.session.isClosed()) {
+			this.session.disconnect(showReason ? reason : "");
 		}
 
-		var realAddress = this.session.getRealAddress();
-		log.info("{}[{}:{}] logged out due to {}", this.getName(), realAddress.getHostName(),
-				realAddress.getPort(), reason);
+		this.chunkManager.close();
+
+		this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
+
+		log.info("{} logged out due to {}", this.getName(), reason);
 	}
 
 	public void openInventory(Inventory inventory) {

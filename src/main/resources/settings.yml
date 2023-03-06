@@ -10,3 +10,10 @@ network:
   port: 19132
 
   compression-level: 7
+
+world:
+  default: world
+
+  chunk:
+    # In seconds
+    expiry-time: 60

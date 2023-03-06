@@ -20,7 +20,6 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 	private final BedrockServerSession session;
 	private final LoginData loginData;
 
-
 	public ResourcePackPacketHandler(Server server, BedrockServerSession session, LoginData loginData) {
 		this.server = server;
 		this.session = session;
@@ -42,19 +41,28 @@ public class ResourcePackPacketHandler implements BedrockPacketHandler {
 			}
 
 			case HAVE_ALL_PACKS -> {
-				ResourcePackStackPacket stackPacket = new ResourcePackStackPacket();
+				var stackPacket = new ResourcePackStackPacket();
 				stackPacket.setGameVersion(Network.CODEC.getMinecraftVersion());
 				this.session.sendPacket(stackPacket);
 				return true;
 			}
 
 			case COMPLETED -> {
-				Player player = new Player(this.server, this.session, this.loginData);
-				this.session.addDisconnectHandler(reason -> player.disconnect(reason.name()));
+				this.server.getScheduler().prepareTask(() -> {
+					var player = new Player(this.server, this.session, this.loginData);
 
-				player.initialize();
+					this.session.addDisconnectHandler(reason -> {
+						this.server.removePlayer(player);
 
-				this.session.setPacketHandler(new PlayerPacketHandler(player));
+						player.disconnect(reason.name());
+					});
+
+					player.initialize();
+
+					this.server.addPlayer(player);
+
+					this.session.setPacketHandler(new PlayerPacketHandler(player));
+				}).async(true).schedule();
 				return true;
 			}
 		}

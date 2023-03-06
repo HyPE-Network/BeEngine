@@ -2,6 +2,7 @@ package org.distril.beengine.world.chunk;
 
 import com.nukkitx.network.VarInts;
 import io.netty.buffer.ByteBuf;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.material.Material;
 import org.distril.beengine.material.block.BlockState;
@@ -11,8 +12,10 @@ import org.distril.beengine.world.chunk.bitarray.BitArray.Version;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Log4j2
+@Getter
 public class Layer {
 
 	private static final BlockState AIR_STATE = Material.AIR.getBlock().getState();
@@ -101,5 +104,24 @@ public class Layer {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+
+		Layer that = (Layer) obj;
+		return this.palette.equals(that.getPalette()) && this.bitArray.equals(that.getBitArray());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.palette, this.bitArray);
 	}
 }

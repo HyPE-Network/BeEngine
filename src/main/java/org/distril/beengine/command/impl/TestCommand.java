@@ -4,6 +4,7 @@ import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.command.Command;
 import org.distril.beengine.command.CommandSender;
 import org.distril.beengine.command.data.Args;
+import org.distril.beengine.server.Server;
 
 @Log4j2
 public class TestCommand extends Command {
@@ -15,6 +16,6 @@ public class TestCommand extends Command {
 
 	@Override
 	public void execute(CommandSender sender, Args args) {
-
+		sender.sendMessage("Players size: " + Server.getInstance().getPlayers().size());
 	}
 }

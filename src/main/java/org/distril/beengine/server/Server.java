@@ -20,6 +20,7 @@ import org.distril.beengine.player.Player;
 import org.distril.beengine.player.data.provider.NBTPlayerDataProvider;
 import org.distril.beengine.player.data.provider.PlayerDataProvider;
 import org.distril.beengine.scheduler.Scheduler;
+import org.distril.beengine.util.Utils;
 import org.distril.beengine.world.WorldRegistry;
 
 import java.io.IOException;
@@ -88,9 +89,7 @@ public class Server {
 
 		this.network = new Network(this, this.settings.getIp(), this.settings.getPort());
 
-		try {
-			Files.createDirectory(Path.of("players"));
-		} catch (IOException ignored) {/**/}
+		Utils.createDirectories("players");
 	}
 
 	public void start() {
@@ -162,14 +161,16 @@ public class Server {
 		}
 	}
 
-	public void stop() {
+	public void shutdown() {
 		log.info("Stopping server...");
-		this.network.stop();
+		this.settings.save();
 
 		log.info("Cancel all tasks...");
 		this.scheduler.cancelAllTasks();
 
-		this.settings.save();
+		this.players.forEach(player -> player.disconnect("Server stopped"));
+
+		this.network.stop();
 
 		log.info("Server stopped!");
 		this.console.interrupt();
@@ -187,42 +188,55 @@ public class Server {
 	}
 
 	public Player getPlayer(String username) {
-		if (username == null || username.isEmpty()) {
+		if (username == null) {
 			return null;
 		}
 
-		for (Player player : this.players) {
-			if (player.getUsername().equalsIgnoreCase(username)) {
-				return player;
+		username = username.trim();
+
+		if (username.isEmpty()) {
+			return null;
+		}
+
+		for (var target : this.players) {
+			if (target.getUsername().equalsIgnoreCase(username)) {
+				return target;
 			}
 		}
 
 		return null;
+
 	}
 
 	public void addPlayer(Player player) {
 		this.players.add(player);
-
-		List<PlayerListPacket.Entry> entries = new ArrayList<>();
-
-		this.players.forEach(target -> entries.add(target.getPlayerListEntry()));
-
-		this.updatePlayersList(PlayerListPacket.Action.ADD, entries, Collections.singleton(player));
-
-		this.updatePlayersList(PlayerListPacket.Action.ADD, Collections.singleton(player.getPlayerListEntry()), this.players);
 	}
 
 	public void removePlayer(Player player) {
 		this.players.remove(player);
-
-		this.updatePlayersList(PlayerListPacket.Action.REMOVE, Collections.singleton(player.getPlayerListEntry()),
-				this.players);
 	}
 
-	private void updatePlayersList(PlayerListPacket.Action action, Collection<PlayerListPacket.Entry> entries,
-	                               Collection<Player> players) {
+	public void removeOnlinePlayer(Player player) {
 		var packet = new PlayerListPacket();
-		packet.setAction(action);
+		packet.setAction(PlayerListPacket.Action.REMOVE);
+		packet.getEntries().add(new PlayerListPacket.Entry(player.getUuid()));
+
+		this.broadcastPacket(this.players, packet);
+	}
+
+	public void addOnlinePlayer(Player player) {
+		List<PlayerListPacket.Entry> entries = new ArrayList<>();
+
+		this.players.forEach(target -> entries.add(target.getPlayerListEntry()));
+
+		this.updatePlayersList(entries, Collections.singleton(player));
+
+		this.updatePlayersList(Collections.singleton(player.getPlayerListEntry()), this.players);
+	}
+
+	private void updatePlayersList(Collection<PlayerListPacket.Entry> entries, Collection<Player> players) {
+		var packet = new PlayerListPacket();
+		packet.setAction(PlayerListPacket.Action.ADD);
 		packet.getEntries().addAll(entries);
 
 		players.forEach(player -> player.sendPacket(packet));

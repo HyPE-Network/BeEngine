@@ -1,11 +1,9 @@
 package org.distril.beengine.world.chunk;
 
-import com.google.common.base.Preconditions;
 import com.nukkitx.network.VarInts;
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.entity.Entity;
 import org.distril.beengine.material.Material;
@@ -13,13 +11,15 @@ import org.distril.beengine.material.block.Block;
 import org.distril.beengine.material.block.BlockState;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.server.Server;
+import org.distril.beengine.util.ChunkUtils;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Log4j2
 @Getter
-@RequiredArgsConstructor
 public class Chunk {
 
 	public static final int VERSION = 22;
@@ -29,18 +29,21 @@ public class Chunk {
 	private final int x, z;
 	private final SubChunk[] subChunks = new SubChunk[16];
 
-	private final Set<Entity> entities = new HashSet<>();
+	private final Set<Entity> entities = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	private final Set<ChunkLoader> loaders = new HashSet<>();
 
-	private static void checkBounds(int x, int y, int z) {
-		Preconditions.checkElementIndex(x, 16, "X coordinate");
-		Preconditions.checkElementIndex(y, 256, "Y coordinate");
-		Preconditions.checkElementIndex(z, 16, "Z coordinate");
+	private int expiryTime;
+
+	public Chunk(int x, int z) {
+		this.x = x;
+		this.z = z;
+
+		this.resetExpiryTime();
 	}
 
 	public void setBlock(int x, int y, int z, int layer, Block block) {
-		Chunk.checkBounds(x, y, z);
+		ChunkUtils.checkBounds(x, y, z);
 
 		var subChunk = this.getSubChunk(y >> 4);
 		if (subChunk == null) {
@@ -55,7 +58,7 @@ public class Chunk {
 	}
 
 	public Block getBlock(int x, int y, int z, int layer) {
-		Chunk.checkBounds(x, y, z);
+		ChunkUtils.checkBounds(x, y, z);
 
 		var subChunk = this.getSubChunk(y >> 4);
 		BlockState state;
@@ -93,8 +96,8 @@ public class Chunk {
 	}
 
 	public void addLoader(ChunkLoader loader) {
-		if (loader != null) {
-			this.loaders.add(loader);
+		if (loader != null && this.loaders.add(loader)) {
+			this.resetExpiryTime();
 		}
 	}
 
@@ -119,6 +122,27 @@ public class Chunk {
 		return players;
 	}
 
+	public CompletableFuture<Boolean> tick() {
+		return CompletableFuture.supplyAsync(() -> {
+			// todo tick block updates and block entities
+			if (this.expiryTime > 0 && this.canBeClosed()) {
+				this.expiryTime--;
+
+				return this.expiryTime == 0;
+			}
+
+			return false;
+		});
+	}
+
+	private void resetExpiryTime() {
+		this.expiryTime = Server.getInstance().getSettings().getChunkExpiryTime() * 20;
+	}
+
+	public boolean canBeClosed() {
+		return this.loaders.isEmpty();
+	}
+
 	public LevelChunkPacket createPacket() {
 		var packet = new LevelChunkPacket();
 		packet.setChunkX(this.x);
@@ -127,7 +151,7 @@ public class Chunk {
 
 		var buffer = Unpooled.buffer();
 		try {
-			for (SubChunk subChunk : this.subChunks) {
+			for (var subChunk : this.subChunks) {
 				if (subChunk == null) {
 					break;
 				}
@@ -156,6 +180,8 @@ public class Chunk {
 		this.entities.forEach(Entity::close);
 
 		this.entities.clear();
+
+		this.loaders.clear();
 	}
 
 	@Override

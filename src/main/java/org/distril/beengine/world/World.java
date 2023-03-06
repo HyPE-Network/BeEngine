@@ -12,14 +12,12 @@ import org.distril.beengine.material.block.Block;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.server.Server;
-import org.distril.beengine.util.CompletableFutureArray;
+import org.distril.beengine.util.AsyncArray;
 import org.distril.beengine.util.Direction;
 import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.chunk.ChunkManager;
 import org.distril.beengine.world.generator.Generator;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,12 +40,7 @@ public class World extends Tickable {
 
 	public World(String worldName, Dimension dimension, Generator generator) {
 		super(worldName + " - World");
-		this.path = Path.of("./worlds/" + worldName);
-
-		try {
-			Files.createDirectories(this.path);
-		} catch (IOException ignored) {/**/}
-
+		this.path = Path.of("worlds", worldName);
 		this.worldName = worldName;
 		this.dimension = dimension;
 		this.generator = generator;
@@ -57,14 +50,18 @@ public class World extends Tickable {
 
 	@Override
 	protected void onUpdate(long currentTick) {
-		var futureArray = new CompletableFutureArray();
-		this.entities.forEach((id, entity) -> {
-			if (entity != null) {
-				futureArray.add(() -> entity.onUpdate(currentTick));
-			}
-		});
+		if (!this.entities.isEmpty()) {
+			var futureArray = new AsyncArray();
+			this.entities.forEach((id, entity) -> {
+				if (entity != null) {
+					futureArray.add(() -> entity.onUpdate(currentTick));
+				}
+			});
 
-		futureArray.execute().join();
+			futureArray.execute().join();
+		}
+
+		this.chunkManager.tick();
 	}
 
 	public void addEntity(Entity entity) {
