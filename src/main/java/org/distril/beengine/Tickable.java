@@ -76,8 +76,8 @@ public abstract class Tickable extends Thread {
 
 		var nowNano = System.nanoTime();
 
-		var tick = (float) Math.min(20, 1000000000 / Math.max(1000000, ((double) nowNano - tickTimeNano)));
-		var use = (float) Math.min(1, ((double) (nowNano - tickTimeNano)) / 50000000);
+		var tick = (float) Math.min(20, 1_000_000_000 / Math.max(1_000_000, ((double) nowNano - tickTimeNano)));
+		var use = (float) Math.min(1, ((double) (nowNano - tickTimeNano)) / 50_000_000);
 
 		if (this.maxTick > tick) {
 			this.maxTick = tick;

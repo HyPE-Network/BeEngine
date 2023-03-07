@@ -13,7 +13,7 @@ import java.io.IOException;
 @Log4j2
 public class Console extends Thread {
 
-	private static final ConsoleSender SENDER = new ConsoleSender();
+	public static final ConsoleSender SENDER = new ConsoleSender();
 
 	private final Server server;
 

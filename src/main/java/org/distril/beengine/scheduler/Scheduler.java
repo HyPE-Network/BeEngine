@@ -31,22 +31,19 @@ public class Scheduler {
 
 	public void processTick(long currentTick) {
 		this.lastUpdateTick = currentTick;
-		while (!this.queue.isEmpty() && this.queue.peek().getNextRunTick() <= lastUpdateTick) {
+		while (!this.queue.isEmpty() && this.queue.peek().getNextRunTick() <= currentTick) {
 			var taskEntry = this.queue.poll();
+			if (!taskEntry.isCancelled()) {
+				var task = taskEntry.getTask();
+				if (taskEntry.isAsync()) {
+					POOL.submit(task::onRun);
+				} else {
+					task.onRun();
+				}
 
-			if (taskEntry.isCancelled()) {
-				continue;
-			}
-
-			Task task = taskEntry.getTask();
-			if (taskEntry.isAsync()) {
-				POOL.submit(task::onRun);
-			} else {
-				task.onRun();
-			}
-
-			if (!taskEntry.isCancelled() && taskEntry.isRepeating()) {
-				this.addInQueue(taskEntry);
+				if (!task.isCancelled() && taskEntry.isRepeating()) {
+					this.addInQueue(taskEntry);
+				}
 			}
 		}
 	}

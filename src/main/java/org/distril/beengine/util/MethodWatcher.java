@@ -7,6 +7,14 @@ import java.util.function.Supplier;
 @Log4j2
 public class MethodWatcher {
 
+	public static void watch(Runnable runnable, String testName) {
+		var startTime = System.currentTimeMillis();
+		runnable.run();
+		var endTime = System.currentTimeMillis();
+
+		log.info("{} took {} ms!", testName, endTime - startTime);
+	}
+
 	public static <T> T watch(Supplier<T> supplier, String testName) {
 		var startTime = System.currentTimeMillis();
 		var result = supplier.get();
