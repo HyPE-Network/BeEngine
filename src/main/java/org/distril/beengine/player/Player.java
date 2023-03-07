@@ -280,7 +280,9 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 		this.chunkManager.close();
 
-		this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
+		if (this.data != null) {
+			this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
+		}
 
 		log.info("{} logged out due to {}", this.getName(), reason);
 	}

@@ -17,3 +17,4 @@ world:
   chunk:
     # In seconds
     expiry-time: 60
+    per-tick: 16

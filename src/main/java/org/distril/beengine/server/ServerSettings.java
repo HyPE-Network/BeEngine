@@ -25,6 +25,7 @@ public class ServerSettings {
 	private String defaultWorldName;
 
 	private int chunkExpiryTime;
+	private int chunksPerTick;
 
 	public ServerSettings(Path path) {
 		this.config = Config.load(path.toFile());
@@ -42,6 +43,7 @@ public class ServerSettings {
 		this.defaultWorldName = this.config.get("world.default", String.class);
 
 		this.chunkExpiryTime = this.config.get("world.chunk.expiry-time", Integer.class);
+		this.chunksPerTick = this.config.get("world.chunk.per-tick", Integer.class);
 	}
 
 	public void save() {

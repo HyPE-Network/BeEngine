@@ -56,7 +56,7 @@ public class PlayerChunkManager {
 	}
 
 	public synchronized void sendQueued() {
-		int chunksPerTick = 16; // this.player.getServer().getConfig("chunk-sending.per-tick", 4);
+		var chunksPerTick = this.player.getServer().getSettings().getChunksPerTick();
 
 		var sendQueueIterator = this.sendQueue.long2ObjectEntrySet().iterator();
 		// Remove chunks which are out of range
@@ -79,9 +79,9 @@ public class PlayerChunkManager {
 		// Order chunks around player.
 		list.unstableSort(this.chunkComparator);
 
-		for (long key : list.toLongArray()) {
+		for (var key : list.toLongArray()) {
 			var packet = this.sendQueue.get(key);
-			if (chunksPerTick < 0 || packet == null) {
+			if (chunksPerTick <= 0 || packet == null) {
 				break;
 			}
 
@@ -156,12 +156,13 @@ public class PlayerChunkManager {
 		// Order chunks for smoother loading
 		chunksToLoad.sort(this.chunkComparator);
 
-		for (long key : chunksToLoad.toLongArray()) {
+		var chunkManager = this.player.getWorld().getChunkManager();
+		for (var key : chunksToLoad.toLongArray()) {
 			var cx = ChunkUtils.fromKeyX(key);
 			var cz = ChunkUtils.fromKeyZ(key);
 
 			if (this.sendQueue.putIfAbsent(key, null) == null) {
-				this.player.getWorld().getChunkManager().generateChunk(cx, cz).thenApply(chunk -> {
+				chunkManager.generateChunk(cx, cz).thenApply(chunk -> {
 					chunk.addLoader(this.player);
 					return chunk;
 				}).thenApplyAsync(Chunk::createPacket).whenComplete((packet, throwable) -> {

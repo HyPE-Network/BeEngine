@@ -47,6 +47,11 @@ public class ChunkManager {
 
 	public CompletableFuture<Chunk> generateChunk(long key) {
 		return CompletableFuture.supplyAsync(() -> {
+			var loadedChunk = this.getLoadedChunk(key);
+			if (loadedChunk != null) {
+				return loadedChunk;
+			}
+
 			var chunk = this.chunks.computeIfAbsent(key, chunkKey -> new Chunk(ChunkUtils.fromKeyX(chunkKey),
 					ChunkUtils.fromKeyZ(chunkKey)));
 
