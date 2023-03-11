@@ -3,14 +3,13 @@ package org.distril.beengine.entity;
 import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.CreatureInventory;
 import org.distril.beengine.player.Player;
-import org.distril.beengine.world.util.Location;
 
-public abstract class EntityCreature extends Entity implements InventoryHolder {
+public abstract class EntityCreature extends EntityLiving implements InventoryHolder {
 
 	private CreatureInventory inventory;
 
-	public EntityCreature(EntityType type, Location location) {
-		super(type, location);
+	public EntityCreature(EntityType type) {
+		super(type);
 
 		if (!(this instanceof Player)) {
 			this.inventory = new CreatureInventory(this);

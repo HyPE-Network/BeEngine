@@ -28,15 +28,15 @@ public class EntityHuman extends EntityCreature {
 	private SerializedSkin skin;
 	private Device device;
 
-	public EntityHuman(Location location) {
-		super(EntityType.HUMAN, location);
+	public EntityHuman() {
+		super(EntityType.HUMAN);
 	}
 
 	@Override
-	protected void init() {
+	public boolean spawn(Location location) {
 		this.getMetadata().setFlag(EntityFlag.HAS_GRAVITY, true);
 
-		super.init();
+		return super.spawn(location);
 	}
 
 	@Override
@@ -47,6 +47,11 @@ public class EntityHuman extends EntityCreature {
 	@Override
 	public float getWidth() {
 		return 0.6F;
+	}
+
+	@Override
+	public float getEyeHeight() {
+		return 1.62F;
 	}
 
 	public void setSkin(SerializedSkin skin) {
@@ -60,10 +65,6 @@ public class EntityHuman extends EntityCreature {
 		packet.setTrustedSkin(true);
 
 		this.getViewers().forEach(viewer -> viewer.sendPacket(packet));
-
-		if (this instanceof Player player) {
-			player.sendPacket(packet);
-		}
 	}
 
 	public PlayerListPacket.Entry getPlayerListEntry() {

@@ -66,7 +66,9 @@ public class Layer {
 
 		VarInts.writeInt(buffer, this.palette.size());
 
-		this.palette.forEach(state -> VarInts.writeInt(buffer, state.getRuntimeId()));
+		synchronized (this.palette) {
+			this.palette.forEach(state -> VarInts.writeInt(buffer, state.getRuntimeId()));
+		}
 	}
 
 	private void onResize(Version version) {

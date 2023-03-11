@@ -7,7 +7,9 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
+import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap;
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
+import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -28,7 +30,6 @@ import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
 import org.distril.beengine.util.ItemUtils;
 import org.distril.beengine.world.chunk.ChunkLoader;
-import org.distril.beengine.world.util.Location;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -55,10 +56,9 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	private PlayerData data;
 
-	private boolean connected = true, loggedIn;
+	private boolean loggedIn;
 
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
-		super(Location.from(server.getWorldRegistry().getDefaultWorld()));
 		this.server = server;
 		this.session = session;
 		this.loginData = loginData;
@@ -66,7 +66,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.attributes = new Attributes(this);
 		this.inventory = new PlayerInventory(this);
 
-		this.inventory.addItem(Material.BEDROCK.getItem());
+		this.inventory.addItem(Material.BEDROCK.getItem()); // For Tests
 
 		this.setUsername(loginData.getUsername());
 		this.setXuid(loginData.getXuid());
@@ -122,7 +122,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	private void completePlayerInitialization() {
-		this.init();
+		this.spawn(this.data.getLocation());
+
 		this.loggedIn = true;
 
 		var startGamePacket = new StartGamePacket();
@@ -252,7 +253,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public boolean isConnected() {
-		return this.connected && this.loggedIn;
+		return !this.session.isClosed();
 	}
 
 	public void disconnect() {
@@ -272,9 +273,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 			super.close();
 		}
 
-		this.connected = false;
-
-		if (!this.session.isClosed()) {
+		if (this.isConnected()) {
 			this.session.disconnect(showReason ? reason : "");
 		}
 
@@ -299,6 +298,30 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		if (this.openedInventory != null && this.openedInventory.closeFor(this)) {
 			this.openedInventory = null;
 		}
+	}
+
+	@Override
+	public void setSkin(SerializedSkin skin) {
+		super.setSkin(skin);
+
+		var packet = new PlayerSkinPacket();
+		packet.setNewSkinName("");
+		packet.setOldSkinName("");
+		packet.setUuid(this.getUuid());
+		packet.setSkin(skin);
+		packet.setTrustedSkin(true);
+
+		this.sendPacket(packet);
+	}
+
+	@Override
+	protected void onDataChange(EntityDataMap changeSet) {
+		super.onDataChange(changeSet);
+
+		var packet = new SetEntityDataPacket();
+		packet.setRuntimeEntityId(this.getId());
+		packet.getMetadata().putAll(changeSet);
+		this.sendPacket(packet);
 	}
 
 	@Override
@@ -398,15 +421,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		return Vector2f.from(-Math.cos(plane), -Math.sin(plane)).normalize();
 	}
 
-	public float getEyeHeight() {
-		return 1.62F;
-	}
-
 	public void setUsingItem(boolean value) {
 		this.getMetadata().setFlag(EntityFlag.USING_ITEM, value);
-	}
-
-	public boolean equals(CommandSender sender) {
-		return sender.getName().equals(this.getName());
 	}
 }

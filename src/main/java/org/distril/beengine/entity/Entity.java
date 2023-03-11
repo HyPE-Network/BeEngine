@@ -9,6 +9,7 @@ import com.nukkitx.protocol.bedrock.packet.AddEntityPacket;
 import com.nukkitx.protocol.bedrock.packet.RemoveEntityPacket;
 import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.distril.beengine.entity.data.EntityMetadata;
 import org.distril.beengine.player.Player;
@@ -18,12 +19,14 @@ import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.util.Location;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Setter
 @Getter
+@RequiredArgsConstructor
 public abstract class Entity {
 
 	private static final AtomicLong NEXT_ID = new AtomicLong(0);
@@ -31,7 +34,7 @@ public abstract class Entity {
 	private final Set<Player> viewers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	private final EntityType type;
-	private final long id;
+	private final long id = NEXT_ID.incrementAndGet();
 
 	private final EntityMetadata metadata = new EntityMetadata(this::onDataChange);
 
@@ -42,17 +45,6 @@ public abstract class Entity {
 
 	private boolean spawned;
 
-	public Entity(EntityType type, Location location) {
-		this.type = type;
-		this.id = NEXT_ID.incrementAndGet();
-
-		this.location = location;
-
-		if (!(this instanceof Player)) {
-			this.init();
-		}
-	}
-
 	public void onUpdate(long currentTick) {
 		this.metadata.update();
 	}
@@ -61,10 +53,16 @@ public abstract class Entity {
 
 	public abstract float getWidth();
 
-	protected void init() {
-		if (this.location == null) {
-			throw new IllegalArgumentException("Invalid garbage Location given to Entity");
+	public float getEyeHeight() {
+		return 0F;
+	}
+
+	public boolean spawn(Location location) {
+		if (this.spawned) {
+			return false;
 		}
+
+		this.location = Objects.requireNonNull(location, "location must not be null");
 
 		this.metadata.setFlag(EntityFlag.HAS_COLLISION, true);
 		this.metadata.setShort(EntityData.AIR_SUPPLY, 400);
@@ -76,17 +74,11 @@ public abstract class Entity {
 		this.metadata.setInt(EntityData.HEALTH, (int) this.getHealth());
 
 		this.getWorld().addEntity(this, true);
+		return true;
 	}
 
-	private void onDataChange(EntityDataMap changeSet) {
+	protected void onDataChange(EntityDataMap changeSet) {
 		this.sendDataToViewers(changeSet);
-
-		if (this instanceof Player player) {
-			var packet = new SetEntityDataPacket();
-			packet.setRuntimeEntityId(this.id);
-			packet.getMetadata().putAll(changeSet);
-			player.sendPacket(packet);
-		}
 	}
 
 	private void sendDataToViewers(EntityDataMap dataMap) {
@@ -160,13 +152,19 @@ public abstract class Entity {
 		this.yaw = yaw;
 	}
 
+	public boolean isAlive() {
+		return this.health > 0;
+	}
+
 	public void setHealth(float health) {
 		if (this.health == health) {
 			return;
 		}
 
 		if (health < 1) {
-			this.close();
+			if (this.isAlive()) {
+				this.kill();
+			}
 		} else if (health <= this.maxHealth || health < this.health) {
 			this.health = health;
 		} else {
@@ -174,6 +172,10 @@ public abstract class Entity {
 		}
 
 		this.metadata.setInt(EntityData.HEALTH, (int) this.health);
+	}
+
+	public void kill() {
+		this.health = 0;
 	}
 
 	public void close() {
