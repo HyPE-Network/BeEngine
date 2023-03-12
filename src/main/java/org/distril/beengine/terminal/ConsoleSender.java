@@ -1,4 +1,4 @@
-package org.distril.beengine.console;
+package org.distril.beengine.terminal;
 
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.command.CommandSender;

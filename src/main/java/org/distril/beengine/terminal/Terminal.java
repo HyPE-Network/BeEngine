@@ -1,8 +1,6 @@
-package org.distril.beengine.console;
+package org.distril.beengine.terminal;
 
-import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.server.Server;
-import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -10,15 +8,16 @@ import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
 
-@Log4j2
-public class Console extends Thread {
+public class Terminal extends Thread {
 
-	private static final ConsoleSender SENDER = new ConsoleSender();
+	public static final ConsoleSender SENDER = new ConsoleSender();
+
+	private static final String PROMPT = "> ";
 
 	private final Server server;
 
-	public Console(Server server) {
-		super("Console Thread");
+	public Terminal(Server server) {
+		super("Terminal Thread");
 		this.setDaemon(true);
 
 		this.server = server;
@@ -39,11 +38,14 @@ public class Console extends Thread {
 			reader.unsetOpt(LineReader.Option.INSERT_TAB);
 			while (this.server.isRunning()) {
 				try {
-					var command = reader.readLine().trim();
+					var command = reader.readLine(PROMPT);
 					if (!command.isEmpty()) {
 						this.server.dispatchCommand(SENDER, command);
 					}
-				} catch (EndOfFileException ignored) {/**/}
+				} catch (UserInterruptException exception) {
+					// Handle Ctrl + C
+					this.server.stop();
+				}
 			}
 		} catch (UserInterruptException | IOException exception) {
 			this.server.stop();

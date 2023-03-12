@@ -11,13 +11,13 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.distril.beengine.Bootstrap;
 import org.distril.beengine.command.CommandRegistry;
 import org.distril.beengine.command.CommandSender;
-import org.distril.beengine.console.Console;
 import org.distril.beengine.material.item.ItemRegistry;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.player.data.provider.NBTPlayerDataProvider;
 import org.distril.beengine.player.data.provider.PlayerDataProvider;
 import org.distril.beengine.scheduler.Scheduler;
+import org.distril.beengine.terminal.Terminal;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,7 +38,7 @@ public class Server {
 	@Getter(AccessLevel.NONE)
 	private final AtomicBoolean running = new AtomicBoolean(true);
 
-	private final Console console;
+	private final Terminal terminal;
 	private final ServerSettings settings;
 	private final Network network;
 
@@ -78,7 +78,7 @@ public class Server {
 			context.updateLoggers();
 		}
 
-		this.console = new Console(this);
+		this.terminal = new Terminal(this);
 
 		this.network = new Network(this, this.settings.getIp(), this.settings.getPort());
 
@@ -88,7 +88,7 @@ public class Server {
 	}
 
 	public void start() {
-		this.console.start();
+		this.terminal.start();
 
 		log.info("Starting server...");
 
@@ -163,7 +163,7 @@ public class Server {
 		this.settings.save();
 
 		log.info("Server stopped!");
-		this.console.interrupt();
+		this.terminal.interrupt();
 
 		System.exit(0);
 	}

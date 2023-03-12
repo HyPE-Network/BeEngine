@@ -1,4 +1,4 @@
-package org.distril.beengine.console.pattern;
+package org.distril.beengine.terminal.pattern;
 
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.Configuration;
@@ -54,12 +54,12 @@ public class MinecraftFormattingPatternConverter extends LogEventPatternConverte
 
 	public static MinecraftFormattingPatternConverter newInstance(Configuration config, String[] options) {
 		if (options.length < 1 || options.length > 2) {
-			LOGGER.error("Incorrect number of options on FormattingCodesPatternConverter. Expected at least 1, max 2 received " + options.length);
+			LOGGER.error("Incorrect number of options on MinecraftFormattingPatternConverter. Expected at least 1, max 2 received " + options.length);
 			return null;
 		}
 
 		if (options[0] == null) {
-			LOGGER.error("No pattern supplied on FormattingCodesPatternConverter");
+			LOGGER.error("No pattern supplied on MinecraftFormattingPatternConverter");
 			return null;
 		}
 
