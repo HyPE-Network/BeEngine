@@ -9,10 +9,10 @@ import org.distril.beengine.material.block.BlockState;
 import org.distril.beengine.world.chunk.bitarray.BitArray;
 import org.distril.beengine.world.chunk.bitarray.BitArray.Version;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Log4j2
 @Getter
@@ -22,7 +22,7 @@ public class Layer {
 
 	private static final int SIZE = 4096;
 
-	private final List<BlockState> palette = new ArrayList<>(16);
+	private final List<BlockState> palette = new CopyOnWriteArrayList<>();
 	private BitArray bitArray;
 
 	public Layer() {
@@ -66,9 +66,7 @@ public class Layer {
 
 		VarInts.writeInt(buffer, this.palette.size());
 
-		synchronized (this.palette) {
-			this.palette.forEach(state -> VarInts.writeInt(buffer, state.getRuntimeId()));
-		}
+		this.palette.forEach(state -> VarInts.writeInt(buffer, state.getRuntimeId()));
 	}
 
 	private void onResize(Version version) {
