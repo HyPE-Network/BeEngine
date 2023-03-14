@@ -1,4 +1,4 @@
-name: Java CI
+name: Pull Request CI
 
 on: [push, pull_request]
 
@@ -25,4 +25,13 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: wrapper
-          arguments: shadowJar
+          arguments: "shadowJar"
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.caching=true -Dorg.gradle.welcome=never"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: BeEngine
+          path: target/BeEngine-*.jar
