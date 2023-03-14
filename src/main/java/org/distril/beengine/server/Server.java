@@ -153,7 +153,7 @@ public class Server {
 		}
 	}
 
-	public void stop() {
+	public void shutdown() {
 		log.info("Stopping server...");
 		this.network.stop();
 

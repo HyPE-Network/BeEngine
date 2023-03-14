@@ -1,4 +1,6 @@
+.gradle
 .idea
+build
 logs
 players
 target

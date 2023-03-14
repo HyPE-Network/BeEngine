@@ -15,7 +15,7 @@ public class StopCommand extends Command {
 	@Override
 	public void execute(CommandSender sender, Args args) {
 		if (sender.hasPermission(this.getPermission())) {
-			Server.getInstance().stop();
+			Server.getInstance().shutdown();
 		}
 	}
 }
