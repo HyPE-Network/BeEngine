@@ -19,6 +19,7 @@ import org.distril.beengine.world.chunk.Chunk;
 import org.distril.beengine.world.util.Location;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -128,7 +129,7 @@ public abstract class Entity {
 	}
 
 	public Set<Player> getViewers() {
-		return Collections.unmodifiableSet(this.viewers);
+		return new HashSet<>(this.viewers);
 	}
 
 	public World getWorld() {

@@ -6,7 +6,7 @@ import org.distril.beengine.util.AsyncArrayValue;
 import org.distril.beengine.util.ChunkUtils;
 import org.distril.beengine.world.World;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,11 +99,7 @@ public class ChunkManager {
 		this.chunks.remove(key);
 	}
 
-	public synchronized void gc() {
-
-	}
-
 	public Map<Long, Chunk> getChunks() {
-		return Collections.unmodifiableMap(chunks);
+		return new HashMap<>(chunks);
 	}
 }

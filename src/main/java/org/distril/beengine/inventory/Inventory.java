@@ -10,7 +10,6 @@ import org.distril.beengine.player.Player;
 import org.distril.beengine.util.ItemUtils;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,17 +30,17 @@ public abstract class Inventory {
 	private final int id;
 
 	public Inventory(InventoryHolder holder, InventoryType type) {
-		this(holder, type, Integer.MIN_VALUE);
+		this(holder, type, null);
 	}
 
-	public Inventory(InventoryHolder holder, InventoryType type, int overrideId) {
+	public Inventory(InventoryHolder holder, InventoryType type, Integer overrideId) {
 		this.holder = holder;
 		this.type = type;
 		this.items = new Item[type.getSize()];
 
 		Arrays.fill(this.items, Item.AIR);
 
-		if (overrideId != Integer.MIN_VALUE) {
+		if (overrideId != null) {
 			this.id = overrideId;
 		} else {
 			this.id = NEXT_ID.incrementAndGet();
@@ -81,8 +80,7 @@ public abstract class Inventory {
 	public void addItem(Item item) {
 		for (int slot = 0; slot < this.items.length; slot++) {
 			if (this.items[slot].getMaterial() == Material.AIR) {
-				this.items[slot] = ItemUtils.getAirIfNull(item);
-				this.onSlotChange(slot);
+				this.setItem(slot, item);
 
 				return;
 			}
@@ -90,7 +88,15 @@ public abstract class Inventory {
 	}
 
 	public void clear() {
+		this.clear(true);
+	}
+
+	public void clear(boolean send) {
 		Arrays.fill(this.items, Item.AIR);
+
+		if (send) {
+			this.sendSlots();
+		}
 	}
 
 	public boolean openFor(Player player) {
@@ -141,7 +147,15 @@ public abstract class Inventory {
 		player.sendPacket(packet);
 	}
 
+	public void sendSlots() {
+		var packet = new InventoryContentPacket();
+		packet.setContainerId(this.getId());
+		packet.setContents(Arrays.stream(this.items).map(ItemUtils::toNetwork).collect(Collectors.toList()));
+
+		this.viewers.forEach(viewer -> viewer.sendPacket(packet));
+	}
+
 	public Set<Player> getViewers() {
-		return Collections.unmodifiableSet(this.viewers);
+		return new HashSet<>(this.viewers);
 	}
 }

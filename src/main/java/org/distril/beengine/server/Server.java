@@ -243,7 +243,7 @@ public class Server {
 	}
 
 	public Set<Player> getPlayers() {
-		return Collections.unmodifiableSet(this.players);
+		return new HashSet<>(this.players);
 	}
 
 	public boolean isRunning() {

@@ -100,8 +100,8 @@ public class CommandRegistry {
 		return next;
 	}
 
-	private List<String> parseArguments(String cmdLine) {
-		var sb = new StringBuilder(cmdLine);
+	private List<String> parseArguments(String commandArgs) {
+		var sb = new StringBuilder(commandArgs);
 		List<String> args = new ArrayList<>();
 		boolean notQuoted = true;
 		int start = 0;
