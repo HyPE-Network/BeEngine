@@ -5,9 +5,9 @@ import com.nukkitx.protocol.bedrock.data.command.CommandParam;
 import com.nukkitx.protocol.bedrock.data.command.CommandParamData;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.distril.beengine.command.parser.DefaultParser;
 import org.distril.beengine.command.parser.EnumParser;
 import org.distril.beengine.command.parser.Parser;
-import org.distril.beengine.command.parser.StringParser;
 
 import java.util.Collections;
 
@@ -28,7 +28,7 @@ public class CommandArgument {
 	}
 
 	public CommandArgument(String name, CommandParam param, boolean optional) {
-		this(name, param, optional, StringParser.INSTANCE, null);
+		this(name, param, optional, DefaultParser.INSTANCE, null);
 	}
 
 	public CommandArgument(String name, CommandParam param, Parser parser, boolean optional) {

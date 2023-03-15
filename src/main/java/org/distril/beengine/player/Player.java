@@ -1,12 +1,15 @@
 package org.distril.beengine.player;
 
 import com.nukkitx.math.vector.Vector2f;
+import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.BedrockServerSession;
 import com.nukkitx.protocol.bedrock.data.*;
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
+import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap;
+import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
+import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
 import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -15,15 +18,18 @@ import org.distril.beengine.entity.impl.EntityHuman;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.PlayerInventory;
+import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.ItemPalette;
-import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
 import org.distril.beengine.player.data.attribute.Attribute;
 import org.distril.beengine.player.data.attribute.Attributes;
+import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
+import org.distril.beengine.util.ItemUtils;
+import org.distril.beengine.world.chunk.ChunkLoader;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +39,7 @@ import java.util.UUID;
 
 @Getter
 @Log4j2
-public class Player extends EntityHuman implements InventoryHolder, CommandSender {
+public class Player extends EntityHuman implements InventoryHolder, CommandSender, ChunkLoader {
 
 	private final Server server;
 	private final BedrockServerSession session;
@@ -43,12 +49,14 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	private final PlayerInventory inventory;
 
+	private final PlayerChunkManager chunkManager = new PlayerChunkManager(this);
+
 	private final Set<String> permissions = new HashSet<>();
 	private Inventory openedInventory;
 
 	private PlayerData data;
 
-	private boolean connected;
+	private boolean loggedIn;
 
 	public Player(Server server, BedrockServerSession session, LoginData loginData) {
 		this.server = server;
@@ -58,6 +66,8 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.attributes = new Attributes(this);
 		this.inventory = new PlayerInventory(this);
 
+		this.inventory.addItem(Material.BEDROCK.getItem()); // For Tests
+
 		this.setUsername(loginData.getUsername());
 		this.setXuid(loginData.getXuid());
 		this.setUuid(loginData.getUuid());
@@ -65,21 +75,24 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		this.setDevice(loginData.getDevice());
 	}
 
-	public void initialize() {
-		this.server.getPlayerDataProvider().load(this.getUuidForData()).whenComplete((data, throwable) -> {
-			if (throwable != null) {
-				log.error("Failed to load data of " + this.getUuidForData(), throwable);
-				this.disconnect();
-				return;
-			}
+	@Override
+	public void onUpdate(long currentTick) {
+		if (!this.loggedIn) {
+			return;
+		}
 
-			this.data = data;
+		if (this.isSpawned()) {
+			this.chunkManager.queueNewChunks();
+		}
 
-			this.completePlayerInitialization();
-		});
+		this.chunkManager.sendQueued();
+
+		if (this.chunkManager.getChunksSent() >= 46 && !this.isSpawned()) {
+			this.doFirstSpawn();
+		}
 	}
 
-	private void completePlayerInitialization() {
+	public void initialize() {
 		if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
 			var packet = new PlayStatusPacket();
 			packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
@@ -94,12 +107,24 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 			}
 		}
 
-		this.setPitch(this.data.getPitch());
-		this.setYaw(this.data.getYaw());
-		this.setHeadYaw(this.data.getYaw());
-		this.setPosition(this.data.getPosition());
+		try {
+			this.data = this.server.getPlayerDataProvider().load(this.getUuidForData());
 
-		this.setGameMode(this.data.getGameMode());
+			this.setPitch(data.getPitch());
+			this.setYaw(data.getYaw());
+			this.setLocation(data.getLocation());
+
+			this.completePlayerInitialization();
+		} catch (IOException exception) {
+			log.error("Failed to load data of " + this.getUuidForData(), exception);
+			this.disconnect();
+		}
+	}
+
+	private void completePlayerInitialization() {
+		this.spawn(this.data.getLocation());
+
+		this.loggedIn = true;
 
 		var startGamePacket = new StartGamePacket();
 		startGamePacket.setUniqueEntityId(this.getId());
@@ -107,28 +132,26 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
 		startGamePacket.setPlayerPosition(this.getPosition());
 		startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
-		startGamePacket.setSeed(-1L);
+		startGamePacket.setSeed(0L);
 		startGamePacket.setDimensionId(0);
-		startGamePacket.setTrustingPlayers(false);
+		startGamePacket.setGeneratorId(1);
 		startGamePacket.setLevelGameType(GameType.SURVIVAL);
 		startGamePacket.setDifficulty(1);
+		startGamePacket.setTrustingPlayers(false);
 		startGamePacket.setDefaultSpawn(Vector3i.from(0, 60, 0));
 		startGamePacket.setDayCycleStopTime(7000);
 		startGamePacket.setLevelName(this.server.getSettings().getMotd());
-		startGamePacket.setLevelId("");
-		startGamePacket.setGeneratorId(1);
+		startGamePacket.setLevelId(this.getWorld().getWorldName());
 		startGamePacket.setDefaultPlayerPermission(PlayerPermission.MEMBER);
 		startGamePacket.setServerChunkTickRange(8);
-		startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
+		// startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
+		startGamePacket.setVanillaVersion("1.17.40");
 		startGamePacket.setPremiumWorldTemplateId("");
 		startGamePacket.setInventoriesServerAuthoritative(true);
-		startGamePacket.getGamerules().add(new GameRuleData<>("showcoordinates", true));
 		startGamePacket.setItemEntries(ItemPalette.getItemEntries());
 
 		var movementSettings = new SyncedPlayerMovementSettings();
 		movementSettings.setMovementMode(AuthoritativeMovementMode.CLIENT);
-		movementSettings.setRewindHistorySize(0);
-		movementSettings.setServerAuthoritativeBlockBreaking(false);
 
 		startGamePacket.setPlayerMovementSettings(movementSettings);
 		startGamePacket.setCommandsEnabled(true);
@@ -138,44 +161,44 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setXblBroadcastMode(GamePublishSetting.PUBLIC);
 		startGamePacket.setPlatformBroadcastMode(GamePublishSetting.PUBLIC);
 		startGamePacket.setCurrentTick(this.server.getCurrentTick());
-		startGamePacket.setServerEngine("");
+		startGamePacket.setServerEngine("BeEngine");
 		startGamePacket.setPlayerPropertyData(NbtMap.EMPTY);
 		startGamePacket.setWorldTemplateId(new UUID(0, 0));
 		startGamePacket.setWorldEditor(false);
 		startGamePacket.setChatRestrictionLevel(ChatRestrictionLevel.NONE);
 		this.sendPacket(startGamePacket);
 
-		this.server.addPlayer(this);
-
-		var biomeDefinitionPacket = new BiomeDefinitionListPacket();
-		biomeDefinitionPacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
-		this.sendPacket(biomeDefinitionPacket);
-
-		var availableEntityIdentifiersPacket = new AvailableEntityIdentifiersPacket();
-		availableEntityIdentifiersPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
-		this.sendPacket(availableEntityIdentifiersPacket);
-
 		this.sendPacket(ItemPalette.getCreativeContentPacket());
 
-		var craftingDataPacket = new CraftingDataPacket();
-		// todo: crafting data
-		this.sendPacket(craftingDataPacket);
+		var biomePacket = new BiomeDefinitionListPacket();
+		biomePacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
+		this.sendPacket(biomePacket);
 
-		this.attributes.sendAttributes();
+		var entityPacket = new AvailableEntityIdentifiersPacket();
+		entityPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
+		this.sendPacket(entityPacket);
+	}
+
+	private void doFirstSpawn() {
+		var packet = new PlayStatusPacket();
+		packet.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
+		this.sendPacket(packet);
+
+		this.server.addOnlinePlayer(this);
+
 		this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
 
-		PlayStatusPacket playStatusPacket = new PlayStatusPacket();
-		playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
-		this.sendPacket(playStatusPacket);
+		this.attributes.sendAttributes();
 
 		this.inventory.sendSlots(this);
 
-		var realAddress = this.session.getRealAddress();
-		log.info("{}[{}, {}] logged in [X={}, Y={}, Z={}]",
-				this.getName(), realAddress.getHostName(), realAddress.getPort(),
-				this.getPosition().getX(), this.getPosition().getY(), this.getPosition().getZ());
-
 		this.setSpawned(true);
+
+		var position = this.getPosition();
+		var realAddress = this.session.getRealAddress();
+		log.info("{}[{}:{}] logged in with entity id {} at ({}, {}, {}, {})",
+				this.getName(), realAddress.getHostName(), realAddress.getPort(), this.getId(),
+				this.getWorld().getWorldName(), position.getX(), position.getY(), position.getZ());
 	}
 
 	public void sendPacket(BedrockPacket packet) {
@@ -230,7 +253,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public boolean isConnected() {
-		return this.connected; // todo add is loggedIn
+		return !this.session.isClosed();
 	}
 
 	public void disconnect() {
@@ -242,34 +265,25 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public void disconnect(String reason, boolean showReason) {
-		if (!this.isConnected()) {
-			if (showReason && reason.length() > 0) {
-				DisconnectPacket packet = new DisconnectPacket();
-				packet.setKickMessage(reason);
-				this.sendPacketImmediately(packet);
-			}
+		this.server.removeOnlinePlayer(this);
 
-			this.connected = false;
+		if (this.isSpawned()) {
 			this.closeOpenedInventory();
-
-			if (!this.session.isClosed()) {
-				this.session.disconnect(showReason ? reason : "");
-			}
 
 			super.close();
 		}
 
-		this.server.removePlayer(this);
-
-		try {
-			this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
-		} catch (IOException exception) {
-			log.error("Failed to save data of " + this.getUuidForData(), exception);
+		if (this.isConnected()) {
+			this.session.disconnect(showReason ? reason : "");
 		}
 
-		var realAddress = this.session.getRealAddress();
-		log.info("{}[{}:{}] logged out due to {}", this.getName(), realAddress.getHostName(),
-				realAddress.getPort(), reason);
+		this.chunkManager.close();
+
+		if (this.data != null) {
+			this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
+		}
+
+		log.info("{} logged out due to {}", this.getName(), reason);
 	}
 
 	public void openInventory(Inventory inventory) {
@@ -287,6 +301,30 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	@Override
+	public void setSkin(SerializedSkin skin) {
+		super.setSkin(skin);
+
+		var packet = new PlayerSkinPacket();
+		packet.setNewSkinName("");
+		packet.setOldSkinName("");
+		packet.setUuid(this.getUuid());
+		packet.setSkin(skin);
+		packet.setTrustedSkin(true);
+
+		this.sendPacket(packet);
+	}
+
+	@Override
+	protected void onDataChange(EntityDataMap changeSet) {
+		super.onDataChange(changeSet);
+
+		var packet = new SetEntityDataPacket();
+		packet.setRuntimeEntityId(this.getId());
+		packet.getMetadata().putAll(changeSet);
+		this.sendPacket(packet);
+	}
+
+	@Override
 	public PlayerInventory getInventory() {
 		return this.inventory;
 	}
@@ -295,7 +333,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	protected AddPlayerPacket createSpawnPacket(Player player) {
 		var packet = super.createSpawnPacket(player);
 		packet.setGameType(this.data.getGameMode().getType());
-		packet.setHand(ItemData.AIR);
+		packet.setHand(ItemUtils.toNetwork(this.inventory.getItemInHand()));
 		return packet;
 	}
 
@@ -332,7 +370,58 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		return this.getUsername();
 	}
 
-	public boolean equals(CommandSender sender) {
-		return sender.getName().equals(this.getName());
+	@Override
+	public void setPosition(Vector3f position) {
+		var from = this.getChunk();
+		var to = this.getWorld().getChunk(position.toInt());
+
+		if (!from.equals(to)) {
+			from.removeEntity(this);
+			to.addEntity(this);
+		}
+
+		super.setPosition(position);
+	}
+
+	public void sendPosition(MovePlayerPacket.Mode mode) {
+		var packet = new MovePlayerPacket();
+		packet.setRuntimeEntityId(this.getId());
+		packet.setPosition(this.getPosition().add(0, this.getEyeHeight(), 0));
+		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getYaw()));
+		packet.setMode(mode);
+
+		if (mode == MovePlayerPacket.Mode.TELEPORT) {
+			packet.setTeleportationCause(MovePlayerPacket.TeleportationCause.BEHAVIOR);
+		}
+
+		this.sendPacket(packet);
+	}
+
+	public boolean canInteract(Vector3f position) {
+		return this.canInteract(position, this.isCreative() ? 13 : 7);
+	}
+
+	public boolean canInteract(Vector3f position, double maxDistance) {
+		return this.canInteract(position, maxDistance, 6D);
+	}
+
+	public boolean canInteract(Vector3f position, double maxDistance, double maxDiff) {
+		if (this.getPosition().distanceSquared(position) > maxDistance * maxDistance) {
+			return false;
+		}
+
+		var directionPlane = this.getDirectionPlane();
+		var fromDirection = directionPlane.dot(this.getPosition().toVector2(true));
+		var toDirection = directionPlane.dot(position.toVector2(true));
+		return (toDirection - fromDirection) >= -maxDiff;
+	}
+
+	private Vector2f getDirectionPlane() {
+		var plane = Math.toRadians(this.getYaw()) - Math.PI / 2;
+		return Vector2f.from(-Math.cos(plane), -Math.sin(plane)).normalize();
+	}
+
+	public void setUsingItem(boolean value) {
+		this.getMetadata().setFlag(EntityFlag.USING_ITEM, value);
 	}
 }

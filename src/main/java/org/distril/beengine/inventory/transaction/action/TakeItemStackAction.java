@@ -9,8 +9,8 @@ import org.distril.beengine.player.Player;
 public class TakeItemStackAction extends MoveItemStackAction {
 
 	public TakeItemStackAction(StackRequestSlotInfoData from, StackRequestSlotInfoData to,
-	                           ItemStackTransaction transaction, int count) {
-		super(from, to, transaction, count);
+	                           ItemStackTransaction transaction, int count, int requestId) {
+		super(from, to, transaction, count, requestId);
 	}
 
 	@Override
@@ -21,13 +21,9 @@ public class TakeItemStackAction extends MoveItemStackAction {
 		// double-click
 		if (toItem.getMaterial() != Material.AIR) {
 			// todo check count from and to items
-			toItem.incrementCount(Math.min(fromItem.getCount(), this.getCount()));
+			toItem = toItem.incrementCount(Math.min(fromItem.getCount(), this.getCount()));
 
 			fromItem = Item.AIR;
-
-			this.setToItem(toItem);
-			this.setFromItem(fromItem);
-			return true;
 		}
 
 		this.setFromItem(toItem);

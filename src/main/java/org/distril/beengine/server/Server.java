@@ -1,5 +1,6 @@
 package org.distril.beengine.server;
 
+import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,21 +12,19 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.distril.beengine.Bootstrap;
 import org.distril.beengine.command.CommandRegistry;
 import org.distril.beengine.command.CommandSender;
+import org.distril.beengine.console.Console;
 import org.distril.beengine.material.item.ItemRegistry;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.player.data.provider.NBTPlayerDataProvider;
 import org.distril.beengine.player.data.provider.PlayerDataProvider;
 import org.distril.beengine.scheduler.Scheduler;
-import org.distril.beengine.terminal.Terminal;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
@@ -43,10 +42,15 @@ public class Server {
 	private final Network network;
 
 	private final Scheduler scheduler = new Scheduler();
+
 	private final ItemRegistry itemRegistry = new ItemRegistry();
+	private final BlockRegistry blockRegistry = new BlockRegistry();
+
 	private final CommandRegistry commandRegistry = new CommandRegistry();
 
-	private final List<Player> players = new ArrayList<>();
+	private final WorldRegistry worldRegistry = new WorldRegistry();
+
+	private final Set<Player> players = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	@Setter
 	@Getter
@@ -82,9 +86,7 @@ public class Server {
 
 		this.network = new Network(this, this.settings.getIp(), this.settings.getPort());
 
-		try {
-			Files.createDirectory(Path.of("players"));
-		} catch (IOException ignored) {/**/}
+		Utils.createDirectories("players");
 	}
 
 	public void start() {
@@ -93,6 +95,9 @@ public class Server {
 		log.info("Starting server...");
 
 		this.itemRegistry.init();
+		this.blockRegistry.init();
+
+		this.worldRegistry.init();
 
 		try {
 			this.network.start();
@@ -155,12 +160,14 @@ public class Server {
 
 	public void shutdown() {
 		log.info("Stopping server...");
-		this.network.stop();
+		this.settings.save();
 
 		log.info("Cancel all tasks...");
 		this.scheduler.cancelAllTasks();
 
-		this.settings.save();
+		this.players.forEach(player -> player.disconnect("Server stopped"));
+
+		this.network.stop();
 
 		log.info("Server stopped!");
 		this.terminal.interrupt();
@@ -178,54 +185,73 @@ public class Server {
 	}
 
 	public Player getPlayer(String username) {
-		if (username == null || username.isEmpty()) {
+		if (username == null) {
 			return null;
 		}
 
-		for (Player player : this.players) {
-			if (player.getUsername().equalsIgnoreCase(username)) {
-				return player;
+		username = username.trim();
+
+		if (username.isEmpty()) {
+			return null;
+		}
+
+		for (var target : this.players) {
+			if (target.getUsername().equalsIgnoreCase(username)) {
+				return target;
 			}
 		}
 
 		return null;
+
 	}
 
 	public void addPlayer(Player player) {
 		this.players.add(player);
-
-		List<PlayerListPacket.Entry> entries = new ArrayList<>();
-
-		this.players.forEach(target -> {
-			entries.add(target.getPlayerListEntry());
-		});
-
-		this.updatePlayersList(PlayerListPacket.Action.ADD, entries, Collections.singleton(player));
-
-		this.updatePlayersList(PlayerListPacket.Action.ADD, Collections.singleton(player.getPlayerListEntry()), this.players);
 	}
 
 	public void removePlayer(Player player) {
 		this.players.remove(player);
-
-		this.updatePlayersList(PlayerListPacket.Action.REMOVE, Collections.singleton(player.getPlayerListEntry()),
-				this.players);
 	}
 
-	private void updatePlayersList(PlayerListPacket.Action action, Collection<PlayerListPacket.Entry> entries,
-	                               Collection<Player> players) {
+	public void removeOnlinePlayer(Player player) {
 		var packet = new PlayerListPacket();
-		packet.setAction(action);
+		packet.setAction(PlayerListPacket.Action.REMOVE);
+		packet.getEntries().add(new PlayerListPacket.Entry(player.getUuid()));
+
+		this.broadcastPacket(this.players, packet);
+	}
+
+	public void addOnlinePlayer(Player player) {
+		List<PlayerListPacket.Entry> entries = new ArrayList<>();
+
+		this.players.forEach(target -> entries.add(target.getPlayerListEntry()));
+
+		this.updatePlayersList(entries, Collections.singleton(player));
+
+		this.updatePlayersList(Collections.singleton(player.getPlayerListEntry()), this.players);
+	}
+
+	private void updatePlayersList(Collection<PlayerListPacket.Entry> entries, Collection<Player> players) {
+		var packet = new PlayerListPacket();
+		packet.setAction(PlayerListPacket.Action.ADD);
 		packet.getEntries().addAll(entries);
 
 		players.forEach(player -> player.sendPacket(packet));
 	}
 
-	public List<Player> getPlayers() {
-		return Collections.unmodifiableList(this.players);
+	public Set<Player> getPlayers() {
+		return Collections.unmodifiableSet(this.players);
 	}
 
 	public boolean isRunning() {
 		return this.running.get();
+	}
+
+	public void broadcastPackets(Collection<Player> targets, Collection<? extends BedrockPacket> packets) {
+		targets.forEach(target -> packets.forEach(target::sendPacket));
+	}
+
+	public void broadcastPacket(Collection<Player> targets, BedrockPacket packet) {
+		targets.forEach(target -> target.sendPacket(packet));
 	}
 }

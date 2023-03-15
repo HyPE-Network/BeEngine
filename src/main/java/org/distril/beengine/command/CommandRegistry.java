@@ -4,7 +4,7 @@ import com.nukkitx.protocol.bedrock.packet.AvailableCommandsPacket;
 import org.distril.beengine.command.data.Args;
 import org.distril.beengine.command.impl.GameModeCommand;
 import org.distril.beengine.command.impl.StopCommand;
-import org.distril.beengine.command.parser.Parser;
+import org.distril.beengine.command.impl.TestCommand;
 import org.distril.beengine.player.Player;
 
 import java.util.*;
@@ -16,6 +16,7 @@ public class CommandRegistry {
 	public CommandRegistry() {
 		this.register(new GameModeCommand());
 		this.register(new StopCommand());
+		this.register(new TestCommand());
 	}
 
 	public void register(Command command) {
@@ -41,7 +42,7 @@ public class CommandRegistry {
 			return false;
 		}
 
-		String commandOrAlias = parsedArgs.remove(0).toLowerCase();
+		var commandOrAlias = parsedArgs.remove(0).toLowerCase();
 		var command = this.getCommand(commandOrAlias);
 
 		if (command == null) {
@@ -55,8 +56,8 @@ public class CommandRegistry {
 		while (parsersIterator.hasNext()) {
 			var argsIterator = parsedArgs.iterator();
 
-			for (Map.Entry<String, Parser> entry : parsersIterator.next().entrySet()) {
-				Parser parser = entry.getValue();
+			for (var entry : parsersIterator.next().entrySet()) {
+				var parser = entry.getValue();
 
 				if (argsIterator.hasNext()) {
 					var next = this.getNext(argsIterator);
@@ -137,11 +138,12 @@ public class CommandRegistry {
 	public AvailableCommandsPacket createPacketFor(Player player) {
 		var packet = new AvailableCommandsPacket();
 		var data = packet.getCommands();
-		for (Command command : this.commands.values()) {
+
+		this.commands.values().forEach(command -> {
 			if (player.hasPermission(command.getPermission())) {
 				data.add(command.toNetwork());
 			}
-		}
+		});
 
 		return packet;
 	}

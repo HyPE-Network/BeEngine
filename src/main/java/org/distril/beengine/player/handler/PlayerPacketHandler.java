@@ -34,6 +34,48 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 	}
 
 	@Override
+	public boolean handle(MovePlayerPacket packet) {
+		if (!this.player.isSpawned()) {
+			return true;
+		}
+
+		var to = packet.getPosition().sub(0, player.getEyeHeight(), 0);
+		var from = player.getPosition();
+
+		var pitch = packet.getRotation().getX() % 360;
+		var yaw = packet.getRotation().getY() % 360;
+
+		if (yaw < 0) {
+			yaw += 360;
+		}
+
+		var distance = to.distanceSquared(from);
+
+		if (distance == 0 && pitch == player.getPitch() && yaw == player.getYaw()) {
+			return true;
+		}
+
+		if (distance > 100) {
+			log.debug("{}: MovePlayerPacket too far REVERTING", player.getName());
+			player.sendPosition(MovePlayerPacket.Mode.RESPAWN);
+			return true;
+		}
+
+		player.setRotation(pitch, yaw);
+		player.setPosition(to);
+
+		// player.sendPosition(MovePlayerPacket.Mode.NORMAL);
+		return true;
+	}
+
+
+	@Override
+	public boolean handle(RequestChunkRadiusPacket packet) {
+		this.player.getChunkManager().setChunkRadius(packet.getRadius());
+		return true;
+	}
+
+	@Override
 	public boolean handle(ItemStackRequestPacket packet) {
 		return this.inventoryPacketHandler.handle(packet);
 	}
@@ -44,13 +86,18 @@ public class PlayerPacketHandler implements BedrockPacketHandler {
 	}
 
 	@Override
+	public boolean handle(MobEquipmentPacket packet) {
+		return this.inventoryPacketHandler.handle(packet);
+	}
+
+	@Override
 	public boolean handle(ContainerClosePacket packet) {
 		return this.inventoryPacketHandler.handle(packet);
 	}
 
 	@Override
 	public boolean handle(PacketViolationWarningPacket packet) {
-		log.debug("Packet violation for " + packet.getPacketType() + ": " + packet.getContext());
+		log.warn("Packet violation for {}: {}", packet.getPacketType(), packet.getContext());
 		return true;
 	}
 }

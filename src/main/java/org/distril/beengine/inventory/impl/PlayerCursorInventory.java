@@ -18,12 +18,17 @@ public class PlayerCursorInventory extends Inventory {
 	}
 
 	@Override
-	public boolean setItem(int slot, Item item) {
-		return super.setItem(0, item);
+	public boolean setItem(int slot, Item item, boolean send) {
+		return super.setItem(0, item, send);
+	}
+
+	@Override
+	protected void sendSlot(int slot, Player... players) {
+		super.sendSlot(0, players);
 	}
 
 	@Override
 	public void sendSlots(Player player) {
-		this.sendSlot(0, player);
+		super.sendSlot(0, player);
 	}
 }

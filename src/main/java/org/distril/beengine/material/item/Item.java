@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import org.distril.beengine.material.Material;
+import org.distril.beengine.material.block.Block;
+import org.distril.beengine.material.block.BlockPalette;
 import org.distril.beengine.material.item.behavior.Behavior;
 
 import java.util.List;
@@ -75,6 +77,11 @@ public class Item {
 		return this.toBuilder().nbt(this.nbt.toBuilder().putCompound("display", displayNbt).build()).build();
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T extends Block> T toBlock() {
+		return (T) BlockPalette.getBlock(this);
+	}
+
 	public String getIdentifier() {
 		return this.material.getIdentifier();
 	}
@@ -102,7 +109,7 @@ public class Item {
 
 	public boolean equals(Item that, boolean checkMeta, boolean checkData) {
 		checkMeta = !checkMeta || (this.meta == that.getMeta() && this.blockRuntimeId == that.getBlockRuntimeId());
-		checkData = !checkData || Objects.equals(this.nbt, that.getNbt());
+		checkData = !checkData || this.nbt.equals(that.getNbt());
 		return this.material == that.getMaterial() && checkMeta && checkData;
 	}
 

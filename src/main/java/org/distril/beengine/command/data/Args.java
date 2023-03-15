@@ -36,7 +36,7 @@ public class Args {
 		if (username != null) {
 			var players = server.getPlayers();
 			if (username.equals("@r")) {
-				return players.get(new Random().nextInt(players.size()));
+				return players.stream().toList().get(new Random().nextInt(players.size()));
 			}
 		}
 

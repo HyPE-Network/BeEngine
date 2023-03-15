@@ -8,13 +8,13 @@ import org.distril.beengine.scheduler.task.TaskEntry;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 public class Scheduler {
 
 	private static final Comparator<TaskEntry> COMPARATOR = Comparator.comparing(TaskEntry::getNextRunTick).reversed();
-	private static final ExecutorService POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	private static final ForkJoinPool POOL = ForkJoinPool.commonPool();
 
 	private final PriorityQueue<TaskEntry> queue = new PriorityQueue<>(COMPARATOR);
 
@@ -31,22 +31,19 @@ public class Scheduler {
 
 	public void processTick(long currentTick) {
 		this.lastUpdateTick = currentTick;
-		while (!this.queue.isEmpty() && this.queue.peek().getNextRunTick() <= lastUpdateTick) {
+		while (!this.queue.isEmpty() && this.queue.peek().getNextRunTick() <= currentTick) {
 			var taskEntry = this.queue.poll();
+			if (!taskEntry.isCancelled()) {
+				var task = taskEntry.getTask();
+				if (taskEntry.isAsync()) {
+					POOL.submit(task::onRun);
+				} else {
+					task.onRun();
+				}
 
-			if (taskEntry.isCancelled()) {
-				continue;
-			}
-
-			Task task = taskEntry.getTask();
-			if (taskEntry.isAsync()) {
-				POOL.submit(task::onRun);
-			} else {
-				task.onRun();
-			}
-
-			if (!taskEntry.isCancelled() && taskEntry.isRepeating()) {
-				this.addInQueue(taskEntry);
+				if (!task.isCancelled() && taskEntry.isRepeating()) {
+					this.addInQueue(taskEntry);
+				}
 			}
 		}
 	}
@@ -64,6 +61,15 @@ public class Scheduler {
 	public void cancelAllTasks() {
 		this.queue.forEach(entry -> entry.getTask().cancel());
 		this.queue.clear();
+
+		POOL.shutdown();
+		try {
+			if (!POOL.awaitTermination(1, TimeUnit.SECONDS)) {
+				POOL.shutdownNow();
+			}
+		} catch (InterruptedException exception) {
+			POOL.shutdownNow();
+		}
 	}
 
 	@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
@@ -85,8 +91,8 @@ public class Scheduler {
 			return this;
 		}
 
-		public TaskBuilder async() {
-			this.async = true;
+		public TaskBuilder async(boolean async) {
+			this.async = async;
 			return this;
 		}
 

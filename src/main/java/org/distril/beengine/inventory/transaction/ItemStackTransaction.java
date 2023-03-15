@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.inventory.Inventory;
 import org.distril.beengine.inventory.transaction.action.ItemStackAction;
+import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
 
 import java.util.*;
@@ -14,6 +15,7 @@ import java.util.*;
 import static com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket.*;
 
 @Log4j2
+@Setter
 @Getter
 @RequiredArgsConstructor
 public class ItemStackTransaction {
@@ -22,20 +24,19 @@ public class ItemStackTransaction {
 
 	private final Player player;
 
-	@Setter
+	private Item creativeOutput;
+
 	private ResponseStatus status = ResponseStatus.OK;
 
 	public boolean handle(ItemStackAction action) {
 		if (!action.isValid(this.player)) {
 			log.warn("Failed validation check on {}", action.getClass().getSimpleName());
 			action.onExecuteFail(this.player);
-
 			return false;
 		}
 
 		if (action.execute(this.player)) {
 			action.onExecuteSuccess(this.player);
-
 			return true;
 		}
 
@@ -49,7 +50,7 @@ public class ItemStackTransaction {
 
 	public void addContainers(Collection<ContainerEntry> containers) {
 		containers.forEach(entry -> {
-			var list = this.containers.computeIfAbsent(entry.getContainer(), x -> new ArrayList<>());
+			var list = this.containers.computeIfAbsent(entry.getContainer(), $ -> new ArrayList<>());
 			list.addAll(entry.getItems());
 		});
 	}

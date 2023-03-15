@@ -3,7 +3,7 @@ package org.distril.beengine.command.data;
 import com.nukkitx.protocol.bedrock.data.command.CommandEnumData;
 import com.nukkitx.protocol.bedrock.data.command.CommandParam;
 import lombok.experimental.UtilityClass;
-import org.distril.beengine.command.parser.StringParser;
+import org.distril.beengine.command.parser.DefaultParser;
 import org.distril.beengine.command.parser.TargetParser;
 
 @UtilityClass
@@ -57,8 +57,8 @@ public class ArgumentType {
 		return ArgumentType.MinecraftEnum(name, "GameMode", optional);
 	}
 
-	private static CommandArgument MinecraftEnum(String name, String enumType, boolean optional) {
-		return new CommandArgument(name, CommandParam.TEXT, optional, StringParser.INSTANCE, new CommandEnumData(enumType,
+	public static CommandArgument MinecraftEnum(String name, String enumType, boolean optional) {
+		return new CommandArgument(name, CommandParam.TEXT, optional, DefaultParser.INSTANCE, new CommandEnumData(enumType,
 				new String[0], false));
 	}
 }

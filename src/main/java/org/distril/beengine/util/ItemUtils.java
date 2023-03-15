@@ -32,8 +32,8 @@ public class ItemUtils {
 		}
 
 		if (itemJSON.has("damage")) {
-			int meta = itemJSON.get("damage").getAsInt();
-			if ((meta & 0x7fff) == 0x7fff) {
+			var meta = itemJSON.get("damage").getAsInt();
+			if ((meta & 0x7FFF) == 0x7FFF) {
 				meta = -1;
 			}
 
@@ -89,7 +89,7 @@ public class ItemUtils {
 			return Item.AIR;
 		}
 
-		var builder = ItemBuilder.builder(Material.fromRuntimeId(itemData.getId()));
+		var builder = ItemBuilder.builder(Material.fromItemRuntimeId(itemData.getId()));
 		builder.meta(itemData.getDamage());
 		builder.count(itemData.getCount());
 		builder.nbt(itemData.getTag());

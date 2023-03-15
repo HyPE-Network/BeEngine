@@ -13,10 +13,7 @@ import org.distril.beengine.util.ItemUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ItemPalette {
 
@@ -24,6 +21,8 @@ public class ItemPalette {
 
 	private static final BiMap<String, Integer> ITEMS = HashBiMap.create();
 	private static final Set<StartGamePacket.ItemEntry> ENTRIES = new HashSet<>();
+
+	private static final Map<Integer, ItemData> CREATIVE_ITEMS = new HashMap<>();
 
 	private static final CreativeContentPacket CREATIVE_CONTENT_PACKET = new CreativeContentPacket();
 
@@ -33,8 +32,10 @@ public class ItemPalette {
 
 			items.forEach(item -> {
 				var itemObj = item.getAsJsonObject();
+
 				var identifier = itemObj.get("name").getAsString();
 				var runtimeId = itemObj.get("id").getAsInt();
+
 				ITEMS.put(identifier, runtimeId);
 				ENTRIES.add(new StartGamePacket.ItemEntry(identifier, (short) runtimeId, false));
 			});
@@ -45,22 +46,16 @@ public class ItemPalette {
 		try (var reader = new InputStreamReader(Bootstrap.getResource("data/creative_items.json"))) {
 			var itemArray = GSON.fromJson(reader, JsonObject.class).getAsJsonArray("items");
 
-			List<ItemData> itemsData = new ArrayList<>();
 			int netId = 0;
 			for (var itemElement : itemArray) {
 				var itemObj = itemElement.getAsJsonObject();
 
 				netId++;
-				itemsData.add(
-						ItemUtils.fromJSON(itemObj)
-								.toBuilder()
-								.netId(netId)
-								.build()
-				);
+				CREATIVE_ITEMS.put(netId, ItemUtils.fromJSON(itemObj).toBuilder().netId(netId).build());
 			}
 
 
-			CREATIVE_CONTENT_PACKET.setContents(itemsData.toArray(new ItemData[0]));
+			CREATIVE_CONTENT_PACKET.setContents(CREATIVE_ITEMS.values().toArray(new ItemData[0]));
 		} catch (IOException exception) {
 			throw new RuntimeException(exception);
 		}
@@ -80,5 +75,9 @@ public class ItemPalette {
 
 	public static int getRuntimeId(String identifier) {
 		return ITEMS.get(identifier);
+	}
+
+	public static Item getCreativeItem(int itemNetworkId) {
+		return ItemUtils.fromNetwork(CREATIVE_ITEMS.get(itemNetworkId));
 	}
 }

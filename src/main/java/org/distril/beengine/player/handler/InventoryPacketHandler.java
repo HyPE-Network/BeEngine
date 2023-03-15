@@ -1,21 +1,18 @@
 package org.distril.beengine.player.handler;
 
 import com.nukkitx.protocol.bedrock.data.inventory.ItemStackRequest;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.PlaceStackRequestActionData;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.StackRequestActionData;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.SwapStackRequestActionData;
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.TakeStackRequestActionData;
+import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.*;
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler;
-import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket;
-import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket;
-import com.nukkitx.protocol.bedrock.packet.ItemStackRequestPacket;
-import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket;
+import com.nukkitx.protocol.bedrock.packet.*;
 import lombok.extern.log4j.Log4j2;
 import org.distril.beengine.inventory.transaction.ItemStackTransaction;
-import org.distril.beengine.inventory.transaction.action.PlaceItemStackAction;
-import org.distril.beengine.inventory.transaction.action.SwapItemStackAction;
-import org.distril.beengine.inventory.transaction.action.TakeItemStackAction;
+import org.distril.beengine.inventory.transaction.action.*;
+import org.distril.beengine.material.item.ItemPalette;
+import org.distril.beengine.network.data.transaction.ItemUseTransaction;
 import org.distril.beengine.player.Player;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Log4j2
 public class InventoryPacketHandler implements BedrockPacketHandler {
@@ -42,35 +39,50 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 
 				switch (action.getType()) {
 					case TAKE -> {
-						var source = ((TakeStackRequestActionData) action).getSource();
-						var target = ((TakeStackRequestActionData) action).getDestination();
+						var takeAction = (TakeStackRequestActionData) action;
 
 						continueActions = this.transaction.handle(new TakeItemStackAction(
-								source,
-								target,
-								this.transaction,
-								((TakeStackRequestActionData) action).getCount()
-						));
+								takeAction.getSource(), takeAction.getDestination(),
+								this.transaction, takeAction.getCount(), request.getRequestId()));
 					}
 
 					case PLACE -> {
-						var source = ((PlaceStackRequestActionData) action).getSource();
-						var target = ((PlaceStackRequestActionData) action).getDestination();
+						var placeAction = (PlaceStackRequestActionData) action;
 
 						continueActions = this.transaction.handle(new PlaceItemStackAction(
-								source,
-								target,
-								this.transaction,
-								((PlaceStackRequestActionData) action).getCount()
-						));
+								placeAction.getSource(), placeAction.getDestination(),
+								this.transaction, placeAction.getCount(), request.getRequestId()));
 					}
 
 					case SWAP -> {
-						var source = ((SwapStackRequestActionData) action).getSource();
-						var target = ((SwapStackRequestActionData) action).getDestination();
+						var swapAction = (SwapStackRequestActionData) action;
 
-						continueActions = this.transaction.handle(new SwapItemStackAction(source, target, this.transaction));
+						continueActions = this.transaction.handle(new SwapItemStackAction(
+								swapAction.getSource(), swapAction.getDestination(), this.transaction));
 					}
+
+					case DROP -> {
+						// todo when i added player and world method for drop items
+					}
+
+					case DESTROY -> {
+						var destroyAction = (DestroyStackRequestActionData) action;
+
+						continueActions = this.transaction.handle(new DestroyItemStackAction(
+								destroyAction.getSource(), destroyAction.getCount(), this.transaction));
+					}
+
+					case CRAFT_CREATIVE -> {
+						var craftCreativeAction = (CraftCreativeStackRequestActionData) action;
+
+						this.transaction.setCreativeOutput(ItemPalette.getCreativeItem(craftCreativeAction.getCreativeItemNetworkId()));
+						continueActions = this.transaction.handle(new CraftCreativeItemStackAction(this.transaction));
+					}
+
+					case CRAFT_RESULTS_DEPRECATED -> {
+						// skip it because deprecated
+					}
+
 
 					default -> log.warn("Missing inventory action handler: " + action.getType());
 				}
@@ -91,7 +103,84 @@ public class InventoryPacketHandler implements BedrockPacketHandler {
 
 	@Override
 	public boolean handle(InventoryTransactionPacket packet) {
+		if (this.player.isSpectator()) {
+			return true;
+		}
+
+		switch (packet.getTransactionType()) {
+			case ITEM_USE -> {
+				var transaction = ItemUseTransaction.read(packet);
+
+				switch (transaction.getType()) {
+					case CLICK_BLOCK -> {
+						player.setUsingItem(false);
+
+						var blockPosition = transaction.getBlockPosition();
+						var world = player.getWorld();
+						var blockFace = transaction.getBlockFace();
+						if (player.canInteract(blockPosition.toFloat().add(0.5, 0.5, 0.5))) {
+							var clientItem = transaction.getItemInHand();
+							var serverItem = player.getInventory().getItemInHand();
+							if (player.isCreative()) {
+								if (world.useItemOn(blockPosition, serverItem, blockFace, packet.getClickPosition(), player) != null) {
+									return true;
+								}
+							} else if (serverItem.equals(clientItem)) {
+								var oldServerItem = serverItem;
+								if ((serverItem = world.useItemOn(blockPosition, serverItem, blockFace, packet.getClickPosition(), player)) != null) {
+									if (!serverItem.equals(oldServerItem) ||
+											serverItem.getCount() != oldServerItem.getCount()) {
+										player.getInventory().setItemInHand(serverItem);
+										player.getInventory().sendHeldItem(player.getViewers());
+									}
+
+									return true;
+								}
+							}
+						}
+
+						player.getInventory().sendHeldItem(Collections.singleton(player));
+
+						if (blockPosition.distanceSquared(player.getPosition().toInt()) > 10000) {
+							return true;
+						}
+
+						var target = world.getBlock(blockPosition);
+						var block = target.getSide(blockFace);
+
+						world.sendBlocks(Collections.singleton(player), Arrays.asList(target, block), UpdateBlockPacket.FLAG_ALL_PRIORITY);
+						player.setUsingItem(false);
+						return true;
+					}
+
+					case CLICK_AIR -> {
+
+					}
+
+					case BREAK_BLOCK -> {
+
+					}
+				}
+			}
+
+			case ITEM_USE_ON_ENTITY -> {
+
+			}
+
+			case ITEM_RELEASE -> {
+
+			}
+
+			default -> log.info("Unhandled transaction type: {}", packet.getTransactionType());
+		}
+
 		log.info(packet.toString());
+		return true;
+	}
+
+	@Override
+	public boolean handle(MobEquipmentPacket packet) {
+		this.player.getInventory().setHeldItemIndex(packet.getHotbarSlot());
 		return true;
 	}
 

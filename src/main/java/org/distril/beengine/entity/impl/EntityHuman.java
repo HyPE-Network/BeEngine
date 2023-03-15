@@ -1,21 +1,21 @@
 package org.distril.beengine.entity.impl;
 
 import com.nukkitx.math.vector.Vector3f;
-import com.nukkitx.protocol.bedrock.data.GameType;
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
+import com.nukkitx.protocol.bedrock.data.PlayerPermission;
+import com.nukkitx.protocol.bedrock.data.command.CommandPermission;
+import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin;
 import com.nukkitx.protocol.bedrock.packet.AddPlayerPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerSkinPacket;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.distril.beengine.entity.EntityCreature;
 import org.distril.beengine.entity.EntityType;
 import org.distril.beengine.network.data.Device;
 import org.distril.beengine.player.Player;
+import org.distril.beengine.world.util.Location;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Getter
@@ -25,12 +25,33 @@ public class EntityHuman extends EntityCreature {
 	private String username;
 	private String xuid;
 	private UUID uuid;
-	@Setter(value = AccessLevel.NONE)
 	private SerializedSkin skin;
 	private Device device;
 
 	public EntityHuman() {
 		super(EntityType.HUMAN);
+	}
+
+	@Override
+	public boolean spawn(Location location) {
+		this.getMetadata().setFlag(EntityFlag.HAS_GRAVITY, true);
+
+		return super.spawn(location);
+	}
+
+	@Override
+	public float getHeight() {
+		return 1.8F;
+	}
+
+	@Override
+	public float getWidth() {
+		return 0.6F;
+	}
+
+	@Override
+	public float getEyeHeight() {
+		return 1.62F;
 	}
 
 	public void setSkin(SerializedSkin skin) {
@@ -44,10 +65,6 @@ public class EntityHuman extends EntityCreature {
 		packet.setTrustedSkin(true);
 
 		this.getViewers().forEach(viewer -> viewer.sendPacket(packet));
-
-		if (this instanceof Player player) {
-			player.sendPacket(packet);
-		}
 	}
 
 	public PlayerListPacket.Entry getPlayerListEntry() {
@@ -69,31 +86,12 @@ public class EntityHuman extends EntityCreature {
 		packet.setRuntimeEntityId(this.getId());
 		packet.setUniqueEntityId(this.getId());
 		packet.setPosition(this.getPosition());
-		packet.setGameType(GameType.SURVIVAL);
 		packet.setMotion(Vector3f.ZERO);
-		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getHeadYaw()));
+		packet.setRotation(Vector3f.from(this.getPitch(), this.getYaw(), this.getYaw()));
 		packet.setDeviceId("");
 		packet.setPlatformChatId("");
-		packet.setHand(ItemData.AIR);
+		packet.setCommandPermission(CommandPermission.OPERATOR);
+		packet.setPlayerPermission(PlayerPermission.OPERATOR);
 		return packet;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-
-		if (obj == null || this.getClass() != obj.getClass()) {
-			return false;
-		}
-
-		EntityHuman that = (EntityHuman) obj;
-		return Objects.equals(this.uuid, that.getUuid());
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.uuid);
 	}
 }

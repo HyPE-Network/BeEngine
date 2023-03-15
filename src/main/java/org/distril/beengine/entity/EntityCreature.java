@@ -4,7 +4,7 @@ import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.CreatureInventory;
 import org.distril.beengine.player.Player;
 
-public abstract class EntityCreature extends Entity implements InventoryHolder {
+public abstract class EntityCreature extends EntityLiving implements InventoryHolder {
 
 	private CreatureInventory inventory;
 

@@ -31,23 +31,19 @@ public class GameModeCommand extends Command {
 
 		if (args.isEmpty()) {
 			sender.sendMessage("Use: /gamemode <gameMode> [player]");
-
 			return;
 		}
 
 		var gameMode = args.getGameMode("gameMode");
 		if (gameMode == null) {
 			sender.sendMessage("Game mode '" + args.getString("gameMode") + "' is invalid");
-
 			return;
 		}
 
 
 		var target = args.getTarget("player");
-
-		if ((sender.isConsole() && !args.has("player")) || (args.has("player") && target == null)) {
+		if (sender.isConsole() && (!args.has("player") || target == null)) {
 			sender.sendMessage("No targets matched selector");
-
 			return;
 		}
 
