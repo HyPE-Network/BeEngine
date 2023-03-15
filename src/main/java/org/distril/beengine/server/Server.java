@@ -12,13 +12,16 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.distril.beengine.Bootstrap;
 import org.distril.beengine.command.CommandRegistry;
 import org.distril.beengine.command.CommandSender;
-import org.distril.beengine.console.Console;
+import org.distril.beengine.material.block.BlockRegistry;
 import org.distril.beengine.material.item.ItemRegistry;
 import org.distril.beengine.network.Network;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.player.data.provider.NBTPlayerDataProvider;
 import org.distril.beengine.player.data.provider.PlayerDataProvider;
 import org.distril.beengine.scheduler.Scheduler;
+import org.distril.beengine.terminal.Terminal;
+import org.distril.beengine.util.Utils;
+import org.distril.beengine.world.WorldRegistry;
 
 import java.io.IOException;
 import java.nio.file.Files;
