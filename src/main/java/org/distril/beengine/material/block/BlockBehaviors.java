@@ -5,7 +5,7 @@ import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
 import org.distril.beengine.util.Direction;
 
-public interface BlockBehavior {
+public interface BlockBehaviors {
 
 	default boolean onPlace(Item item, Block target, Direction blockFace, Vector3f clickPosition, Player player) {
 		return true;

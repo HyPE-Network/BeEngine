@@ -11,7 +11,7 @@ import java.util.Objects;
 
 @Getter
 @Setter
-public abstract class Block implements Cloneable, BlockBehavior {
+public abstract class Block implements Cloneable, BlockBehaviors {
 
 	private final Material material;
 

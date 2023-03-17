@@ -3,6 +3,7 @@ package org.distril.beengine.inventory;
 import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket;
 import com.nukkitx.protocol.bedrock.packet.InventoryContentPacket;
 import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket;
+import lombok.AccessLevel;
 import lombok.Getter;
 import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.Item;
@@ -13,7 +14,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Getter
 public abstract class Inventory {
@@ -27,6 +27,7 @@ public abstract class Inventory {
 
 	private final Item[] items;
 
+	@Getter(AccessLevel.PROTECTED)
 	private final int id;
 
 	public Inventory(InventoryHolder holder, InventoryType type) {
@@ -38,17 +39,11 @@ public abstract class Inventory {
 		this.type = type;
 		this.items = new Item[type.getSize()];
 
-		Arrays.fill(this.items, Item.AIR);
-
 		if (overrideId != null) {
 			this.id = overrideId;
 		} else {
 			this.id = NEXT_ID.incrementAndGet();
 		}
-	}
-
-	protected int getId() {
-		return this.id;
 	}
 
 	public boolean setItem(int slot, Item item) {
@@ -60,7 +55,7 @@ public abstract class Inventory {
 			return false;
 		}
 
-		this.items[slot] = ItemUtils.getAirIfNull(item);
+		this.items[slot] = item;
 
 		if (send) {
 			this.onSlotChange(slot);
@@ -71,15 +66,15 @@ public abstract class Inventory {
 
 	public Item getItem(int slot) {
 		if (slot < 0 || slot >= this.items.length) {
-			return Item.AIR;
+			return Material.AIR.getItem();
 		}
 
-		return this.items[slot];
+		return ItemUtils.getAirIfNull(this.items[slot]);
 	}
 
 	public void addItem(Item item) {
 		for (int slot = 0; slot < this.items.length; slot++) {
-			if (this.items[slot].getMaterial() == Material.AIR) {
+			if (this.items[slot] == null) {
 				this.setItem(slot, item);
 
 				return;
@@ -92,7 +87,7 @@ public abstract class Inventory {
 	}
 
 	public void clear(boolean send) {
-		Arrays.fill(this.items, Item.AIR);
+		Arrays.fill(this.items, null);
 
 		if (send) {
 			this.sendSlots();
@@ -122,7 +117,7 @@ public abstract class Inventory {
 	}
 
 	protected void onClose(Player player) {
-		ContainerClosePacket packet = new ContainerClosePacket();
+		var packet = new ContainerClosePacket();
 		packet.setId((byte) this.getId());
 		player.sendPacket(packet);
 	}
@@ -143,16 +138,14 @@ public abstract class Inventory {
 	public void sendSlots(Player player) {
 		var packet = new InventoryContentPacket();
 		packet.setContainerId(this.getId());
-		packet.setContents(Arrays.stream(this.items).map(ItemUtils::toNetwork).collect(Collectors.toList()));
+		packet.setContents(Arrays.stream(this.items)
+				.map(item -> ItemUtils.toNetwork(ItemUtils.getAirIfNull(item)))
+				.toList());
 		player.sendPacket(packet);
 	}
 
 	public void sendSlots() {
-		var packet = new InventoryContentPacket();
-		packet.setContainerId(this.getId());
-		packet.setContents(Arrays.stream(this.items).map(ItemUtils::toNetwork).collect(Collectors.toList()));
-
-		this.viewers.forEach(viewer -> viewer.sendPacket(packet));
+		this.viewers.forEach(this::sendSlots);
 	}
 
 	public Set<Player> getViewers() {

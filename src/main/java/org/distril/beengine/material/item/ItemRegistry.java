@@ -1,6 +1,7 @@
 package org.distril.beengine.material.item;
 
 import org.distril.beengine.material.Material;
+import org.distril.beengine.material.item.impl.NoopItem;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -19,6 +20,6 @@ public class ItemRegistry {
 
 	@SuppressWarnings("unchecked")
 	public <T extends Item> T from(Material material) {
-		return (T) this.byMaterial.getOrDefault(material, ItemBuilder.builder(material).build());
+		return (T) this.byMaterial.getOrDefault(material, new NoopItem(material)).clone();
 	}
 }

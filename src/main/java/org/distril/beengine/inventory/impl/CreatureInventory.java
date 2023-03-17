@@ -17,18 +17,18 @@ import java.util.Collection;
 @Getter
 public class CreatureInventory extends Inventory {
 
-	private Item helmet = Item.AIR;
-	private Item chestplate = Item.AIR;
-	private Item leggings = Item.AIR;
-	private Item boots = Item.AIR;
+	private static final int HOTBAR_SIZE = 9;
+
+	private Item helmet, chestplate;
+	private Item leggings, boots;
 
 	private int heldItemIndex;
 
 	public CreatureInventory(InventoryHolder holder) {
-		this(holder, Integer.MIN_VALUE);
+		super(holder, null);
 	}
 
-	public CreatureInventory(InventoryHolder holder, int overrideId) {
+	public CreatureInventory(InventoryHolder holder, Integer overrideId) {
 		super(holder, InventoryType.PLAYER, overrideId);
 	}
 
@@ -53,7 +53,7 @@ public class CreatureInventory extends Inventory {
 	}
 
 	public void setHeldItemIndex(int heldItemIndex) {
-		if (heldItemIndex >= 0 && heldItemIndex <= this.getType().getSize()) {
+		if (heldItemIndex >= 0 && heldItemIndex <= HOTBAR_SIZE) {
 			this.heldItemIndex = heldItemIndex;
 			this.sendHeldItem(this.getHolder().getViewers());
 		}
@@ -81,7 +81,7 @@ public class CreatureInventory extends Inventory {
 
 	@Override
 	protected void onOpen(Player player) {
-		ContainerOpenPacket packet = new ContainerOpenPacket();
+		var packet = new ContainerOpenPacket();
 		packet.setId((byte) this.getId());
 		packet.setType(this.getType().getContainerType());
 
@@ -93,22 +93,22 @@ public class CreatureInventory extends Inventory {
 	}
 
 	public void setHelmet(Item helmet) {
-		this.helmet = ItemUtils.getAirIfNull(helmet);
+		this.helmet = helmet;
 		this.sendArmor();
 	}
 
 	public void setChestplate(Item chestplate) {
-		this.chestplate = ItemUtils.getAirIfNull(chestplate);
+		this.chestplate = chestplate;
 		this.sendArmor();
 	}
 
 	public void setLeggings(Item leggings) {
-		this.leggings = ItemUtils.getAirIfNull(leggings);
+		this.leggings = leggings;
 		this.sendArmor();
 	}
 
 	public void setBoots(Item boots) {
-		this.boots = ItemUtils.getAirIfNull(boots);
+		this.boots = boots;
 		this.sendArmor();
 	}
 
