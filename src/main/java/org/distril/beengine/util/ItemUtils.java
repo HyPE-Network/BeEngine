@@ -7,7 +7,6 @@ import com.nukkitx.protocol.bedrock.data.inventory.ItemData;
 import org.distril.beengine.material.Material;
 import org.distril.beengine.material.block.BlockPalette;
 import org.distril.beengine.material.item.Item;
-import org.distril.beengine.material.item.ItemBuilder;
 import org.distril.beengine.material.item.ItemPalette;
 
 import java.io.ByteArrayInputStream;
@@ -61,7 +60,7 @@ public class ItemUtils {
 
 	public static Item getAirIfNull(Item item) {
 		if (item == null || item.getCount() <= 0) {
-			return Item.AIR;
+			return Material.AIR.getItem();
 		}
 
 		return item;
@@ -77,7 +76,7 @@ public class ItemUtils {
 				.tag(item.getNbt())
 				.canBreak(new String[0]) // todo
 				.canPlace(new String[0]) // todo
-				.blockingTicks(item.getBlockingTicks())
+				.blockingTicks(0)
 				.blockRuntimeId(item.getBlockRuntimeId())
 				.netId(item.getNetworkId())
 				.usingNetId(item.getNetworkId() != 0)
@@ -86,17 +85,14 @@ public class ItemUtils {
 
 	public static Item fromNetwork(ItemData itemData) {
 		if (itemData == null) {
-			return Item.AIR;
+			return Material.AIR.getItem();
 		}
 
-		var builder = ItemBuilder.builder(Material.fromItemRuntimeId(itemData.getId()));
-		builder.meta(itemData.getDamage());
-		builder.count(itemData.getCount());
-		builder.nbt(itemData.getTag());
-		builder.blockingTicks(itemData.getBlockingTicks());
-		builder.blockRuntimeId(itemData.getBlockRuntimeId());
-		builder.networkId(itemData.getNetId());
+		var item = Material.fromItemRuntimeId(itemData.getId()).getItem();
+		item.setMeta(itemData.getDamage());
+		item.setCount(itemData.getCount());
+		item.setNbt(itemData.getTag());
 
-		return builder.build();
+		return item;
 	}
 }

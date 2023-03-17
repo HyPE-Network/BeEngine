@@ -2,6 +2,7 @@ package org.distril.beengine.material;
 
 import lombok.Getter;
 import org.distril.beengine.material.block.Block;
+import org.distril.beengine.material.block.BlockPalette;
 import org.distril.beengine.material.block.BlockState;
 import org.distril.beengine.material.item.Item;
 import org.distril.beengine.material.item.ItemPalette;
@@ -1204,7 +1205,8 @@ public enum Material {
 	}
 
 	public static Material fromItemRuntimeId(int itemRuntimeId) {
-		return BY_RUNTIME_ID.get(itemRuntimeId);
+		var material = BY_RUNTIME_ID.get(itemRuntimeId);
+		return material == null ? AIR : material;
 	}
 
 	public static Material fromIdentifier(String identifier) {
@@ -1225,5 +1227,9 @@ public enum Material {
 
 	public <T extends Block> T getBlock(BlockState state) {
 		return Server.getInstance().getBlockRegistry().from(this, state);
+	}
+
+	public boolean isBlock() {
+		return BlockPalette.isBlock(this);
 	}
 }

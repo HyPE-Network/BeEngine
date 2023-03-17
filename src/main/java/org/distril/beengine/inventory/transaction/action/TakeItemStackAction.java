@@ -3,7 +3,6 @@ package org.distril.beengine.inventory.transaction.action;
 import com.nukkitx.protocol.bedrock.data.inventory.StackRequestSlotInfoData;
 import org.distril.beengine.inventory.transaction.ItemStackTransaction;
 import org.distril.beengine.material.Material;
-import org.distril.beengine.material.item.Item;
 import org.distril.beengine.player.Player;
 
 public class TakeItemStackAction extends MoveItemStackAction {
@@ -21,9 +20,9 @@ public class TakeItemStackAction extends MoveItemStackAction {
 		// double-click
 		if (toItem.getMaterial() != Material.AIR) {
 			// todo check count from and to items
-			toItem = toItem.incrementCount(Math.min(fromItem.getCount(), this.getCount()));
+			toItem.setCount(toItem.getCount() + Math.min(fromItem.getCount(), this.getCount()));
 
-			fromItem = Item.AIR;
+			fromItem = null;
 		}
 
 		this.setFromItem(toItem);

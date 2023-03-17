@@ -25,7 +25,9 @@ public class DestroyItemStackAction extends ItemStackAction {
 
 	@Override
 	public boolean execute(Player player) {
-		this.setFromItem(this.getFromItem().decrementCount(this.count));
+		var fromItem = this.getFromItem();
+		fromItem.setCount(fromItem.getCount() - this.count);
+		this.setFromItem(fromItem);
 		return true;
 	}
 

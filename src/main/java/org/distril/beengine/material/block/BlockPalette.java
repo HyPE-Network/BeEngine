@@ -74,4 +74,8 @@ public class BlockPalette {
 
 		return Server.getInstance().getBlockRegistry().getBlockFromState(blockStates.get(item.getMeta()));
 	}
+
+	public static boolean isBlock(Material material) {
+		return META2STATE.containsKey(material.getIdentifier());
+	}
 }

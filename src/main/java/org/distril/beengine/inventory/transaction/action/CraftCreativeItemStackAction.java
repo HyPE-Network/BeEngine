@@ -15,7 +15,13 @@ public class CraftCreativeItemStackAction extends ItemStackAction {
 
 	@Override
 	public boolean isValid(Player player) {
-		return this.getTransaction().getCreativeOutput() != null && player.isCreative();
+		var creativeOutput = this.getTransaction().getCreativeOutput();
+		if (creativeOutput != null && player.isCreative()) {
+			creativeOutput.setCount(creativeOutput.getMaxCount());
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override

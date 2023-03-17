@@ -70,11 +70,19 @@ public abstract class ItemStackAction {
 			return inventory.getItem(slot);
 		}
 
-		return Item.AIR;
+		return null;
+	}
+
+	protected Item getFromItem() {
+		return this.fromItem.clone();
 	}
 
 	protected void setFromItem(Item item) {
 		this.getFromInventory().setItem(this.from.getSlot(), item, false);
+	}
+
+	protected Item getToItem() {
+		return this.toItem.clone();
 	}
 
 	protected void setToItem(Item item) {

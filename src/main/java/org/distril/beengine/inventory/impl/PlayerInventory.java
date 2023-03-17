@@ -50,6 +50,11 @@ public class PlayerInventory extends CreatureInventory {
 	}
 
 	@Override
+	public boolean closeFor(Player player) {
+		return super.closeFor(player);
+	}
+
+	@Override
 	public void sendSlots(Player player) {
 		super.sendSlots(player);
 
