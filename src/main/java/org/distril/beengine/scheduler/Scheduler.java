@@ -6,17 +6,16 @@ import org.distril.beengine.scheduler.task.RunnableTask;
 import org.distril.beengine.scheduler.task.Task;
 import org.distril.beengine.scheduler.task.TaskEntry;
 
-import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 public class Scheduler {
 
-	private static final Comparator<TaskEntry> COMPARATOR = Comparator.comparing(TaskEntry::getNextRunTick).reversed();
 	private static final ForkJoinPool POOL = ForkJoinPool.commonPool();
 
-	private final PriorityQueue<TaskEntry> queue = new PriorityQueue<>(COMPARATOR);
+	private final Queue<TaskEntry> queue = new ArrayDeque<>();
 
 	private long lastUpdateTick;
 
@@ -96,6 +95,7 @@ public class Scheduler {
 			return this;
 		}
 
+		@SuppressWarnings("UnusedReturnValue")
 		public Task schedule() {
 			this.scheduler.addInQueue(new TaskEntry(this.task, this.delay, this.period, this.async));
 
