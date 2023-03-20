@@ -143,7 +143,7 @@ public class Chunk {
 		return this.loaders.isEmpty();
 	}
 
-	public LevelChunkPacket createPacket() {
+	public synchronized LevelChunkPacket createPacket() {
 		var packet = new LevelChunkPacket();
 		packet.setChunkX(this.x);
 		packet.setChunkZ(this.z);

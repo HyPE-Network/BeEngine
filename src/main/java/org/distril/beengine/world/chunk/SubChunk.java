@@ -28,7 +28,7 @@ public class SubChunk {
 		return this.layers[layer].get(x & 0xf, y & 0xf, z & 0xf);
 	}
 
-	public void writeToNetwork(ByteBuf buffer) {
+	public synchronized void writeToNetwork(ByteBuf buffer) {
 		buffer.writeByte(VERSION);
 		buffer.writeByte(this.layers.length);
 		// buffer.writeByte(this.index);

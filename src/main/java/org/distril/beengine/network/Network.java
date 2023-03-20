@@ -14,7 +14,7 @@ public class Network implements BedrockServerEventHandler {
 
 	public static final BedrockPacketCodec CODEC = Bedrock_v567patch.BEDROCK_V567PATCH;
 
-	private static final BedrockPong PONG = new BedrockPong();
+	public static final BedrockPong PONG = new BedrockPong();
 
 	static {
 		PONG.setEdition("MCPE");
@@ -31,7 +31,7 @@ public class Network implements BedrockServerEventHandler {
 	public Network(Server server, String ip, int port) {
 		this.server = server;
 
-		InetSocketAddress bindAddress = new InetSocketAddress(ip, port);
+		var bindAddress = new InetSocketAddress(ip, port);
 		this.bedrockServer = new BedrockServer(bindAddress, Runtime.getRuntime().availableProcessors());
 		this.bedrockServer.setHandler(this);
 
@@ -74,10 +74,11 @@ public class Network implements BedrockServerEventHandler {
 	public void onSessionCreation(BedrockServerSession session) {
 		session.setCompressionLevel(this.server.getSettings().getCompressionLevel());
 		session.setLogging(false);
+		session.setPacketCodec(CODEC);
 		session.setPacketHandler(new LoginPacketHandler(session, this.server));
 	}
 
 	public void stop() {
-		this.bedrockServer.close();
+		this.bedrockServer.close(true);
 	}
 }

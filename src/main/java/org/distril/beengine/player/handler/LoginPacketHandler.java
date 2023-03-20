@@ -27,20 +27,18 @@ public class LoginPacketHandler implements BedrockPacketHandler {
 
 	@Override
 	public boolean handle(RequestNetworkSettingsPacket packet) {
-		int protocolVersion = packet.getProtocolVersion();
+		var protocolVersion = packet.getProtocolVersion();
 		if (protocolVersion != Network.CODEC.getProtocolVersion()) {
-			PlayStatusPacket loginFailPacket = new PlayStatusPacket();
+			var loginFailedPacket = new PlayStatusPacket();
 			if (protocolVersion > Network.CODEC.getProtocolVersion()) {
-				loginFailPacket.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_SERVER_OLD);
+				loginFailedPacket.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_SERVER_OLD);
 			} else {
-				loginFailPacket.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_CLIENT_OLD);
+				loginFailedPacket.setStatus(PlayStatusPacket.Status.LOGIN_FAILED_CLIENT_OLD);
 			}
 
-			this.session.sendPacketImmediately(loginFailPacket);
+			this.session.sendPacketImmediately(loginFailedPacket);
 			return true;
 		}
-
-		this.session.setPacketCodec(Network.CODEC);
 
 		var networkSettingsPacket = new NetworkSettingsPacket();
 		networkSettingsPacket.setCompressionThreshold(0);
@@ -86,7 +84,7 @@ public class LoginPacketHandler implements BedrockPacketHandler {
 
 		if (!EncryptionUtils.canUseEncryption()) {
 			log.error("Packet encryption is not supported on this machine.");
-			this.session.getConnection().disconnect();
+			this.session.disconnect();
 			return true;
 		}
 
@@ -138,8 +136,6 @@ public class LoginPacketHandler implements BedrockPacketHandler {
 			var packet = new PlayStatusPacket();
 			packet.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);
 			this.session.sendPacket(packet);
-
-			this.session.sendPacket(new ResourcePacksInfoPacket()); // todo: add resource packs
 
 			this.session.setPacketHandler(new ResourcePackPacketHandler(this.server, this.session, this.loginData));
 		}

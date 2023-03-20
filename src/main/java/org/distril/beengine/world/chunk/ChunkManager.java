@@ -66,13 +66,13 @@ public class ChunkManager {
 		}
 
 		AsyncArrayValue<Boolean> futureArray = new AsyncArrayValue<>();
-		this.chunks.forEach((key, chunk) -> futureArray.add(chunk.tick().whenComplete((close, throwable) -> {
+		this.chunks.forEach((key, chunk) -> futureArray.add(chunk.tick().whenComplete((unload, throwable) -> {
 			if (throwable != null) {
 				log.error("Error when ticking chunk {}", chunk, throwable);
 				return;
 			}
 
-			if (close) {
+			if (unload) {
 				this.unloadChunk(key, true, false);
 			}
 		})));

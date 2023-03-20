@@ -202,7 +202,7 @@ public class PlayerChunkManager {
 		this.setRadius(chunkRadius << 4);
 	}
 
-	public void close() {
+	public void clear() {
 		this.loadedChunks.forEach(this.removeChunkLoader);
 
 		this.loadedChunks.clear();

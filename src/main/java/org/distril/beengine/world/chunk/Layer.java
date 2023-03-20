@@ -42,12 +42,12 @@ public class Layer {
 		return (version.getBits() << 1) | (runtime ? 1 : 0);
 	}
 
-	public BlockState get(int x, int y, int z) {
+	public synchronized BlockState get(int x, int y, int z) {
 		var index = (x << 8) | (z << 4) | y;
 		return this.palette.get(this.bitArray.get(index));
 	}
 
-	public void set(int x, int y, int z, BlockState state) {
+	public synchronized void set(int x, int y, int z, BlockState state) {
 		try {
 			var index = (x << 8) | (z << 4) | y;
 			var idx = this.idFor(state);
@@ -57,7 +57,7 @@ public class Layer {
 		}
 	}
 
-	public void writeToNetwork(ByteBuf buffer) {
+	public synchronized void writeToNetwork(ByteBuf buffer) {
 		buffer.writeByte(this.getPaletteHeader(this.bitArray.getVersion(), true));
 
 		for (int word : this.bitArray.getWords()) {

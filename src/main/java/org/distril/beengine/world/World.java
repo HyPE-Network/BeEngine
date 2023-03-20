@@ -214,6 +214,11 @@ public class World extends Tickable {
 		Server.getInstance().broadcastPackets(targets, packets);
 	}
 
+	public Set<Entity> getLoadedChunkEntities(int chunkX, int chunkZ) {
+		var loadedChunk = this.chunkManager.getLoadedChunk(chunkX, chunkZ);
+		return loadedChunk != null ? loadedChunk.getEntities() : Set.of();
+	}
+
 	public Item useItemOn(Vector3i blockPosition, Item item, Direction blockFace, Vector3f clickPosition, Player player) {
 		return this.useItemOn(blockPosition, item, blockFace, clickPosition, player, true);
 	}

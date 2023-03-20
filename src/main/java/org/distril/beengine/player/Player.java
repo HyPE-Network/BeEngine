@@ -20,6 +20,7 @@ import org.distril.beengine.inventory.InventoryHolder;
 import org.distril.beengine.inventory.impl.PlayerInventory;
 import org.distril.beengine.material.Material;
 import org.distril.beengine.material.item.ItemPalette;
+import org.distril.beengine.network.Network;
 import org.distril.beengine.network.data.LoginData;
 import org.distril.beengine.player.data.GameMode;
 import org.distril.beengine.player.data.PlayerData;
@@ -28,6 +29,7 @@ import org.distril.beengine.player.data.attribute.Attributes;
 import org.distril.beengine.player.manager.PlayerChunkManager;
 import org.distril.beengine.server.Server;
 import org.distril.beengine.util.BedrockResourceLoader;
+import org.distril.beengine.util.ChunkUtils;
 import org.distril.beengine.util.ItemUtils;
 import org.distril.beengine.world.chunk.ChunkLoader;
 
@@ -77,7 +79,7 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	@Override
 	public void onUpdate(long currentTick) {
-		if (!this.loggedIn) {
+		if (!this.isConnected() || !this.loggedIn) {
 			return;
 		}
 
@@ -94,45 +96,39 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 
 	public void initialize() {
 		if (this.server.getPlayers().size() >= this.server.getSettings().getMaximumPlayers()) {
-			var packet = new PlayStatusPacket();
-			packet.setStatus(PlayStatusPacket.Status.FAILED_SERVER_FULL_SUB_CLIENT);
-			this.session.sendPacket(packet);
+			this.disconnect("disconnectionScreen.serverFull");
 			return;
 		}
 
-		// Disconnect the player's other session if they're logged in on another device
-		for (Player player : this.server.getPlayers()) {
-			if (player.getUuid().equals(this.getUuid()) || player.getXuid().equals(this.getXuid())) {
-				player.disconnect();
+		this.server.getPlayers().forEach(target -> {
+			if (target.equals(this) && target.getName().equalsIgnoreCase(this.getName()) || target.getUuidForData().equals(this.getUuidForData())) {
+				target.disconnect("disconnectionScreen.loggedinOtherLocation");
 			}
-		}
+		});
 
 		try {
 			this.data = this.server.getPlayerDataProvider().load(this.getUuidForData());
 
+			// no packet set data methods
 			this.setPitch(data.getPitch());
 			this.setYaw(data.getYaw());
 			this.setLocation(data.getLocation());
 
-			this.completePlayerInitialization();
+			this.spawn(this.getLocation());
 		} catch (IOException exception) {
 			log.error("Failed to load data of " + this.getUuidForData(), exception);
-			this.disconnect();
+			this.disconnect("Invalid data");
 		}
 	}
 
-	private void completePlayerInitialization() {
-		this.spawn(this.data.getLocation());
-
-		this.loggedIn = true;
-
+	public void completePlayerInitialization() {
 		var startGamePacket = new StartGamePacket();
 		startGamePacket.setUniqueEntityId(this.getId());
 		startGamePacket.setRuntimeEntityId(this.getId());
 		startGamePacket.setPlayerGameType(this.data.getGameMode().getType());
 		startGamePacket.setPlayerPosition(this.getPosition());
 		startGamePacket.setRotation(Vector2f.from(this.getPitch(), this.getYaw()));
-		startGamePacket.setSeed(0L);
+		startGamePacket.setSeed(-1L);
 		startGamePacket.setDimensionId(0);
 		startGamePacket.setGeneratorId(1);
 		startGamePacket.setLevelGameType(GameType.SURVIVAL);
@@ -140,10 +136,10 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setTrustingPlayers(false);
 		startGamePacket.setDefaultSpawn(Vector3i.from(0, 60, 0));
 		startGamePacket.setDayCycleStopTime(7000);
-		startGamePacket.setLevelName(this.server.getSettings().getMotd());
+		startGamePacket.setLevelName(Network.PONG.getMotd());
 		startGamePacket.setLevelId(this.getWorld().getWorldName());
 		startGamePacket.setDefaultPlayerPermission(PlayerPermission.MEMBER);
-		startGamePacket.setServerChunkTickRange(8);
+		startGamePacket.setServerChunkTickRange(4);
 		// startGamePacket.setVanillaVersion(Network.CODEC.getMinecraftVersion());
 		startGamePacket.setVanillaVersion("1.17.40");
 		startGamePacket.setPremiumWorldTemplateId("");
@@ -168,8 +164,6 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		startGamePacket.setChatRestrictionLevel(ChatRestrictionLevel.NONE);
 		this.sendPacket(startGamePacket);
 
-		this.sendPacket(ItemPalette.getCreativeContentPacket());
-
 		var biomePacket = new BiomeDefinitionListPacket();
 		biomePacket.setDefinitions(BedrockResourceLoader.BIOME_DEFINITIONS);
 		this.sendPacket(biomePacket);
@@ -177,22 +171,42 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 		var entityPacket = new AvailableEntityIdentifiersPacket();
 		entityPacket.setIdentifiers(BedrockResourceLoader.ENTITY_IDENTIFIERS);
 		this.sendPacket(entityPacket);
+
+		this.loggedIn = true;
+
+		this.attributes.sendAll();
+
+		this.server.addPlayer(this);
+		this.server.addOnlinePlayer(this);
 	}
 
 	private void doFirstSpawn() {
+		this.setSpawned(true);
+
+		this.sendData(this);
+
+		this.inventory.sendSlots(this);
+
 		var packet = new PlayStatusPacket();
 		packet.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
 		this.sendPacket(packet);
 
-		this.server.addOnlinePlayer(this);
-
 		this.sendPacket(this.server.getCommandRegistry().createPacketFor(this));
+		this.sendPacket(ItemPalette.getCreativeContentPacket());
 
-		this.attributes.sendAttributes();
+		// packet set data methods
+		this.setGameMode(this.data.getGameMode());
 
-		this.inventory.sendSlots(this);
+		this.chunkManager.getLoadedChunks().forEach(chunkKey -> {
+			var chunkX = ChunkUtils.fromKeyX(chunkKey);
+			var chunkZ = ChunkUtils.fromKeyZ(chunkKey);
 
-		this.setSpawned(true);
+			this.getWorld().getLoadedChunkEntities(chunkX, chunkZ).forEach(target -> {
+				if (!this.equals(target) && target.isSpawned() && target.isAlive()) {
+					target.spawnTo(this);
+				}
+			});
+		});
 
 		var position = this.getPosition();
 		var realAddress = this.session.getRealAddress();
@@ -218,15 +232,11 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public void setGameMode(GameMode gameMode) {
-		var currentGamemode = this.data.getGameMode();
-		if (gameMode != currentGamemode) {
+		this.data.setGameMode(gameMode);
 
-			this.data.setGameMode(gameMode);
-
-			var packet = new SetPlayerGameTypePacket();
-			packet.setGamemode(gameMode.ordinal());
-			this.sendPacket(packet);
-		}
+		var packet = new SetPlayerGameTypePacket();
+		packet.setGamemode(gameMode.ordinal());
+		this.sendPacket(packet);
 	}
 
 	public boolean isSurvival() {
@@ -265,25 +275,62 @@ public class Player extends EntityHuman implements InventoryHolder, CommandSende
 	}
 
 	public void disconnect(String reason, boolean showReason) {
-		this.server.removeOnlinePlayer(this);
-
-		if (this.isSpawned()) {
-			this.closeOpenedInventory();
-
-			super.close();
+		if (showReason && !reason.isEmpty()) {
+			var packet = new DisconnectPacket();
+			packet.setKickMessage(reason);
+			this.sendPacketImmediately(packet);
 		}
 
-		if (this.isConnected()) {
+		if (this.loggedIn) {
+			this.save();
+		}
+
+		this.closeOpenedInventory();
+
+		this.chunkManager.getLoadedChunks().forEach(chunkKey -> {
+			var chunkX = ChunkUtils.fromKeyX(chunkKey);
+			var chunkZ = ChunkUtils.fromKeyZ(chunkKey);
+
+			this.getWorld().getLoadedChunkEntities(chunkX, chunkZ).forEach(target -> {
+				if (!target.equals(this)) {
+					target.despawnFrom(this);
+				}
+			});
+		});
+
+		super.close();
+
+		if (!this.session.isClosed()) {
 			this.session.disconnect(showReason ? reason : "");
 		}
 
-		this.chunkManager.close();
-
-		if (this.data != null) {
-			this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data);
+		if (this.loggedIn) {
+			this.server.removeOnlinePlayer(this);
 		}
 
+		this.loggedIn = false;
+
+		this.chunkManager.clear();
+
+		this.server.removePlayer(this);
+
 		log.info("{} logged out due to {}", this.getName(), reason);
+	}
+
+	public void save() {
+		this.save(false);
+	}
+
+	public void save(boolean async) {
+		if (!this.isSpawned()) {
+			throw new IllegalStateException("Tried to save closed player: " + this.getName());
+		}
+
+		if (this.loggedIn && !this.getName().isEmpty()) {
+			this.server.getScheduler().prepareTask(() ->
+					this.server.getPlayerDataProvider().save(this.getUuidForData(), this.data)
+			).async(async).schedule();
+		}
 	}
 
 	public void openInventory(Inventory inventory) {

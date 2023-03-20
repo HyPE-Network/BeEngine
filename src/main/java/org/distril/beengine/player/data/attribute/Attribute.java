@@ -19,7 +19,7 @@ public class Attribute {
 		this.defaultValue = this.value = defaultValue;
 	}
 
-	public Attribute setMinValue(float minValue) {
+	public Attribute minValue(float minValue) {
 		if (minValue > this.maxValue) {
 			minValue = this.maxValue;
 		}
@@ -28,7 +28,7 @@ public class Attribute {
 		return this;
 	}
 
-	public Attribute setMaxValue(float maxValue) {
+	public Attribute maxValue(float maxValue) {
 		if (maxValue < this.minValue) {
 			maxValue = this.minValue;
 		}
@@ -37,7 +37,7 @@ public class Attribute {
 		return this;
 	}
 
-	public Attribute setDefaultValue(float defaultValue) {
+	public Attribute defaultValue(float defaultValue) {
 		if (defaultValue > this.maxValue) {
 			defaultValue = this.maxValue;
 		} else if (defaultValue < this.minValue) {
@@ -48,7 +48,7 @@ public class Attribute {
 		return this;
 	}
 
-	public Attribute setValue(float value) {
+	public Attribute value(float value) {
 		if (value > this.maxValue) {
 			value = this.maxValue;
 		} else if (value < this.minValue) {
@@ -65,7 +65,7 @@ public class Attribute {
 
 	@SuppressWarnings("MethodDoesntCallSuperMethod")
 	public Attribute clone() {
-		return new Attribute(this.type, this.minValue, this.maxValue, this.defaultValue).setValue(this.value);
+		return new Attribute(this.type, this.minValue, this.maxValue, this.defaultValue).value(this.value);
 	}
 
 	@Getter

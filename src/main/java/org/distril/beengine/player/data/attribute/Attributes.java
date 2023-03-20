@@ -29,10 +29,10 @@ public class Attributes {
 		this.attributes.put(Attribute.Type.LUCK, new Attribute(Attribute.Type.LUCK, -1024f, 1024f, 0f));
 	}
 
-	public void sendAttributes() {
+	public void sendAll() {
 		this.setAttribute(this.getAttribute(Attribute.Type.HEALTH)
-				.setMaxValue(this.player.getMaxHealth())
-				.setValue(this.player.getHealth()));
+				.maxValue(this.player.getMaxHealth())
+				.value(this.player.getHealth()));
 		// todo: HUNGER
 		// todo: MOVEMENT_SPEED
 		// todo: LEVEL

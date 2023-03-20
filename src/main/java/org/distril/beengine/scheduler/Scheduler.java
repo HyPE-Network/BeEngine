@@ -28,14 +28,20 @@ public class Scheduler {
 		return new TaskBuilder(this, task);
 	}
 
-	public void processTick(long currentTick) {
+	public synchronized void processTick(long currentTick) {
 		this.lastUpdateTick = currentTick;
-		while (!this.queue.isEmpty() && this.queue.peek().getNextRunTick() <= currentTick) {
+		TaskEntry peek;
+		while (!this.queue.isEmpty() && (peek = this.queue.peek()) != null && peek.getNextRunTick() <= currentTick) {
 			var taskEntry = this.queue.poll();
 			if (!taskEntry.isCancelled()) {
 				var task = taskEntry.getTask();
 				if (taskEntry.isAsync()) {
-					POOL.submit(task::onRun);
+					POOL.submit(() -> {
+						var thread = Thread.currentThread();
+						thread.setName("BeEngine Scheduler #" + thread.getId());
+
+						task.onRun();
+					});
 				} else {
 					task.onRun();
 				}
@@ -47,17 +53,17 @@ public class Scheduler {
 		}
 	}
 
-	protected void addInQueue(TaskEntry entry) {
+	protected synchronized void addInQueue(TaskEntry entry) {
 		if (entry.isRepeating()) {
 			entry.setNextRunTick(this.lastUpdateTick + entry.getPeriod());
 		} else {
 			entry.setNextRunTick(this.lastUpdateTick + entry.getDelay());
 		}
 
-		this.queue.add(entry);
+		this.queue.offer(entry);
 	}
 
-	public void cancelAllTasks() {
+	public synchronized void cancelAllTasks() {
 		this.queue.forEach(entry -> entry.getTask().cancel());
 		this.queue.clear();
 
