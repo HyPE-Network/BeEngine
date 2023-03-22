@@ -51,7 +51,8 @@ application {
 tasks {
 	compileJava {
 		options.encoding = Charsets.UTF_8.name()
-		options.compilerArgs.add("--enable-preview")
+		options.compilerArgs.addAll(arrayOf("--enable-preview", "-Xlint:unchecked", "-Xlint:deprecation"))
+		options.isIncremental = true
 	}
 
 	shadowJar {
