@@ -3,6 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCach
 @Suppress("DSL_SCOPE_VIOLATION") // https://youtrack.jetbrains.com/issue/IDEA-262280
 
 plugins {
+	kotlin("jvm") version "1.8.10"
 	id("java-library")
 	id("maven-publish")
 	id("application")
@@ -20,16 +21,16 @@ repositories {
 }
 
 dependencies {
-	api(libs.network) {
-		exclude("org.checkerframework", "checker-qual")
-	}
+	implementation(libs.network) { exclude("org.checkerframework", "checker-qual") }
 
-	api(libs.gson)
-	api(libs.snakeyaml)
-	api(libs.guava)
+	implementation(libs.configurate)
 
-	api(libs.bundles.log4j)
-	api(libs.bundles.terminal) {
+	implementation(libs.gson)
+	implementation(libs.guava)
+	implementation(libs.coroutines)
+
+	implementation(libs.bundles.log4j)
+	implementation(libs.bundles.terminal) {
 		exclude("org.jline", "jline-reader")
 		exclude("org.apache.logging.log4j", "log4j-core")
 	}
@@ -38,15 +39,11 @@ dependencies {
 	annotationProcessor(libs.lombok)
 }
 
-java {
-	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(17))
-	}
-}
+kotlin { jvmToolchain(17) }
 
-application {
-	mainClass.set("org.distril.beengine.Bootstrap")
-}
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
+
+application { mainClass.set("org.distril.beengine.BootstrapKt") }
 
 tasks {
 	compileJava {

@@ -5,6 +5,10 @@ server:
   enable-encryption: true
   debug: false
 
+scheduler:
+  # In millis
+  timeout: 5000
+
 network:
   ip: "0.0.0.0"
   port: 19132
