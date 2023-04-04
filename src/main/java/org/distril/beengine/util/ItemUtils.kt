@@ -46,7 +46,7 @@ object ItemUtils {
 		NbtUtils.createReaderLE(ByteArrayInputStream(nbtData)).use { return it.readTag() as NbtMap }
 	}
 
-	fun getAirIfNull(item: Item?): Item = if (item == null || item.count <= 0) Material.AIR.getItem() else item
+	fun getAirIfNull(item: Item?): Item = if (item == null || item.count <= 0) Item.AIR else item
 
 	fun toNetwork(item: Item): ItemData {
 		return ItemData.builder()
@@ -64,7 +64,7 @@ object ItemUtils {
 	}
 
 	fun fromNetwork(itemData: ItemData?): Item {
-		if (itemData == null) return Material.AIR.getItem()
+		if (itemData == null) return Item.AIR
 
 		return Material.fromItemRuntimeId(itemData.id).getItem<Item>().apply {
 			meta = itemData.damage

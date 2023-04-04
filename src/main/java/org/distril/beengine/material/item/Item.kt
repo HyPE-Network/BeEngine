@@ -83,6 +83,9 @@ abstract class Item(val material: Material) : Cloneable, ItemBehaviors {
 
 	companion object {
 
+		val AIR = Material.AIR.getItem<Item>()
+			get() = field.clone()
+
 		private val NEXT_NETWORK_ID = AtomicInteger(0)
 	}
 }

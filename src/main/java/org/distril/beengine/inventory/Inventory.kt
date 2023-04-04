@@ -3,7 +3,6 @@ package org.distril.beengine.inventory
 import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket
 import com.nukkitx.protocol.bedrock.packet.InventoryContentPacket
 import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket
-import org.distril.beengine.material.Material
 import org.distril.beengine.material.item.Item
 import org.distril.beengine.player.Player
 import org.distril.beengine.util.ItemUtils
@@ -35,7 +34,7 @@ abstract class Inventory(
 	}
 
 	open fun getItem(slot: Int): Item {
-		return if (slot < 0 || slot >= this.items.size) Material.AIR.getItem()
+		return if (slot < 0 || slot >= this.items.size) Item.AIR
 		else ItemUtils.getAirIfNull(this.items[slot])
 	}
 
