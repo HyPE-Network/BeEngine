@@ -117,7 +117,7 @@ class PlayerChunkManager(val player: Player) {
 		if (loadedChunksChanged || chunksToLoad.isNotEmpty()) {
 			val packet = NetworkChunkPublisherUpdatePacket()
 			packet.position = this.player.position.toInt()
-			packet.radius = this.radius
+			packet.radius = this.radius shl 4
 
 			this.player.sendPacket(packet)
 		}

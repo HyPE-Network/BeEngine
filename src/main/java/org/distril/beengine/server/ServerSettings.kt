@@ -19,7 +19,7 @@ class ServerSettings(path: Path) {
 		try {
 			this.config = this.loader.load()
 		} catch (exception: IOException) {
-			throw RuntimeException("An error occurred while loading ServerSettings configuration: ${exception.message}")
+			throw RuntimeException("An error occurred while loading ServerSettings configuration:", exception)
 		}
 	}
 

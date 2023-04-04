@@ -42,6 +42,7 @@ object Server {
 
 	var settings: ServerSettings
 		private set
+
 	val scheduler: Scheduler
 
 	val network: Network

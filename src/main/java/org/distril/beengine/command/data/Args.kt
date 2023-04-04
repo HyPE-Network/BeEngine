@@ -22,10 +22,7 @@ class Args(private val args: Map<String, String>) {
 	fun getTarget(key: String): Player? {
 		val username = this.getString(key)!!
 
-		val players = Server.players
-		if (username == "@r") {
-			return players.stream().toList()[Random().nextInt(players.size)]
-		}
+		if (username == "@r") return Server.players.toList()[Random().nextInt(Server.players.size)]
 
 		return Server.getPlayer(username)
 	}

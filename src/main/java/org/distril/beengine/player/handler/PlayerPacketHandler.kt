@@ -23,6 +23,28 @@ class PlayerPacketHandler(private val player: Player) : BedrockPacketHandler {
 		return true
 	}
 
+	override fun handle(packet: MovePlayerPacket): Boolean {
+		if (!this.player.isSpawned) return true
+
+		val to = packet.position.sub(0f, this.player.eyeHeight, 0f)
+		val from = this.player.position
+
+		val pitch = packet.rotation.x % 360
+		var yaw = packet.rotation.y % 360
+		if (yaw < 0) yaw += 360f
+
+		val distance = to.distanceSquared(from)
+		if (distance == 0f && pitch == this.player.pitch && yaw == this.player.yaw) {
+			return true
+		}
+
+		this.player.setRotation(pitch, yaw)
+		this.player.position = to
+
+		// player.sendPosition(MovePlayerPacket.Mode.NORMAL);
+		return true
+	}
+
 	override fun handle(packet: RequestChunkRadiusPacket): Boolean {
 		this.player.chunkManager.radius = packet.radius
 		return true
