@@ -19,6 +19,7 @@ open class CreatureInventory(
 	override val holder = super.holder as EntityCreature
 
 	var helmet: Item? = null
+		get() = ItemUtils.getAirIfNull(field)
 		set(value) {
 			field = value
 
@@ -26,6 +27,7 @@ open class CreatureInventory(
 		}
 
 	var chestplate: Item? = null
+		get() = ItemUtils.getAirIfNull(field)
 		set(value) {
 			field = value
 
@@ -33,6 +35,7 @@ open class CreatureInventory(
 		}
 
 	var leggings: Item? = null
+		get() = ItemUtils.getAirIfNull(field)
 		set(value) {
 			field = value
 
@@ -40,6 +43,7 @@ open class CreatureInventory(
 		}
 
 	var boots: Item? = null
+		get() = ItemUtils.getAirIfNull(field)
 		set(value) {
 			field = value
 

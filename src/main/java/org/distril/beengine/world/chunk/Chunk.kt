@@ -18,10 +18,8 @@ class Chunk(val x: Int, val z: Int) {
 	val subChunks = arrayOfNulls<SubChunk>(SubChunk.COUNT)
 
 	val entities = Collections.newSetFromMap(ConcurrentHashMap<Entity, Boolean>())
-		get() = HashSet(field)
 
 	val loaders = mutableSetOf<ChunkLoader>()
-		get() = HashSet(field)
 
 	private var expiryTime: Int = 0
 

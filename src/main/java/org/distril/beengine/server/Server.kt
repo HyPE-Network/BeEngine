@@ -38,9 +38,10 @@ object Server {
 	var isRunning = true
 		private set
 
-	val terminal: Terminal
+	val terminal = Terminal()
 
 	var settings: ServerSettings
+		private set
 	val scheduler: Scheduler
 
 	val network: Network
@@ -55,7 +56,6 @@ object Server {
 	val worldRegistry = WorldRegistry()
 
 	val players: MutableSet<Player> = Collections.newSetFromMap(ConcurrentHashMap())
-		get() = HashSet(field)
 
 	var playerDataProvider: PlayerDataProvider = NBTPlayerDataProvider()
 
@@ -82,7 +82,6 @@ object Server {
 			context.updateLoggers()
 		}
 
-		this.terminal = Terminal()
 		this.network = Network(this.settings.ip, this.settings.port)
 
 		Utils.createDirectories("players")
@@ -92,13 +91,15 @@ object Server {
 		this.terminal.start()
 		log.info("Starting server...")
 
-		BlockPalette.init()
-		ItemPalette.init()
-
-		this.itemRegistry = ItemRegistry()
-		this.blockRegistry = BlockRegistry()
-
 		runBlocking {
+			val blockPaletteDeferred = async { BlockPalette.init() }
+			val itemPaletteDeferred = async { ItemPalette.init() }
+			blockPaletteDeferred.await()
+			itemPaletteDeferred.await()
+
+			itemRegistry = ItemRegistry()
+			blockRegistry = BlockRegistry()
+
 			val list = mutableListOf(
 				async { BedrockResourceLoader.init() },
 				async { itemRegistry.init() },
@@ -114,8 +115,6 @@ object Server {
 		} catch (exception: Exception) {
 			throw RuntimeException(exception)
 		}
-
-		log.info("Server started!")
 
 		this.startTickLoopProcessor()
 	}

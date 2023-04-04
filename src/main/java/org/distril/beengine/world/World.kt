@@ -7,6 +7,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
+import org.apache.logging.log4j.LogManager
 import org.distril.beengine.Tickable
 import org.distril.beengine.entity.Entity
 import org.distril.beengine.material.Material
@@ -28,27 +29,24 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	val path = Path.of("worlds", worldName)
 	val chunkManager = ChunkManager(this)
 	val entities: MutableMap<Long, Entity> = ConcurrentHashMap<Long, Entity>()
-		get() = HashMap(field)
 
 	init {
 		this.start()
 	}
 
-	override fun onUpdate(currentTick: Long) = runBlocking {
-		val list = mutableListOf(
-			async {
-				if (entities.isNotEmpty()) {
+	override fun onUpdate(currentTick: Long) {
+		runBlocking {
+			val list = mutableListOf(
+				async {
 					val tickedEntities = flow { entities.values.forEach { emit(it.onUpdate(currentTick)) } }
 
 					tickedEntities.collect()
-				}
-			},
-			async { chunkManager.tick() }
-		)
+				},
+				async { chunkManager.tick() }
+			)
 
-		awaitAll(*list.toTypedArray())
-
-		return@runBlocking
+			awaitAll(*list.toTypedArray())
+		}
 	}
 
 	fun addEntity(entity: Entity, addInChunk: Boolean = true) {
@@ -58,10 +56,6 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 			val location = entity.location
 			location.chunk.addEntity(entity)
 		}
-	}
-
-	fun removeEntity(entity: Entity) {
-		this.entities.remove(entity.id)
 	}
 
 	fun removeEntity(entity: Entity, removeInChunk: Boolean = true) {
@@ -192,6 +186,8 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	override fun hashCode() = Objects.hash(this.path)
 
 	companion object {
+
+		private val log = LogManager.getLogger(Player::class.java)
 
 		private const val MAX_Y = 256
 

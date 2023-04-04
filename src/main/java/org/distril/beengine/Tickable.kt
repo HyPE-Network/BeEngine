@@ -21,7 +21,6 @@ abstract class Tickable(threadName: String) : Thread("$threadName Ticker") {
 	private var maxUse = 0f
 
 	init {
-
 		Arrays.fill(this.tickAverage, 20f)
 		Arrays.fill(this.useAverage, 0f)
 	}

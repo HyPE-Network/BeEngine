@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong
 abstract class Entity(val type: EntityType) : EntityMetadata.Listener {
 
 	val viewers: MutableSet<Player> = Collections.newSetFromMap(ConcurrentHashMap())
-		get() = HashSet(field)
 
 	val id = NEXT_ID.incrementAndGet()
 

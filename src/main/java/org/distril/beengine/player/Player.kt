@@ -9,7 +9,6 @@ import com.nukkitx.protocol.bedrock.BedrockServerSession
 import com.nukkitx.protocol.bedrock.data.*
 import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlag
-import com.nukkitx.protocol.bedrock.data.skin.SerializedSkin
 import com.nukkitx.protocol.bedrock.packet.*
 import org.apache.logging.log4j.LogManager
 import org.distril.beengine.command.CommandSender
@@ -52,9 +51,9 @@ class Player(
 	val chunkManager = PlayerChunkManager(this)
 	val permissions = mutableSetOf<String>()
 
-	override var skin: SerializedSkin?
-		get() = super.skin
+	override var skin = super.skin
 		set(skin) {
+			field = skin
 			super.skin = skin
 
 			val packet = PlayerSkinPacket()
@@ -86,7 +85,9 @@ class Player(
 	override fun onUpdate(currentTick: Long) {
 		if (!this.isConnected || !this.isLoggedIn) return
 
-		if (this.isSpawned) this.chunkManager.queueNewChunks()
+		if (this.isSpawned) {
+			this.chunkManager.queueNewChunks()
+		}
 
 		this.chunkManager.sendQueued()
 		if (this.chunkManager.chunksSentCount >= 46 && !this.isSpawned) this.doFirstSpawn()
@@ -110,9 +111,8 @@ class Player(
 			// no packet set data methods
 			this.pitch = this.data.pitch
 			this.yaw = this.data.yaw
-			this.location = this.data.location
 
-			this.init(this.location)
+			this.init(this.data.location)
 		} catch (exception: IOException) {
 			log.error("Failed to load data of ${this.uuidForData}", exception)
 			this.disconnect("Invalid data")
@@ -338,7 +338,8 @@ class Player(
 
 	override fun hasPermission(permission: String) = this.permissions.contains(permission)
 
-	override var position = super.position
+	override var position: Vector3f = Vector3f.ZERO
+		get() = super.position
 		set(value) {
 			val from = this.chunk
 			val to = this.world.getChunk(position.toInt())

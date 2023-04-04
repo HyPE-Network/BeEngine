@@ -10,7 +10,6 @@ import java.util.concurrent.ThreadLocalRandom
 class ChunkManager(private val world: World) {
 
 	val chunks: MutableMap<Long, Chunk> = ConcurrentHashMap()
-		get() = HashMap(field)
 
 	fun getLoadedChunk(x: Int, z: Int) = this.getLoadedChunk(ChunkUtils.encode(x, z))
 

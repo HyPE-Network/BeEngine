@@ -8,7 +8,7 @@ import org.distril.beengine.scheduler.task.RunnableTask
 import org.distril.beengine.scheduler.task.Task
 import org.distril.beengine.scheduler.task.TaskEntry
 import java.util.*
-import java.util.concurrent.Executors
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 
 class Scheduler(private val taskTimeout: Long) {
@@ -37,9 +37,9 @@ class Scheduler(private val taskTimeout: Long) {
 							try {
 								withTimeout(taskTimeout) { task.onRun() }
 							} catch (exception: TimeoutCancellationException) {
-								log.warn("Scheduler Task timed out: ${exception.message}")
+								log.error("Scheduler Task timed out:", exception)
 							} catch (exception: Exception) {
-								log.error("Scheduler Task failed with exception: ${exception.message}")
+								log.error("Scheduler Task failed with exception:", exception)
 							}
 						}
 
@@ -86,8 +86,6 @@ class Scheduler(private val taskTimeout: Long) {
 
 		private val log = LogManager.getLogger(Scheduler::class.java)
 
-		private val POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()) {
-			Thread.currentThread().apply { name = "BeEngine Scheduler Task #" + this.id }
-		}
+		private val POOL = ForkJoinPool.commonPool()
 	}
 }

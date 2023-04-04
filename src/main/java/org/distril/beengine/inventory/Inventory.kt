@@ -17,7 +17,6 @@ abstract class Inventory(
 ) {
 
 	val viewers = mutableSetOf<Player>()
-		get() = HashSet(field)
 
 	private val items = arrayOfNulls<Item>(type.size)
 

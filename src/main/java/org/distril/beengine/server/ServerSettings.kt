@@ -23,7 +23,7 @@ class ServerSettings(path: Path) {
 		}
 	}
 
-	var motd = this.config.node("server", "max-players").string!!
+	var motd = this.config.node("server", "motd").string!!
 	var maximumPlayers = this.config.node("server", "max-players").int
 	var isXboxRequired = this.config.node("server", "xbox-require").boolean
 	var isEncryptionEnabled = this.config.node("server", "enable-encryption").boolean
