@@ -54,8 +54,8 @@ object ItemUtils {
 			.damage(item.meta)
 			.count(item.count)
 			.tag(item.nbt)
-			.canBreak(listOf<String>().toTypedArray()) // todo
-			.canPlace(listOf<String>().toTypedArray()) // todo
+			.canBreak(arrayOf<String>()) // todo
+			.canPlace(arrayOf<String>()) // todo
 			.blockingTicks(0)
 			.blockRuntimeId(item.blockRuntimeId)
 			.netId(item.networkId)
