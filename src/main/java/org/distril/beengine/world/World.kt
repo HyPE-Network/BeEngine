@@ -80,10 +80,9 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	fun getLoadedBlock(position: Vector3i) = this.getLoadedBlock(position.x, position.y, position.z)
 
 	fun getLoadedBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block? {
-		if (y >= MAX_Y || y < MIN_Y) {
-			val block = Material.AIR.getBlock<Block>()
-			block.position = Vector3i.from(x, y, z)
-			return block
+		if (y >= MAX_Y || y < MIN_Y) return Material.AIR.getBlock<Block>().apply {
+			world = this@World
+			position = Vector3i.from(x, y, z)
 		}
 
 		val chunkX = x shr 4
@@ -93,6 +92,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 
 		return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
 			world = this@World
+			position = Vector3i.from(x, y, z)
 		}
 	}
 
@@ -109,6 +109,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 
 		return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
 			world = this@World
+			position = Vector3i.from(x, y, z)
 		}
 	}
 
@@ -126,9 +127,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		val chunk = this.getChunk(x shr 4, z shr 4)
 		chunk.setBlock(x and 0xF, y, z and 0xF, layer, block)
 
-		if (send) {
-			this.sendBlocks(chunk.getPlayers(), listOf(block))
-		}
+		if (send) this.sendBlocks(chunk.getPlayers(), listOf(block))
 	}
 
 	fun sendBlocks(
@@ -166,12 +165,10 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		val replacePos = replaceBlock.position!!
 		if (replacePos.y >= MAX_Y || replacePos.y < MIN_Y) return null
 
-		val placeBlock = usedItem.toBlock<Block>()
-		if (placeBlock != null) {
-			placeBlock.world = this
-			placeBlock.position = replacePos
-			this.setBlock(replacePos, block = placeBlock)
-		}
+		usedItem.toBlock<Block>()?.apply {
+			world = this@World
+			position = replacePos
+		}?.run { setBlock(replacePos, block = this) }
 
 		return usedItem
 	}
