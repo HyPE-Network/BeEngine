@@ -15,16 +15,16 @@ abstract class ItemStackAction(
 	protected val transaction: ItemStackTransaction
 ) {
 
-	protected open var fromItem: Item?
-		get() = this.from.getItem()?.clone()
+	protected open var fromItem = this.from.getItem()
+		get() = field?.clone()
 		set(value) {
-			this.fromInventory.setItem(this.from!!.slot.toInt(), value, false)
+			this.from?.getInventory()?.setItem(this.from.slot.toInt(), value, false)
 		}
 
-	protected var toItem: Item?
-		get() = this.to.getItem()?.clone()
+	protected var toItem = this.to.getItem()
+		get() = field?.clone()
 		set(value) {
-			this.toInventory.setItem(this.to!!.slot.toInt(), value, false)
+			this.to?.getInventory()?.setItem(this.to.slot.toInt(), value, false)
 		}
 
 	abstract fun isValid(player: Player): Boolean
@@ -34,8 +34,8 @@ abstract class ItemStackAction(
 	protected abstract fun getContainers(player: Player): List<ContainerEntry>
 
 	fun onExecuteSuccess(player: Player) {
-		this.fromInventory.sendSlots(player)
-		this.toInventory.sendSlots(player)
+		this.from?.getInventory()?.sendSlots(player)
+		this.to?.getInventory()?.sendSlots(player)
 
 		this.transaction.status = ItemStackResponsePacket.ResponseStatus.OK
 		this.transaction.addContainers(this.getContainers(player))
@@ -47,12 +47,6 @@ abstract class ItemStackAction(
 		this.transaction.status = ItemStackResponsePacket.ResponseStatus.ERROR
 		this.transaction.addContainers(this.getContainers(player))
 	}
-
-	private val fromInventory: Inventory
-		get() = this.from.getInventory()
-
-	private val toInventory: Inventory
-		get() = this.to.getInventory()
 
 	protected fun StackRequestSlotInfoData.toNetwork(): ItemStackResponsePacket.ItemEntry {
 		val item = this.getItem()!!
@@ -67,16 +61,14 @@ abstract class ItemStackAction(
 		)
 	}
 
-	private fun StackRequestSlotInfoData?.getInventory(): Inventory {
-		return transaction.getInventoryByType(this!!.container)
+	private fun StackRequestSlotInfoData?.getInventory(): Inventory? {
+		if (this == null) return null
+		return transaction.getInventoryByType(this.container)
 	}
 
 	private fun StackRequestSlotInfoData?.getItem(): Item? {
 		if (this == null) return null
-
-		val inventoryByType = transaction.getInventoryByType(this.container)
-
-		return inventoryByType.getItem(this.slot.toInt())
+		return this.getInventory()?.getItem(this.slot.toInt())
 	}
 
 	companion object {

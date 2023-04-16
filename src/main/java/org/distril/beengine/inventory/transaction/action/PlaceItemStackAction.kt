@@ -13,9 +13,8 @@ class PlaceItemStackAction(
 ) : MoveItemStackAction(from, to, transaction, count, requestId) {
 
 	override fun execute(player: Player): Boolean {
-		// todo add in stack
-		this.fromItem = toItem
-		this.toItem = fromItem
+		this.fromItem = this.toItem
+		this.toItem = this.fromItem
 		return true
 	}
 }

@@ -13,12 +13,12 @@ class BlockRegistry {
 	}
 
 	fun register(material: Material, block: Block) {
-		this.byMaterial[material] = block
+		if (material.isBlock) this.byMaterial[material] = block
 	}
 
 	fun getBlockFromState(state: BlockState): Block {
 		val identifier = state.states.getString("name")
-		val material = Material.fromIdentifier(identifier)!!
+		val material = Material.fromIdentifier(identifier)
 		return this.from(material, state)
 	}
 

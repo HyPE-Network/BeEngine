@@ -3,7 +3,6 @@ package org.distril.beengine.inventory.impl
 import com.nukkitx.math.vector.Vector3i
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerId
 import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket
-import org.distril.beengine.material.item.Item
 import org.distril.beengine.player.Player
 
 class PlayerInventory(player: Player) : CreatureInventory(player, ContainerId.INVENTORY) {
@@ -18,10 +17,6 @@ class PlayerInventory(player: Player) : CreatureInventory(player, ContainerId.IN
 
 		this.cursorInventory.clear()
 	}
-
-	fun getCursorItem() = this.cursorInventory.getItem(0)
-
-	fun setCursorItem(item: Item?) = cursorInventory.setItem(0, item)
 
 	override fun onOpen(player: Player) {
 		val packet = ContainerOpenPacket()
@@ -39,5 +34,6 @@ class PlayerInventory(player: Player) : CreatureInventory(player, ContainerId.IN
 		super.sendSlots(player)
 
 		this.cursorInventory.sendSlots(player)
+		this.craftingInventory.sendSlots(player)
 	}
 }

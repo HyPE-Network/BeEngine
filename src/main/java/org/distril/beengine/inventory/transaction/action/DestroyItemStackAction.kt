@@ -14,8 +14,8 @@ class DestroyItemStackAction(
 	override fun isValid(player: Player) = this.count > 0 && player.isCreative
 
 	override fun execute(player: Player): Boolean {
-		val fromItem = fromItem
-		fromItem!!.count = fromItem.count - count
+		val fromItem = fromItem!!
+		fromItem.count = fromItem.count - count
 
 		this.fromItem = fromItem
 		return true
@@ -24,8 +24,8 @@ class DestroyItemStackAction(
 	override fun getContainers(player: Player): List<ContainerEntry> {
 		return listOf(
 			ContainerEntry(
-				this.from!!.container,
-				listOf(this.from.toNetwork())
+				this.from?.container,
+				listOf(this.from?.toNetwork())
 			)
 		)
 	}

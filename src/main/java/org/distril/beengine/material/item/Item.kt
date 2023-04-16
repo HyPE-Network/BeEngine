@@ -81,6 +81,8 @@ abstract class Item(val material: Material) : Cloneable, ItemBehaviors {
 
 	override fun hashCode() = Objects.hash(this.material, this.meta, this.count, this.nbt)
 
+	override fun toString() = this.material.toString()
+
 	companion object {
 
 		val AIR = Material.AIR.getItem<Item>()

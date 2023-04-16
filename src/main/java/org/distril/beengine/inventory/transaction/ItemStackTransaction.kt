@@ -52,6 +52,7 @@ class ItemStackTransaction(val player: Player) {
 		ContainerSlotType.OFFHAND -> player.inventory
 
 		ContainerSlotType.CURSOR -> player.inventory.cursorInventory
+
 		else -> player.openedInventory!!
 	}
 

@@ -5,6 +5,7 @@ import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket
 import com.nukkitx.protocol.bedrock.packet.NetworkChunkPublisherUpdatePacket
 import it.unimi.dsi.fastutil.longs.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
@@ -135,23 +136,20 @@ class PlayerChunkManager(val player: Player) {
 						val chunk = chunkManager.getChunk(chunkX, chunkZ)
 						chunk.addLoader(player)
 
-						emit(chunk)
+						if (!sendQueue.replace(it, null, chunk.createPacket())) {
+							if (sendQueue.containsKey(it)) {
+								log.warn(
+									"Chunk ($chunkX:$chunkZ) already loaded for ${player.name}, value ${sendQueue[it]}"
+								)
+							}
+						}
 					}
+
+					emit(null)
 				}
 			}
 
-			chunks.collect {
-				synchronized(this@PlayerChunkManager) {
-					val chunkKey = ChunkUtils.encode(it.x, it.z)
-					if (!sendQueue.replace(chunkKey, null, it.createPacket())) {
-						if (sendQueue.containsKey(chunkKey)) {
-							log.warn(
-								"Chunk (${it.x}:${it.z}) already loaded for ${player.name}, value ${sendQueue[chunkKey]}"
-							)
-						}
-					}
-				}
-			}
+			chunks.collect()
 		}
 
 		sentCopy.removeAll(chunksForRadius)
@@ -169,7 +167,7 @@ class PlayerChunkManager(val player: Player) {
 
 	companion object {
 
-		const val MAX_RADIUS = 32
+		private const val MAX_RADIUS = 32
 
 		private val log = LogManager.getLogger(PlayerChunkManager::class.java)
 	}
@@ -177,8 +175,8 @@ class PlayerChunkManager(val player: Player) {
 	class AroundPlayerChunkComparator(val player: Player) : LongComparator {
 
 		override fun compare(chunkKey1: Long, chunkKey2: Long): Int {
-			val spawnX = this.player.location.floorX shr 4
-			val spawnZ = this.player.location.floorZ shr 4
+			val spawnX = this.player.location.chunkX
+			val spawnZ = this.player.location.chunkZ
 
 			val x1 = ChunkUtils.decodeX(chunkKey1)
 			val z1 = ChunkUtils.decodeZ(chunkKey1)
@@ -191,7 +189,7 @@ class PlayerChunkManager(val player: Player) {
 		private fun distance(centerX: Int, centerZ: Int, x: Int, z: Int): Int {
 			val dx = centerX - x
 			val dz = centerZ - z
-			return dx * dx + dz * dz
+			return (dx * dx) + (dz * dz)
 		}
 	}
 }

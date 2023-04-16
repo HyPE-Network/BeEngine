@@ -17,13 +17,11 @@ abstract class Inventory(
 
 	val viewers = mutableSetOf<Player>()
 
-	private val items = arrayOfNulls<Item>(type.size)
+	val items = arrayOfNulls<Item>(type.size)
 
 	protected val id = overrideId ?: NEXT_ID.incrementAndGet()
 
-	fun setItem(slot: Int, item: Item?) = this.setItem(slot, item, true)
-
-	open fun setItem(slot: Int, item: Item?, send: Boolean): Boolean {
+	open fun setItem(slot: Int, item: Item?, send: Boolean = true): Boolean {
 		if (slot < 0 || slot >= this.items.size) return false
 
 		this.items[slot] = item
@@ -84,7 +82,7 @@ abstract class Inventory(
 		player.sendPacket(packet)
 	}
 
-	fun onSlotChange(slot: Int) = this.sendSlot(slot, *this.viewers.toTypedArray())
+	private fun onSlotChange(slot: Int) = this.sendSlot(slot, *this.viewers.toTypedArray())
 
 	protected open fun sendSlot(slot: Int, vararg players: Player) {
 		val packet = InventorySlotPacket()

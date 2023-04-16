@@ -10,9 +10,11 @@ class PlayerCursorInventory(player: Player) : Inventory(player, InventoryType.CU
 
 	override fun getItem(slot: Int) = super.getItem(0)
 
-	override fun setItem(slot: Int, item: Item?, send: Boolean) = super.setItem(0, item, send)
+	override fun setItem(slot: Int, item: Item?, send: Boolean): Boolean {
+		return super.setItem(0, item, send)
+	}
 
 	override fun sendSlot(slot: Int, vararg players: Player) = super.sendSlot(0, *players)
 
-	override fun sendSlots(player: Player) = super.sendSlot(0, player)
+	override fun sendSlots(player: Player) = this.sendSlot(0, player)
 }

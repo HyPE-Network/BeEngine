@@ -11,23 +11,23 @@ class SwapItemStackAction(
 	transaction: ItemStackTransaction
 ) : ItemStackAction(from, to, transaction) {
 
-	override fun isValid(player: Player) = !this.fromItem!!.equal(this.toItem!!)
+	override fun isValid(player: Player) = this.fromItem?.equal(this.toItem!!) == false
 
 	override fun execute(player: Player): Boolean {
-		this.fromItem = toItem
-		this.toItem = fromItem
+		this.fromItem = this.toItem
+		this.toItem = this.fromItem
 		return true
 	}
 
 	override fun getContainers(player: Player): List<ContainerEntry> {
 		return listOf(
 			ContainerEntry(
-				this.from!!.container,
-				listOf(this.from.toNetwork())
+				this.from?.container,
+				listOf(this.from?.toNetwork())
 			),
 			ContainerEntry(
-				this.to!!.container,
-				listOf(this.to.toNetwork())
+				this.to?.container,
+				listOf(this.to?.toNetwork())
 			)
 		)
 	}
