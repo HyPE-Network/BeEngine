@@ -87,8 +87,9 @@ abstract class Tickable(threadName: String) : Thread("$threadName Ticker") {
 	}
 
 	private fun FloatArray.copyAverage(value: Float) {
-		System.arraycopy(this, 1, this, 0, this.size - 1)
-		this[this.size - 1] = value
+		val size = this.size
+		for (i in 1 until size) this[i - 1] = this[i]
+		this[size - 1] = value
 	}
 
 	companion object {
