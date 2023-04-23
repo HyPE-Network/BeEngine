@@ -13,7 +13,7 @@ abstract class Block(val material: Material, state: BlockState?) : Cloneable, Bl
 	var world: World? = null
 	var position: Vector3i? = null
 
-	fun getSide(face: Direction, step: Int = 1) = this.world!!.getBlock(face.getOffset(this.position, step))
+	fun getSide(face: Direction, step: Int = 1) = this.world!!.getBlock(face.getOffset(this.position!!, step))
 
 	public override fun clone(): Block {
 		val clone = super.clone() as Block

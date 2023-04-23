@@ -13,9 +13,7 @@ object Utils {
 	fun createDirectories(first: String, vararg more: String) {
 		try {
 			val dir = Path.of(first, *more)
-			if (!Files.exists(dir)) {
-				Files.createDirectories(dir)
-			}
+			if (!Files.exists(dir)) Files.createDirectories(dir)
 		} catch (exception: IOException) {
 			throw RuntimeException(exception)
 		}

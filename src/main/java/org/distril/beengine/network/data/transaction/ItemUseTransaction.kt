@@ -35,7 +35,7 @@ class ItemUseTransaction private constructor(
 		fun read(packet: InventoryTransactionPacket): ItemUseTransaction {
 			val type = Type.fromTypeId(packet.actionType)
 			val blockPosition = packet.blockPosition
-			val blockFace = Direction.fromIndex(packet.blockFace)
+			val blockFace = Direction.fromIndex(packet.blockFace)!!
 			val hotbarSlot = packet.hotbarSlot
 			val itemInHand = ItemUtils.fromNetwork(packet.itemInHand)
 			val playerPosition = packet.playerPosition
