@@ -48,18 +48,19 @@ object ItemUtils {
 
 	fun getAirIfNull(item: Item?): Item = if (item == null || item.count <= 0) Item.AIR else item
 
-	fun toNetwork(item: Item): ItemData {
+	fun toNetwork(item: Item?): ItemData {
+		val nonNullItem = getAirIfNull(item)
 		return ItemData.builder()
-			.id(item.material.itemRuntimeId)
-			.damage(item.meta)
-			.count(item.count)
-			.tag(item.nbt)
+			.id(nonNullItem.material.itemRuntimeId)
+			.damage(nonNullItem.meta)
+			.count(nonNullItem.count)
+			.tag(nonNullItem.nbt)
 			.canBreak(arrayOf<String>()) // todo
 			.canPlace(arrayOf<String>()) // todo
 			.blockingTicks(0)
-			.blockRuntimeId(item.blockRuntimeId)
-			.netId(item.networkId)
-			.usingNetId(item.networkId != 0)
+			.blockRuntimeId(nonNullItem.blockRuntimeId)
+			.netId(nonNullItem.networkId)
+			.usingNetId(nonNullItem.networkId != 0)
 			.build()
 	}
 

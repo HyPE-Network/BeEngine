@@ -37,7 +37,7 @@ abstract class Command(
 		arguments.forEach {
 			val parser = it.parser
 			parser.optional = it.optional
-			if (parser is EnumParser) parser.setValues(it.enumData!!)
+			if (parser is EnumParser) parser.addValues(it.enumData!!)
 			parsers[it.name] = parser
 		}
 

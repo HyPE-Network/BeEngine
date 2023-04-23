@@ -90,6 +90,7 @@ class Player(
 		}
 
 		this.chunkManager.sendQueued()
+
 		if (this.chunkManager.chunksSentCount >= 46 && !this.isSpawned) this.doFirstSpawn()
 	}
 
@@ -233,7 +234,7 @@ class Player(
 
 	fun sendAttribute(attribute: Attribute) {
 		val packet = UpdateAttributesPacket()
-		packet.runtimeEntityId = id
+		packet.runtimeEntityId = this.id
 		packet.attributes.add(attribute.toNetwork())
 
 		this.sendPacket(packet)
@@ -281,7 +282,9 @@ class Player(
 		check(this.isSpawned) { "Tried to save closed player: $name" }
 
 		if (this.isLoggedIn && this.name.isNotEmpty()) {
-			Server.scheduler.scheduleTask(async = async) { Server.playerDataProvider.save(uuidForData, data) }
+			Server.scheduler.scheduleTask(async = async) {
+				Server.playerDataProvider.save(uuidForData, data)
+			}
 		}
 	}
 

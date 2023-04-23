@@ -37,7 +37,6 @@ class ServerSettings(path: Path) {
 
 	var defaultWorldName = this.config.node("world", "default").string!!
 	var chunkExpiryTime = this.config.node("world", "chunk", "expiry-time").int
-	var chunksPerTick = this.config.node("world", "chunk", "per-tick").int
 
 	fun save() {
 		try {

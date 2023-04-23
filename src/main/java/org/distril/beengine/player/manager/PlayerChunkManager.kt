@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.distril.beengine.player.Player
-import org.distril.beengine.server.Server
 import org.distril.beengine.util.ChunkUtils
 import java.util.concurrent.atomic.AtomicLong
 
@@ -29,17 +28,16 @@ class PlayerChunkManager(val player: Player) {
 	private val sendQueue: Long2ObjectMap<LevelChunkPacket> = Long2ObjectOpenHashMap()
 	private val chunksSentCounter = AtomicLong()
 
-	val loadedChunks: LongSet = LongOpenHashSet()
+	val loadedChunks = mutableSetOf<Long>()
 
 	var radius = MAX_RADIUS
 		set(value) {
 			if (field != value) {
 				field = value
 
-				val packet = ChunkRadiusUpdatedPacket()
-				packet.radius = value
-
-				this.player.sendPacket(packet)
+				this.player.sendPacket(ChunkRadiusUpdatedPacket().apply {
+					this.radius = value
+				})
 
 				this.queueNewChunks()
 			}
@@ -47,8 +45,6 @@ class PlayerChunkManager(val player: Player) {
 
 	@Synchronized
 	fun sendQueued() {
-		var chunksPerTick = Server.settings.chunksPerTick
-
 		// Remove chunks which are out of range
 		with(this.sendQueue.long2ObjectEntrySet().iterator()) {
 			forEach {
@@ -67,8 +63,7 @@ class PlayerChunkManager(val player: Player) {
 		list.unstableSort(chunkComparator)
 
 		list.forEach { chunkKey ->
-			val packet = this.sendQueue.remove(chunkKey)
-			if (chunksPerTick <= 0 || packet == null) return
+			val packet = this.sendQueue.remove(chunkKey) ?: return
 
 			this.player.sendPacket(packet)
 
@@ -85,7 +80,6 @@ class PlayerChunkManager(val player: Player) {
 			// Spawn entities
 			chunk.entities.forEach { if (it != this.player && !it.isSpawned) it.spawnFor(player) }
 
-			chunksPerTick--
 			this.chunksSentCounter.incrementAndGet()
 		}
 	}
@@ -98,12 +92,12 @@ class PlayerChunkManager(val player: Player) {
 	fun queueNewChunks(fromChunkX: Int, fromChunkZ: Int) {
 		val radiusSqr = this.radius * this.radius
 
-		val chunksForRadius = LongOpenHashSet()
+		val chunksForRadius = mutableSetOf<Long>()
 		val sentCopy = LongOpenHashSet(this.loadedChunks)
 
 		val chunksToLoad = LongArrayList()
 		for (x in -this.radius..this.radius) for (z in -this.radius..this.radius) {
-			if (x * x + z * z > radiusSqr) continue
+			if (((x * x) + (z * z)) > radiusSqr) continue
 
 			val chunkX = fromChunkX + x
 			val chunkZ = fromChunkZ + z

@@ -24,7 +24,7 @@ object ArgumentType {
 
 	fun minecraftEnum(name: String, enumType: String, optional: Boolean): CommandArgument {
 		return CommandArgument(
-			name, CommandParam.TEXT, optional, EnumParser,
+			name, CommandParam.TEXT, optional, EnumParser(),
 			CommandEnumData(enumType, Array(0) { "" }, false)
 		)
 	}

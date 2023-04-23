@@ -16,10 +16,8 @@ class CommandArgument(
 ) {
 
 	constructor(name: String, optional: Boolean, vararg values: String) : this(
-		name, CommandParam.TEXT, optional, EnumParser, CommandEnumData(name, values, false)
+		name, CommandParam.TEXT, optional, EnumParser(), CommandEnumData(name, values, false)
 	)
 
-	fun toNetwork(): CommandParamData {
-		return CommandParamData(name, optional, enumData, param, null, emptyList())
-	}
+	fun toNetwork() = CommandParamData(name, optional, enumData, param, null, emptyList())
 }

@@ -3,11 +3,11 @@ package org.distril.beengine.command.parser
 import com.nukkitx.protocol.bedrock.data.command.CommandEnumData
 import org.distril.beengine.command.CommandSender
 
-object EnumParser : Parser() {
+class EnumParser : Parser() {
 
 	private val values = mutableSetOf<String>()
 
-	fun setValues(enumData: CommandEnumData) {
+	fun addValues(enumData: CommandEnumData) {
 		this.values.addAll(listOf(*enumData.values))
 	}
 

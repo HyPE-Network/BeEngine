@@ -6,7 +6,6 @@ import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket
 import org.distril.beengine.material.item.Item
 import org.distril.beengine.player.Player
 import org.distril.beengine.util.ItemUtils
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class Inventory(
@@ -48,7 +47,7 @@ abstract class Inventory(
 	open fun clear() = this.clear(true)
 
 	fun clear(send: Boolean) {
-		Arrays.fill(this.items, null)
+		this.items.fill(null)
 
 		if (send) this.sendSlots()
 	}
@@ -96,7 +95,7 @@ abstract class Inventory(
 	open fun sendSlots(player: Player) {
 		val packet = InventoryContentPacket()
 		packet.containerId = this.id
-		packet.contents = this.items.map { ItemUtils.toNetwork(ItemUtils.getAirIfNull(it)) }
+		packet.contents = this.items.map { ItemUtils.toNetwork(it) }
 
 		player.sendPacket(packet)
 	}

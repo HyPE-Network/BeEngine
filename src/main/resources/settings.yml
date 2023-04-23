@@ -1,5 +1,5 @@
 server:
-  motd: "BeEngine is Good :)"
+  motd: BeEngine is Good :)
   max-players: 100
   xbox-require: true
   enable-encryption: true
@@ -10,7 +10,7 @@ scheduler:
   timeout: 5000
 
 network:
-  ip: "0.0.0.0"
+  ip: 0.0.0.0
   port: 19132
 
   compression-level: 7
@@ -21,4 +21,3 @@ world:
   chunk:
     # In seconds
     expiry-time: 60
-    per-tick: 16

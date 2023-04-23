@@ -1,16 +1,14 @@
 package org.distril.beengine
 
 import org.apache.logging.log4j.LogManager
-import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 import kotlin.math.min
 
 abstract class Tickable(threadName: String) : Thread("$threadName Ticker") {
 
-	private val running = AtomicBoolean(true)
+	private var running = true
 
-	private val tickAverage = FloatArray(20)
+	private val tickAverage = FloatArray(20) { 20F }
 
 	private val useAverage = FloatArray(20)
 	private var nextTick: Long = 0
@@ -20,15 +18,10 @@ abstract class Tickable(threadName: String) : Thread("$threadName Ticker") {
 
 	private var maxUse = 0f
 
-	init {
-		Arrays.fill(this.tickAverage, 20f)
-		Arrays.fill(this.useAverage, 0f)
-	}
-
 	override fun run() {
 		this.nextTick = System.currentTimeMillis()
 		try {
-			while (this.running.get()) {
+			while (this.running) {
 				try {
 					this.tick()
 
@@ -72,16 +65,11 @@ abstract class Tickable(threadName: String) : Thread("$threadName Ticker") {
 		this.onUpdate(currentTick)
 
 		val nowNano = System.nanoTime()
-		val tick = min(20.0, 1000000000 / max(1000000.0, nowNano.toDouble() - tickTimeNano)).toFloat()
-		val use = min(1.0, (nowNano - tickTimeNano).toDouble() / 50000000).toFloat()
+		val tick = min(20.0, 1_000_000_000 / max(1_000_000.0, nowNano.toDouble() - tickTimeNano)).toFloat()
+		val use = min(1.0, (nowNano - tickTimeNano).toDouble() / 50_000_000).toFloat()
 
-		if (this.maxTick > tick) {
-			this.maxTick = tick
-		}
-
-		if (this.maxUse < use) {
-			this.maxUse = use
-		}
+		if (this.maxTick > tick) this.maxTick = tick
+		if (this.maxUse < use) this.maxUse = use
 
 		this.tickAverage.copyAverage(tick)
 		this.useAverage.copyAverage(use)
@@ -94,7 +82,7 @@ abstract class Tickable(threadName: String) : Thread("$threadName Ticker") {
 	}
 
 	protected fun stopTicking() {
-		this.running.set(false)
+		this.running = false
 		this.interrupt()
 	}
 
