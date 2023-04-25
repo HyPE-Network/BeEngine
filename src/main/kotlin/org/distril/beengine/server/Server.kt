@@ -93,22 +93,18 @@ object Server {
 		log.info("Starting server...")
 
 		runBlocking {
-			val blockPaletteDeferred = async { BlockPalette.init() }
-			val itemPaletteDeferred = async { ItemPalette.init() }
-			blockPaletteDeferred.await()
-			itemPaletteDeferred.await()
+			async { BlockPalette.init() }.await()
+			async { ItemPalette.init() }.await()
 
 			itemRegistry = ItemRegistry()
 			blockRegistry = BlockRegistry()
 
-			val list = mutableListOf(
+			awaitAll(*mutableListOf(
 				async { BedrockResourceLoader.init() },
 				async { itemRegistry.init() },
 				async { blockRegistry.init() },
 				async { worldRegistry.init() }
-			)
-
-			awaitAll(*list.toTypedArray())
+			).toTypedArray())
 		}
 
 		try {

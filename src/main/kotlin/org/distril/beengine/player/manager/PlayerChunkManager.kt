@@ -5,6 +5,8 @@ import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket
 import com.nukkitx.protocol.bedrock.packet.NetworkChunkPublisherUpdatePacket
 import it.unimi.dsi.fastutil.longs.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
@@ -12,6 +14,7 @@ import org.apache.logging.log4j.LogManager
 import org.distril.beengine.player.Player
 import org.distril.beengine.util.ChunkUtils
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.CoroutineContext
 
 class PlayerChunkManager(val player: Player) {
 
@@ -121,30 +124,29 @@ class PlayerChunkManager(val player: Player) {
 		chunksToLoad.sort(this.chunkComparator)
 
 		val chunkManager = this.player.world.chunkManager
-		runBlocking {
-			val chunks = flow {
-				chunksToLoad.forEach {
-					val chunkX = ChunkUtils.decodeX(it)
-					val chunkZ = ChunkUtils.decodeZ(it)
-					if (sendQueue.putIfAbsent(it, null) == null) {
-						val chunk = chunkManager.getChunk(chunkX, chunkZ)
-						chunk.addLoader(player)
 
-						if (!sendQueue.replace(it, null, chunk.createPacket())) {
-							if (sendQueue.containsKey(it)) {
-								log.warn(
-									"Chunk ($chunkX:$chunkZ) already loaded for ${player.name}, value ${sendQueue[it]}"
-								)
-							}
+		val chunks = flow {
+			chunksToLoad.forEach {
+				val chunkX = ChunkUtils.decodeX(it)
+				val chunkZ = ChunkUtils.decodeZ(it)
+				if (sendQueue.putIfAbsent(it, null) == null) {
+					val chunk = chunkManager.getChunk(chunkX, chunkZ)
+					chunk.addLoader(player)
+
+					if (!sendQueue.replace(it, null, chunk.createPacket())) {
+						if (sendQueue.containsKey(it)) {
+							log.warn(
+								"Chunk ($chunkX:$chunkZ) already loaded for ${player.name}, value ${sendQueue[it]}"
+							)
 						}
 					}
-
-					emit(null)
 				}
-			}
 
-			chunks.collect()
+				emit(null)
+			}
 		}
+
+		runBlocking(Dispatchers.IO) { chunks.collect() }
 
 		sentCopy.removeAll(chunksForRadius)
 		// Remove player from chunk loaders
@@ -164,6 +166,11 @@ class PlayerChunkManager(val player: Player) {
 		private const val MAX_RADIUS = 32
 
 		private val log = LogManager.getLogger(PlayerChunkManager::class.java)
+
+		private val job = Job()
+
+		private val coroutineContext: CoroutineContext
+			get() = Dispatchers.IO + job
 	}
 
 	class AroundPlayerChunkComparator(val player: Player) : LongComparator {

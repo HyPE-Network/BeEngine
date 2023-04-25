@@ -80,7 +80,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	fun getLoadedBlock(position: Vector3i) = this.getLoadedBlock(position.x, position.y, position.z)
 
 	fun getLoadedBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block? {
-		if (y >= MAX_Y || y < MIN_Y) return Material.AIR.getBlock<Block>().apply {
+		if (y >= this.dimension.maxY || y < this.dimension.minY) return Material.AIR.getBlock<Block>().apply {
 			world = this@World
 			position = Vector3i.from(x, y, z)
 		}
@@ -122,7 +122,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	}
 
 	fun setBlock(x: Int, y: Int, z: Int, layer: Int = 0, block: Block, send: Boolean = true) {
-		if (y >= MAX_Y || y < MIN_Y) return
+		if (y >= this.dimension.maxY || y < this.dimension.minY) return
 
 		val chunk = this.getChunk(x shr 4, z shr 4)
 		chunk.setBlock(x and 0xF, y, z and 0xF, layer, block)
@@ -163,14 +163,16 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		val replaceBlock = clickedBlock.getSide(clickedBlockFace)
 
 		val replacePos = replaceBlock.position!!
-		if (replacePos.y >= MAX_Y || replacePos.y < MIN_Y) return null
+		if (replacePos.y < this.dimension.maxY && replacePos.y >= this.dimension.minY) {
+			usedItem.toBlock<Block>()?.apply {
+				world = this@World
+				position = replacePos
+			}?.run { setBlock(replacePos, block = this) }
 
-		usedItem.toBlock<Block>()?.apply {
-			world = this@World
-			position = replacePos
-		}?.run { setBlock(replacePos, block = this) }
+			return usedItem
+		}
 
-		return usedItem
+		return null
 	}
 
 	override fun equals(other: Any?): Boolean {
@@ -185,9 +187,5 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	companion object {
 
 		private val log = LogManager.getLogger(Player::class.java)
-
-		private const val MAX_Y = 256
-
-		private const val MIN_Y = 0
 	}
 }
