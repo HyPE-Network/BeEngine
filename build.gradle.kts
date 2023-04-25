@@ -3,9 +3,8 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCach
 @Suppress("DSL_SCOPE_VIOLATION") // https://youtrack.jetbrains.com/issue/IDEA-262280
 
 plugins {
-	kotlin("jvm") version "1.8.10"
+	kotlin("jvm") version "1.8.21"
 	id("java-library")
-	id("maven-publish")
 	id("application")
 	alias(libs.plugins.shadow)
 }
@@ -34,9 +33,6 @@ dependencies {
 		exclude("org.jline", "jline-reader")
 		exclude("org.apache.logging.log4j", "log4j-core")
 	}
-
-	compileOnly(libs.lombok)
-	annotationProcessor(libs.lombok)
 }
 
 kotlin { jvmToolchain(17) }
@@ -48,7 +44,7 @@ application { mainClass.set("org.distril.beengine.BootstrapKt") }
 tasks {
 	compileJava {
 		options.encoding = Charsets.UTF_8.name()
-		options.compilerArgs.addAll(arrayOf("--enable-preview", "-Xlint:unchecked", "-Xlint:deprecation"))
+		options.compilerArgs.addAll(arrayOf("-Xlint:unchecked", "-Xlint:deprecation"))
 		options.isIncremental = true
 	}
 
