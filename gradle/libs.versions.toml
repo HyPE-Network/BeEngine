@@ -26,7 +26,7 @@ terminalconsoleappender = { group = "net.minecrell", name = "terminalconsoleappe
 gson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }
 
 # Config
-configurate = { group = "org.spongepowered", name = "configurate-yaml", version = "4.0.0" }
+configurate = { group = "org.spongepowered", name = "configurate-yaml", version = "4.1.2" }
 
 # Other
 guava = { group = "com.google.guava", name = "guava", version = "31.1-jre" }
