@@ -7,32 +7,28 @@ import org.distril.beengine.material.block.Block
 import org.distril.beengine.material.block.BlockState
 import org.distril.beengine.world.chunk.bitarray.BitArray
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 class Layer(version: BitArray.Version = BitArray.Version.V2) {
 
-	val palette = mutableListOf<BlockState>()
-	var bitArray: BitArray
-		private set
-
-	init {
-		this.bitArray = version.createPalette(SIZE)
-		this.palette.add(AIR_STATE)
+	val palette: MutableList<BlockState> = CopyOnWriteArrayList<BlockState>().apply {
+		this.add(AIR_STATE)
 	}
 
-	private fun getPaletteHeader(version: BitArray.Version): Int {
-		return version.bits.toInt() shl 1 or 1
-	}
+	var bitArray = version.createPalette(SIZE)
+
+	private fun getPaletteHeader(version: BitArray.Version) = version.bits.toInt() shl 1 or 1
 
 	operator fun get(x: Int, y: Int, z: Int): BlockState {
 		val index = x shl 8 or (z shl 4) or y
-		synchronized(this.palette) { return this.palette[bitArray[index]] }
+		return this.palette[bitArray[index]]
 	}
 
+	@Synchronized
 	operator fun set(x: Int, y: Int, z: Int, state: BlockState) {
 		try {
 			val index = x shl 8 or (z shl 4) or y
-			val idx = this.idFor(state)
-			this.bitArray[index] = idx
+			this.bitArray[index] = this.idFor(state)
 		} catch (exception: IllegalArgumentException) {
 			throw IllegalArgumentException("Unable to set block state: $state, palette: $palette", exception)
 		}
@@ -42,10 +38,8 @@ class Layer(version: BitArray.Version = BitArray.Version.V2) {
 		buffer.writeByte(this.getPaletteHeader(this.bitArray.version))
 		this.bitArray.words.forEach { buffer.writeIntLE(it) }
 
-		synchronized(this.palette) {
-			VarInts.writeInt(buffer, this.palette.size)
-			this.palette.forEach { VarInts.writeInt(buffer, it.runtimeId) }
-		}
+		VarInts.writeInt(buffer, this.palette.size)
+		this.palette.forEach { VarInts.writeInt(buffer, it.runtimeId) }
 	}
 
 	private fun idFor(state: BlockState): Int {
@@ -55,9 +49,7 @@ class Layer(version: BitArray.Version = BitArray.Version.V2) {
 			val version = this.bitArray.version
 			if (index > version.maxEntryValue) {
 				val next = version.next
-				if (next != null) {
-					this.onResize(next)
-				}
+				if (next != null) this.onResize(next)
 			}
 
 			this.palette.add(state)
@@ -84,10 +76,8 @@ class Layer(version: BitArray.Version = BitArray.Version.V2) {
 
 	companion object {
 
-		private val AIR_STATE = Material.AIR.getBlock<Block>().state
-
 		private const val SIZE = 4096
 
-		fun getVersionFromHeader(header: Byte) = BitArray.Version[header.toInt() shr 1, true]
+		private val AIR_STATE = Material.AIR.getBlock<Block>().state
 	}
 }

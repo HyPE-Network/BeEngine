@@ -63,7 +63,7 @@ class Network(
 
 		private val log = LogManager.getLogger(Network::class.java)
 
-		val CODEC = Bedrock_v567patch.BEDROCK_V567PATCH
+		val CODEC = Bedrock_v567patch.BEDROCK_V567PATCH!!
 
 		val PONG = BedrockPong().apply {
 			edition = "MCPE"

@@ -170,6 +170,8 @@ class Player(
 
 		Server.addPlayer(this)
 		Server.addOnlinePlayer(this)
+
+		this.chunkManager.queueNewChunks()
 	}
 
 	private fun doFirstSpawn() {

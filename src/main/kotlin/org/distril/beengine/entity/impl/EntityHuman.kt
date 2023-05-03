@@ -17,25 +17,26 @@ import java.util.*
 
 open class EntityHuman : EntityCreature(EntityType.HUMAN) {
 
-	var username: String? = null
-	var xuid: String? = null
-	var uuid: UUID? = null
+	lateinit var username: String
+	lateinit var xuid: String
+	lateinit var uuid: UUID
 	open var skin: SerializedSkin? = null
 		set(value) {
 			field = value
 
 			val packet = PlayerSkinPacket().apply {
-				newSkinName = ""
-				oldSkinName = ""
-				uuid = uuid
-				skin = skin
-				isTrustedSkin = true
+				this.newSkinName = ""
+				this.oldSkinName = ""
+				this.uuid = this@EntityHuman.uuid
+				this.skin = this@EntityHuman.skin
+				this.isTrustedSkin = true
 			}
 
 			this.viewers.forEach { it.sendPacket(packet) }
 		}
 
-	var device: Device? = null
+	lateinit var device: Device
+
 	override fun init(location: Location): Boolean {
 		this.metadata.setFlag(EntityFlag.HAS_GRAVITY, true)
 
@@ -52,10 +53,10 @@ open class EntityHuman : EntityCreature(EntityType.HUMAN) {
 		get() = PlayerListPacket.Entry(this.uuid).apply {
 			this.entityId = id
 			this.name = username
-			this.skin = skin
-			this.xuid = xuid
+			this.skin = this@EntityHuman.skin
+			this.xuid = this@EntityHuman.xuid
 			this.platformChatId = ""
-			this.buildPlatform = device!!.osId
+			this.buildPlatform = device.osId
 		}
 
 	override fun createSpawnPacket(player: Player): AddPlayerPacket {
