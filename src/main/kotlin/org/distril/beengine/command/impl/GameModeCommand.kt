@@ -3,7 +3,6 @@ package org.distril.beengine.command.impl
 import org.distril.beengine.command.Command
 import org.distril.beengine.command.CommandSender
 import org.distril.beengine.command.data.Args
-import org.distril.beengine.command.data.ArgumentType
 import org.distril.beengine.player.Player
 
 class GameModeCommand : Command(
@@ -14,15 +13,15 @@ class GameModeCommand : Command(
 ) {
 
 	init {
-		this.addArguments(
-			ArgumentType.gameMode("gameMode"),
-			ArgumentType.target("player", true)
-		)
+		this.addArguments {
+			GameMode("gameMode")
+			Target("player", true)
+		}
 
-		this.addArguments(
-			ArgumentType.integer("gameMode"),
-			ArgumentType.target("player", true)
-		)
+		this.addArguments {
+			Integer("gameMode")
+			Target("player", true)
+		}
 	}
 
 	override fun execute(sender: CommandSender, args: Args) {

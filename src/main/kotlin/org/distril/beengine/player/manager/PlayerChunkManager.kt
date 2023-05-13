@@ -4,7 +4,10 @@ import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket
 import com.nukkitx.protocol.bedrock.packet.NetworkChunkPublisherUpdatePacket
-import it.unimi.dsi.fastutil.longs.*
+import it.unimi.dsi.fastutil.longs.LongArrayList
+import it.unimi.dsi.fastutil.longs.LongComparator
+import it.unimi.dsi.fastutil.longs.LongConsumer
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
@@ -12,6 +15,8 @@ import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.distril.beengine.player.Player
 import org.distril.beengine.util.ChunkUtils
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 class PlayerChunkManager(val player: Player) {
@@ -26,10 +31,10 @@ class PlayerChunkManager(val player: Player) {
 		}
 	}
 
-	private val sendQueue: Long2ObjectMap<LevelChunkPacket> = Long2ObjectOpenHashMap()
+	private val sendQueue: MutableMap<Long, LevelChunkPacket?> = HashMap()
 	private val chunksSentCounter = AtomicLong()
 
-	val loadedChunks = mutableSetOf<Long>()
+	val loadedChunks: MutableSet<Long> = Collections.newSetFromMap(ConcurrentHashMap())
 
 	var radius = MAX_RADIUS
 		set(value) {
@@ -47,9 +52,9 @@ class PlayerChunkManager(val player: Player) {
 	@Synchronized
 	fun sendQueued() {
 		// Remove chunks which are out of range
-		with(this.sendQueue.long2ObjectEntrySet().iterator()) {
+		with(this.sendQueue.entries.iterator()) {
 			forEach {
-				val key = it.longKey
+				val key = it.key
 				if (!loadedChunks.contains(key)) {
 					this.remove()
 					val chunk = player.world.getLoadedChunk(key)

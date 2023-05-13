@@ -220,7 +220,7 @@ class Player(
 		this.data.gameMode = gameMode
 
 		val packet = SetPlayerGameTypePacket()
-		packet.gamemode = gameMode.ordinal
+		packet.gamemode = gameMode.type.ordinal
 
 		this.sendPacket(packet)
 	}
@@ -306,7 +306,7 @@ class Player(
 		super.onDataChange(dataMap)
 
 		val packet = SetEntityDataPacket()
-		packet.runtimeEntityId = id
+		packet.runtimeEntityId = this.id
 		packet.metadata.putAll(dataMap)
 
 		this.sendPacket(packet)
@@ -322,7 +322,7 @@ class Player(
 	override fun sendMessage(message: String) {
 		val packet = TextPacket()
 		packet.type = TextPacket.Type.RAW
-		packet.xuid = xuid
+		packet.xuid = this.xuid
 		packet.message = message
 		packet.isNeedsTranslation = true
 

@@ -8,23 +8,25 @@ import java.util.*
 class Args(private val args: Map<String, String>) {
 
 	fun getInteger(key: String): Int? = try {
-		this.args[key]!!.toInt()
-	} catch (exception: NumberFormatException) {
+		this.args[key]?.toInt()
+	} catch (_: NumberFormatException) {
 		null
 	}
 
 	fun getFloat(key: String): Float? = try {
-		this.args[key]!!.toFloat()
-	} catch (exception: NumberFormatException) {
+		this.args[key]?.toFloat()
+	} catch (_: NumberFormatException) {
 		null
 	}
 
 	fun getTarget(key: String): Player? {
-		val username = this.getString(key)!!
+		val username = this.getString(key)
 
-		if (username == "@r") return Server.players.toList()[Random().nextInt(Server.players.size)]
+		return username?.let {
+			if (it == "@r") return Server.players.toList()[Random().nextInt(Server.players.size)]
 
-		return Server.getPlayer(username)
+			return Server.getPlayer(it)
+		}
 	}
 
 	fun getString(key: String) = this.args[key]

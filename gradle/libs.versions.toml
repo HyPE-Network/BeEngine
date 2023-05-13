@@ -10,9 +10,6 @@ jline = "3.23.0"
 log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j" }
 log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
 
-# Help annotation
-lombok = { group = "org.projectlombok", name = "lombok", version = "1.18.26" }
-
 # Network
 network = { group = "com.nukkitx.protocol", name = "bedrock-v567", version = "2.9.17-SNAPSHOT" }
 

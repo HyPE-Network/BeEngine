@@ -17,7 +17,7 @@ class SubChunk(val index: Int) {
 	fun writeToNetwork(buffer: ByteBuf) {
 		buffer.writeByte(VERSION)
 		buffer.writeByte(this.layers.size)
-		// buffer.writeByte(this.index);
+		buffer.writeByte(this.index)
 
 		this.layers.forEach { it.writeToNetwork(buffer) }
 	}
@@ -33,7 +33,7 @@ class SubChunk(val index: Int) {
 
 	companion object {
 
-		const val VERSION = 8
+		const val VERSION = 9
 
 		const val COUNT = 16
 	}

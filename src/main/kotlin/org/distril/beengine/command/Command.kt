@@ -4,6 +4,7 @@ import com.nukkitx.protocol.bedrock.data.command.CommandData
 import com.nukkitx.protocol.bedrock.data.command.CommandEnumData
 import com.nukkitx.protocol.bedrock.data.command.CommandParamData
 import org.distril.beengine.command.data.Args
+import org.distril.beengine.command.data.ArgumentsBuilder
 import org.distril.beengine.command.data.CommandArgument
 import org.distril.beengine.command.parser.EnumParser
 import org.distril.beengine.command.parser.Parser
@@ -30,8 +31,12 @@ abstract class Command(
 
 	abstract fun execute(sender: CommandSender, args: Args)
 
-	fun addArguments(vararg arguments: CommandArgument) {
-		this.arguments.add(arguments.asList().toTypedArray())
+	fun addArguments(block: ArgumentsBuilder.() -> Unit) {
+		val builder = ArgumentsBuilder()
+		builder.block()
+
+		val arguments = builder.arguments
+		this.arguments.add(arguments.toTypedArray())
 
 		val parsers: MutableMap<String, Parser> = LinkedHashMap()
 		arguments.forEach {
