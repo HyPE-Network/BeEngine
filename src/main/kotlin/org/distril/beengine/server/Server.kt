@@ -183,10 +183,10 @@ object Server {
 	}
 
 	fun getPlayer(username: String): Player? {
-		val username = username.trim()
-		if (username.isEmpty()) return null
+		val trimUsername = username.trim()
+		if (trimUsername.isEmpty()) return null
 
-		return this.players.firstOrNull { it.username.equals(username, ignoreCase = true) }
+		return this.players.firstOrNull { it.username.equals(trimUsername, ignoreCase = true) }
 	}
 
 	fun addPlayer(player: Player) {
