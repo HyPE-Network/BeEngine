@@ -5,6 +5,4 @@ logs
 players
 target
 worlds
-*.iml
-dependency-reduced-pom.xml
 settings.yml
