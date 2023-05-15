@@ -27,7 +27,7 @@ configurate = { group = "org.spongepowered", name = "configurate-yaml", version 
 
 # Other
 guava = { group = "com.google.guava", name = "guava", version = "31.1-jre" }
-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = "1.7.0" }
+coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = "1.7.1" }
 
 [bundles]
 log4j = ["log4j-api", "log4j-core"]
