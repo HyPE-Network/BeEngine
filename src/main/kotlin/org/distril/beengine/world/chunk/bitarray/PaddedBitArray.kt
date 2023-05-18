@@ -12,8 +12,9 @@ class PaddedBitArray(version: Version, size: Int, words: IntArray) : BitArray(ve
 
 		val arrayIndex = index / this.version.entriesPerWord
 		val offset = index % this.version.entriesPerWord * this.version.bits
-		this.words[arrayIndex] =
-			this.words[arrayIndex] and (this.version.maxEntryValue shl offset).inv() or (value and this.version.maxEntryValue shl offset)
+		this.words[arrayIndex] = this.words[arrayIndex] and
+				(this.version.maxEntryValue shl offset).inv() or
+				(value and this.version.maxEntryValue shl offset)
 	}
 
 	override fun get(index: Int): Int {

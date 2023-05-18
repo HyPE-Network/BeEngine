@@ -3,12 +3,12 @@ package org.distril.beengine.player.handler
 import com.nukkitx.protocol.bedrock.BedrockServerSession
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler
 import com.nukkitx.protocol.bedrock.packet.*
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.material.Material
 import org.distril.beengine.network.Network
 import org.distril.beengine.network.data.LoginData
 import org.distril.beengine.player.Player
 import org.distril.beengine.server.Server
+import org.distril.beengine.util.Utils.getLogger
 
 class ResourcePackPacketHandler(
 	private val session: BedrockServerSession,
@@ -66,6 +66,6 @@ class ResourcePackPacketHandler(
 
 	companion object {
 
-		private val log = LogManager.getLogger(ResourcePackPacketHandler::class.java)
+		private val log = ResourcePackPacketHandler.getLogger()
 	}
 }

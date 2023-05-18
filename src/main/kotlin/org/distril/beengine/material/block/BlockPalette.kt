@@ -52,7 +52,7 @@ object BlockPalette {
 		this.remove("version")
 	}.build()
 
-	fun getDefaultState(material: Material) = this.defaultStates[material.identifier]
+	fun getDefaultState(material: Material) = this.defaultStates[material.identifier]!!
 
 	fun getBlock(item: Item): Block {
 		val blockStates = this.meta2state[item.material.identifier]!!

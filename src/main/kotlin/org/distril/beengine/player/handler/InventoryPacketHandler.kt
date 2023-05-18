@@ -4,12 +4,12 @@ import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
 import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.*
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler
 import com.nukkitx.protocol.bedrock.packet.*
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.inventory.transaction.ItemStackTransaction
 import org.distril.beengine.inventory.transaction.action.*
 import org.distril.beengine.material.item.ItemPalette
 import org.distril.beengine.network.data.transaction.ItemUseTransaction
 import org.distril.beengine.player.Player
+import org.distril.beengine.util.Utils.getLogger
 
 class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler {
 
@@ -147,15 +147,15 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 						return true
 					}
 
-					ItemUseTransaction.Type.CLICK_AIR -> TODO()
+					ItemUseTransaction.Type.CLICK_AIR -> TODO("CLICK_AIR")
 
-					ItemUseTransaction.Type.BREAK_BLOCK -> TODO()
+					ItemUseTransaction.Type.BREAK_BLOCK -> TODO("BREAK_BLOCK")
 				}
 			}
 
-			TransactionType.ITEM_USE_ON_ENTITY -> TODO()
+			TransactionType.ITEM_USE_ON_ENTITY -> TODO("ITEM_USE_ON_ENTITY")
 
-			TransactionType.ITEM_RELEASE -> TODO()
+			TransactionType.ITEM_RELEASE -> TODO("ITEM_RELEASE")
 
 			else -> log.info("Unhandled transaction type: ${packet.transactionType}")
 		}
@@ -181,6 +181,6 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 
 	companion object {
 
-		private val log = LogManager.getLogger(InventoryPacketHandler::class.java)
+		private val log = InventoryPacketHandler.getLogger()
 	}
 }

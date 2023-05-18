@@ -5,9 +5,9 @@ import com.nukkitx.protocol.bedrock.BedrockServer
 import com.nukkitx.protocol.bedrock.BedrockServerEventHandler
 import com.nukkitx.protocol.bedrock.BedrockServerSession
 import com.nukkitx.protocol.bedrock.v567.Bedrock_v567patch
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.player.handler.LoginPacketHandler
 import org.distril.beengine.server.Server
+import org.distril.beengine.util.Utils.getLogger
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletionException
 
@@ -61,7 +61,7 @@ class Network(
 
 	companion object {
 
-		private val log = LogManager.getLogger(Network::class.java)
+		private val log = Network.getLogger()
 
 		val CODEC = Bedrock_v567patch.BEDROCK_V567PATCH!!
 

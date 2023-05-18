@@ -47,13 +47,11 @@ class ChunkManager(private val world: World) {
 		if (this.chunks.isNotEmpty()) {
 			val tickedChunks = flow {
 				chunks.forEach { (key, chunk) ->
-					run {
-						val canBeUnload = chunk.tick()
+					val canBeUnload = chunk.tick()
 
-						if (canBeUnload) unloadChunk(key)
+					if (canBeUnload) unloadChunk(key)
 
-						emit(Unit)
-					}
+					emit(Unit)
 				}
 			}
 

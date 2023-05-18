@@ -3,10 +3,10 @@ package org.distril.beengine.inventory.transaction
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerSlotType
 import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket
 import com.nukkitx.protocol.bedrock.packet.ItemStackResponsePacket.ContainerEntry
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.inventory.transaction.action.ItemStackAction
 import org.distril.beengine.material.item.Item
 import org.distril.beengine.player.Player
+import org.distril.beengine.util.Utils.getLogger
 import java.util.*
 
 class ItemStackTransaction(val player: Player) {
@@ -58,6 +58,6 @@ class ItemStackTransaction(val player: Player) {
 
 	companion object {
 
-		private val log = LogManager.getLogger(ItemStackTransaction::class.java)
+		private val log = ItemStackTransaction.getLogger()
 	}
 }

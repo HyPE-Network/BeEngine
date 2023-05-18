@@ -1,6 +1,5 @@
 package org.distril.beengine.world.chunk.bitarray
 
-import java.util.*
 import kotlin.math.ceil
 
 abstract class BitArray(val version: Version, val size: Int, val words: IntArray) {
@@ -8,10 +7,8 @@ abstract class BitArray(val version: Version, val size: Int, val words: IntArray
 	init {
 		val expectedWordsLength = ceil((this.size.toFloat() / this.version.entriesPerWord).toDouble()).toInt()
 
-		if (this.words.size != expectedWordsLength) {
-			throw IllegalArgumentException(
-				"Invalid length given for storage, got: ${this.words.size} but expected: $expectedWordsLength"
-			)
+		require(this.words.size == expectedWordsLength) {
+			"Invalid length given for storage, got: ${this.words.size} but expected: $expectedWordsLength"
 		}
 	}
 
@@ -30,15 +27,9 @@ abstract class BitArray(val version: Version, val size: Int, val words: IntArray
 		V2(2, 16, V3),
 		V1(1, 32, V2);
 
-		val bits: Byte
-		val entriesPerWord: Byte
-		val maxEntryValue: Int
-
-		init {
-			this.bits = bits.toByte()
-			this.entriesPerWord = entriesPerWord.toByte()
-			this.maxEntryValue = (1 shl this.bits.toInt()) - 1
-		}
+		val bits = bits.toByte()
+		val entriesPerWord = entriesPerWord.toByte()
+		val maxEntryValue = (1 shl this.bits.toInt()) - 1
 
 		fun getWordsForSize(size: Int) = size / this.entriesPerWord + if (size % this.entriesPerWord == 0) 0 else 1
 
@@ -51,11 +42,8 @@ abstract class BitArray(val version: Version, val size: Int, val words: IntArray
 
 		companion object {
 
-			operator fun get(version: Int, read: Boolean): Version {
-				return Arrays.stream(Version.values())
-					.filter { !read && it.entriesPerWord <= version || read && it.bits.toInt() == version }
-					.findFirst()
-					.orElseThrow { IllegalArgumentException("Invalid palette version: $version") }
+			operator fun get(version: Int, read: Boolean) = values().first {
+				!read && it.entriesPerWord <= version || read && it.bits.toInt() == version
 			}
 		}
 	}

@@ -3,10 +3,10 @@ package org.distril.beengine.player.data.provider
 import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.nbt.NbtMap
 import com.nukkitx.nbt.NbtUtils
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.player.data.GameMode
 import org.distril.beengine.player.data.PlayerData
 import org.distril.beengine.server.Server
+import org.distril.beengine.util.Utils.getLogger
 import org.distril.beengine.world.util.Location
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -73,6 +73,6 @@ class NBTPlayerDataProvider : PlayerDataProvider {
 
 	companion object {
 
-		private val log = LogManager.getLogger(NBTPlayerDataProvider::class.java)
+		private val log = NBTPlayerDataProvider.getLogger()
 	}
 }

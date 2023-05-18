@@ -24,11 +24,12 @@ class Layer(version: BitArray.Version = BitArray.Version.V2) {
 		return this.palette[bitArray[index]]
 	}
 
-	@Synchronized
 	operator fun set(x: Int, y: Int, z: Int, state: BlockState) {
 		try {
 			val index = x shl 8 or (z shl 4) or y
-			this.bitArray[index] = this.idFor(state)
+			synchronized(this.bitArray) {
+				this.bitArray[index] = this.idFor(state)
+			}
 		} catch (exception: IllegalArgumentException) {
 			throw IllegalArgumentException("Unable to set block state: $state, palette: $palette", exception)
 		}
@@ -48,8 +49,7 @@ class Layer(version: BitArray.Version = BitArray.Version.V2) {
 			index = this.palette.size
 			val version = this.bitArray.version
 			if (index > version.maxEntryValue) {
-				val next = version.next
-				if (next != null) this.onResize(next)
+				version.next?.let { this.onResize(it) }
 			}
 
 			this.palette.add(state)

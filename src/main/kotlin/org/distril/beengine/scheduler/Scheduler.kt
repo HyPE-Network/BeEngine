@@ -3,10 +3,10 @@ package org.distril.beengine.scheduler
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.scheduler.task.RunnableTask
 import org.distril.beengine.scheduler.task.Task
 import org.distril.beengine.scheduler.task.TaskEntry
+import org.distril.beengine.util.Utils.getLogger
 import java.util.*
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
@@ -84,7 +84,7 @@ class Scheduler(private val taskTimeout: Long) {
 
 	companion object {
 
-		private val log = LogManager.getLogger(Scheduler::class.java)
+		private val log = Scheduler.getLogger()
 
 		private val POOL = ForkJoinPool.commonPool()
 	}

@@ -36,9 +36,8 @@ enum class Direction(
 	 */
 	val horizontalAngle = ((this.horizontalIndex and 3) * 90).toFloat()
 
-	fun getOffset(position: Vector3i, step: Int = 1): Vector3i {
-		return position.add(this.unitVector.x * step, this.unitVector.y * step, this.unitVector.z * step)
-	}
+	fun getOffset(position: Vector3i, step: Int = 1) =
+		position.add(this.unitVector.x * step, this.unitVector.y * step, this.unitVector.z * step)
 
 	/**
 	 * Get the opposite BlockFace (e.g. DOWN ==&gt; UP)
@@ -52,14 +51,12 @@ enum class Direction(
 	 *
 	 * @return block face
 	 */
-	fun rotateY(): Direction {
-		return when (this) {
-			NORTH -> EAST
-			EAST -> SOUTH
-			SOUTH -> WEST
-			WEST -> NORTH
-			else -> throw RuntimeException("Unable to get Y-rotated face of $this")
-		}
+	fun rotateY() = when (this) {
+		NORTH -> EAST
+		EAST -> SOUTH
+		SOUTH -> WEST
+		WEST -> NORTH
+		else -> throw RuntimeException("Unable to get Y-rotated face of $this")
 	}
 
 	/**
@@ -67,14 +64,12 @@ enum class Direction(
 	 *
 	 * @return block face
 	 */
-	fun rotateYCCW(): Direction {
-		return when (this) {
-			NORTH -> WEST
-			EAST -> NORTH
-			SOUTH -> EAST
-			WEST -> SOUTH
-			else -> throw RuntimeException("Unable to get counter-clockwise Y-rotated face of $this")
-		}
+	fun rotateYCCW() = when (this) {
+		NORTH -> WEST
+		EAST -> NORTH
+		SOUTH -> EAST
+		WEST -> SOUTH
+		else -> throw RuntimeException("Unable to get counter-clockwise Y-rotated face of $this")
 	}
 
 	enum class Axis(val plane: Plane) {
@@ -82,8 +77,6 @@ enum class Direction(
 		X(Plane.HORIZONTAL),
 		Y(Plane.VERTICAL),
 		Z(Plane.HORIZONTAL);
-
-		val isHorizontal = this.plane == Plane.HORIZONTAL
 	}
 
 	enum class AxisDirection(val offset: Int) {
@@ -107,7 +100,7 @@ enum class Direction(
 		init {
 			Direction.values().forEach {
 				values[it.ordinal] = it
-				if (it.axis.isHorizontal) {
+				if (it.axis.plane == Plane.HORIZONTAL) {
 					horizontals[it.horizontalIndex] = it
 				}
 			}

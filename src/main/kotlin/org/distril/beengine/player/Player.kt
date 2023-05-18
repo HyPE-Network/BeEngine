@@ -10,7 +10,6 @@ import com.nukkitx.protocol.bedrock.data.*
 import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlag
 import com.nukkitx.protocol.bedrock.packet.*
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.command.CommandSender
 import org.distril.beengine.entity.Entity
 import org.distril.beengine.entity.impl.EntityHuman
@@ -31,6 +30,7 @@ import org.distril.beengine.util.BedrockResourceLoader
 import org.distril.beengine.util.ChunkUtils.decodeX
 import org.distril.beengine.util.ChunkUtils.decodeZ
 import org.distril.beengine.util.ItemUtils
+import org.distril.beengine.util.Utils.getLogger
 import org.distril.beengine.world.chunk.ChunkLoader
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -75,6 +75,7 @@ class Player(
 
 	init {
 		this.inventory.addItem(Material.BEDROCK.getItem()) // For Tests
+
 		this.username = this.loginData.username
 		this.xuid = this.loginData.xuid
 		this.uuid = this.loginData.uuid
@@ -347,7 +348,8 @@ class Player(
 		get() = super.position
 		set(value) {
 			val from = this.chunk
-			val to = this.world.getChunk(position.toInt())
+			val vector3i = position.toInt()
+			val to = this.world.chunkManager.getChunk(vector3i.x, vector3i.z)
 			if (from != to) {
 				from.removeEntity(this)
 				to.addEntity(this)
@@ -380,6 +382,6 @@ class Player(
 
 	companion object {
 
-		private val log = LogManager.getLogger(Player::class.java)
+		private val log = Player.getLogger()
 	}
 }

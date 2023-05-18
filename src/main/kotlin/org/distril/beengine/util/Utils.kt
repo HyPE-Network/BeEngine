@@ -1,6 +1,7 @@
 package org.distril.beengine.util
 
 import com.google.gson.Gson
+import org.apache.logging.log4j.LogManager
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Files
@@ -19,5 +20,7 @@ object Utils {
 		}
 	}
 
-	fun getResource(name: String): InputStream = Utils::class.java.classLoader.getResourceAsStream(name)!!
+	fun getResource(name: String): InputStream = ClassLoader.getSystemResourceAsStream(name)!!
+
+	fun Any.getLogger() = LogManager.getLogger(this::class.java)!!
 }

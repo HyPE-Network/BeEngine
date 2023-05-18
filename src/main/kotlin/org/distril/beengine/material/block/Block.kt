@@ -6,9 +6,9 @@ import org.distril.beengine.util.Direction
 import org.distril.beengine.world.World
 import java.util.*
 
-abstract class Block(val material: Material, state: BlockState?) : Cloneable, BlockBehaviors {
+abstract class Block(val material: Material, state: BlockState? = null) : Cloneable, BlockBehaviors {
 
-	var state = state ?: BlockPalette.getDefaultState(material)!!
+	var state = state ?: BlockPalette.getDefaultState(material)
 
 	var world: World? = null
 	var position: Vector3i? = null

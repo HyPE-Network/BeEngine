@@ -5,10 +5,10 @@ import com.nukkitx.protocol.bedrock.data.PacketCompressionAlgorithm
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler
 import com.nukkitx.protocol.bedrock.packet.*
 import com.nukkitx.protocol.bedrock.util.EncryptionUtils
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.network.Network
 import org.distril.beengine.network.data.LoginData
 import org.distril.beengine.server.Server
+import org.distril.beengine.util.Utils.getLogger
 import java.util.regex.Pattern
 
 class LoginPacketHandler(private val session: BedrockServerSession) : BedrockPacketHandler {
@@ -109,6 +109,7 @@ class LoginPacketHandler(private val session: BedrockServerSession) : BedrockPac
 		return true
 	}
 
+	@Suppress("LoggingStringTemplateAsArgument")
 	override fun handle(packet: PacketViolationWarningPacket): Boolean {
 		log.debug("Packet violation $packet")
 		return true
@@ -131,7 +132,7 @@ class LoginPacketHandler(private val session: BedrockServerSession) : BedrockPac
 
 	companion object {
 
-		private val log = LogManager.getLogger(LoginPacketHandler::class.java)
+		private val log = LoginPacketHandler.getLogger()
 
 		private val NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,16}$")
 	}

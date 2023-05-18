@@ -1,6 +1,5 @@
 package org.distril.beengine.world.chunk
 
-import com.nukkitx.math.vector.Vector3i
 import com.nukkitx.network.VarInts
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket
 import io.netty.buffer.Unpooled
@@ -13,7 +12,7 @@ import org.distril.beengine.util.ChunkUtils
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class Chunk(val x: Int, val z: Int) {
+data class Chunk(val x: Int, val z: Int) {
 
 	val subChunks = arrayOfNulls<SubChunk>(SubChunk.COUNT)
 
@@ -27,7 +26,7 @@ class Chunk(val x: Int, val z: Int) {
 		this.resetExpiryTime()
 	}
 
-	fun setBlock(x: Int, y: Int, z: Int, layer: Int = 0, block: Block) {
+	fun setBlock(x: Int, y: Int, z: Int, block: Block, layer: Int = 0) {
 		ChunkUtils.checkBounds(x, y, z)
 
 		var subChunk = this.subChunks[y shr 4]
@@ -37,7 +36,7 @@ class Chunk(val x: Int, val z: Int) {
 			subChunk = this.getOrCreateSubChunk(y shr 4)
 		}
 
-		subChunk.setBlockState(x, y, z, layer, block.state)
+		subChunk.setBlockState(x, y, z, block.state, layer)
 	}
 
 	fun getBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block {
@@ -45,10 +44,10 @@ class Chunk(val x: Int, val z: Int) {
 
 		val subChunk = this.subChunks[y shr 4]
 		val state = subChunk?.getBlockState(x, y, z, layer) ?: AIR_STATE
-		return Server.blockRegistry.getBlockFromState(state).apply { position = Vector3i.from(x, y, z) }
+		return Server.blockRegistry.getBlockFromState(state)
 	}
 
-	fun getOrCreateSubChunk(index: Int): SubChunk {
+	private fun getOrCreateSubChunk(index: Int): SubChunk {
 		for (y in index downTo 0) {
 			var subChunk = this.subChunks[y]
 			if (subChunk == null) {
@@ -78,13 +77,13 @@ class Chunk(val x: Int, val z: Int) {
 		this.loaders.remove(loader)
 	}
 
-	fun getPlayersLoader() = this.loaders.filterIsInstance<Player>()
+	val playersLoader get() = this.loaders.filterIsInstance<Player>()
 
-	fun getPlayers() = this.entities.filterIsInstance<Player>()
+	val players get() = this.entities.filterIsInstance<Player>()
 
 	fun tick(): Boolean {
 		// todo tick block updates and block entities
-		if (this.expiryTime > 0 && this.canBeClosed()) {
+		if (this.expiryTime > 0 && this.canBeClosed) {
 			this.expiryTime--
 			return this.expiryTime == 0
 		}
@@ -92,7 +91,7 @@ class Chunk(val x: Int, val z: Int) {
 		return false
 	}
 
-	fun canBeClosed() = this.loaders.isEmpty()
+	val canBeClosed get() = this.loaders.isEmpty()
 
 	fun createPacket(): LevelChunkPacket {
 		val packet = LevelChunkPacket()
@@ -123,7 +122,7 @@ class Chunk(val x: Int, val z: Int) {
 	}
 
 	fun close() {
-		Arrays.fill(this.subChunks, null)
+		this.subChunks.fill(null)
 
 		this.entities.forEach { if (it !is Player) it.close() }
 		this.entities.clear()
@@ -135,19 +134,7 @@ class Chunk(val x: Int, val z: Int) {
 		this.expiryTime = Server.settings.chunkExpiryTime * 20
 	}
 
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (other !is Chunk) return false
-
-		return this.x == other.x && this.z == other.z
-	}
-
-	override fun hashCode() = Objects.hash(this.x, this.z)
-
-
 	companion object {
-
-		const val VERSION = 22
 
 		private val AIR_STATE = Material.AIR.getBlock<Block>().state
 	}

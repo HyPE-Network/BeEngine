@@ -8,13 +8,13 @@ import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongComparator
 import it.unimi.dsi.fastutil.longs.LongConsumer
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.player.Player
 import org.distril.beengine.util.ChunkUtils
+import org.distril.beengine.util.Utils.getLogger
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -23,11 +23,10 @@ class PlayerChunkManager(val player: Player) {
 
 	private val chunkComparator = AroundPlayerChunkComparator(this.player)
 
-	private val removeChunkLoader = LongConsumer { chunkKey ->
-		val chunk = this.player.world.getLoadedChunk(chunkKey)
-		if (chunk != null) {
+	private val removeChunkLoader = LongConsumer {
+		this.player.world.chunkManager.getLoadedChunk(it)?.let { chunk ->
 			chunk.removeLoader(this.player)
-			chunk.entities.forEach { it.despawnFor(this.player) }
+			chunk.entities.forEach { entity -> entity.despawnFor(this.player) }
 		}
 	}
 
@@ -57,7 +56,7 @@ class PlayerChunkManager(val player: Player) {
 				val key = it.key
 				if (!loadedChunks.contains(key)) {
 					this.remove()
-					val chunk = player.world.getLoadedChunk(key)
+					val chunk = player.world.chunkManager.getLoadedChunk(key)
 					chunk?.removeLoader(player)
 				}
 			}
@@ -128,28 +127,30 @@ class PlayerChunkManager(val player: Player) {
 
 		val chunkManager = this.player.world.chunkManager
 
-		val chunks = flow {
-			chunksToLoad.forEach {
-				val chunkX = ChunkUtils.decodeX(it)
-				val chunkZ = ChunkUtils.decodeZ(it)
-				if (sendQueue.putIfAbsent(it, null) == null) {
-					val chunk = chunkManager.getChunk(chunkX, chunkZ)
-					chunk.addLoader(player)
+		runBlocking {
+			val chunks = mutableListOf<Deferred<Any>>()
 
-					if (!sendQueue.replace(it, null, chunk.createPacket())) {
-						if (sendQueue.containsKey(it)) {
-							log.warn(
-								"Chunk ($chunkX:$chunkZ) already loaded for ${player.name}, value ${sendQueue[it]}"
-							)
+			chunksToLoad.forEach {
+				chunks.add(async {
+					val chunkX = ChunkUtils.decodeX(it)
+					val chunkZ = ChunkUtils.decodeZ(it)
+					if (sendQueue.putIfAbsent(it, null) == null) {
+						val chunk = chunkManager.getChunk(chunkX, chunkZ)
+						chunk.addLoader(player)
+
+						if (!sendQueue.replace(it, null, chunk.createPacket())) {
+							if (sendQueue.containsKey(it)) {
+								log.warn(
+									"Chunk ($chunkX:$chunkZ) already loaded for ${player.name}, value ${sendQueue[it]}"
+								)
+							}
 						}
 					}
-				}
-
-				emit(null)
+				})
 			}
-		}
 
-		runBlocking(Dispatchers.IO) { chunks.collect() }
+			awaitAll(*chunks.toTypedArray())
+		}
 
 		sentCopy.removeAll(chunksForRadius)
 		// Remove player from chunk loaders
@@ -168,7 +169,7 @@ class PlayerChunkManager(val player: Player) {
 
 		private const val MAX_RADIUS = 32
 
-		private val log = LogManager.getLogger(PlayerChunkManager::class.java)
+		private val log = PlayerChunkManager.getLogger()
 	}
 
 	class AroundPlayerChunkComparator(val player: Player) : LongComparator {

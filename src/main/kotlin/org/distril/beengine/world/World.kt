@@ -4,10 +4,7 @@ import com.nukkitx.math.vector.Vector3i
 import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
-import org.apache.logging.log4j.LogManager
+import kotlinx.coroutines.coroutineScope
 import org.distril.beengine.Tickable
 import org.distril.beengine.entity.Entity
 import org.distril.beengine.material.Material
@@ -28,25 +25,20 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 
 	val path = Path.of("worlds", worldName)
 	val chunkManager = ChunkManager(this)
-	val entities: MutableMap<Long, Entity> = ConcurrentHashMap<Long, Entity>()
+	val entities: MutableMap<Long, Entity> = ConcurrentHashMap()
 
 	init {
 		this.start()
 	}
 
-	override fun onUpdate(currentTick: Long) {
-		runBlocking {
-			val list = mutableListOf(
-				async {
-					val tickedEntities = flow { entities.values.forEach { emit(it.onUpdate(currentTick)) } }
+	override suspend fun onUpdate(currentTick: Long): Unit = coroutineScope {
+		val tickedItems = mutableListOf(async { chunkManager.tick() })
 
-					tickedEntities.collect()
-				},
-				async { chunkManager.tick() }
-			)
-
-			awaitAll(*list.toTypedArray())
+		entities.values.forEach {
+			tickedItems.add(async { it.onUpdate(currentTick) })
 		}
+
+		awaitAll(*tickedItems.toTypedArray())
 	}
 
 	fun addEntity(entity: Entity, addInChunk: Boolean = true) {
@@ -67,28 +59,21 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		}
 	}
 
-	fun getLoadedChunk(x: Int, z: Int) = this.chunkManager.getLoadedChunk(x, z)
-
-	fun getLoadedChunk(key: Long) = this.chunkManager.getLoadedChunk(key)
-
-	fun getChunk(position: Vector3i) = this.chunkManager.getChunk(position.x shr 4, position.z shr 4)
-
-	fun getChunk(x: Int, z: Int) = this.chunkManager.getChunk(x, z)
-
-	fun getChunk(key: Long) = this.chunkManager.getChunk(key)
-
-	fun getLoadedBlock(position: Vector3i) = this.getLoadedBlock(position.x, position.y, position.z)
+	fun getLoadedBlock(position: Vector3i, layer: Int = 0) =
+		this.getLoadedBlock(position.x, position.y, position.z, layer)
 
 	fun getLoadedBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block? {
-		if (y >= this.dimension.maxY || y < this.dimension.minY) return Material.AIR.getBlock<Block>().apply {
-			world = this@World
-			position = Vector3i.from(x, y, z)
+		if (y >= this.dimension.maxY || y < this.dimension.minY) {
+			return Material.AIR.getBlock<Block>().apply {
+				world = this@World
+				position = Vector3i.from(x, y, z)
+			}
 		}
 
 		val chunkX = x shr 4
 		val chunkZ = z shr 4
 
-		val chunk = this.getLoadedChunk(chunkX, chunkZ) ?: return null
+		val chunk = this.chunkManager.getLoadedChunk(chunkX, chunkZ) ?: return null
 
 		return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
 			world = this@World
@@ -96,7 +81,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		}
 	}
 
-	fun getBlock(position: Vector3i) = this.getBlock(position.x, position.y, position.z)
+	fun getBlock(position: Vector3i, layer: Int = 0) = this.getBlock(position.x, position.y, position.z, layer)
 
 	fun getBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block {
 		val loadedBlock = this.getLoadedBlock(x, y, z, layer)
@@ -105,7 +90,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		val chunkX = x shr 4
 		val chunkZ = z shr 4
 
-		val chunk = this.getChunk(chunkX, chunkZ)
+		val chunk = this.chunkManager.getChunk(chunkX, chunkZ)
 
 		return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
 			world = this@World
@@ -113,21 +98,16 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		}
 	}
 
-	fun setBlock(position: Vector3i, layer: Int = 0, block: Block) {
-		this.setBlock(position.x, position.y, position.z, layer, block)
-	}
+	fun setBlock(position: Vector3i, block: Block, layer: Int = 0) =
+		this.setBlock(position.x, position.y, position.z, block, layer)
 
-	fun setBlock(x: Int, y: Int, z: Int, layer: Int = 0, block: Block) {
-		this.setBlock(x, y, z, layer, block, true)
-	}
-
-	fun setBlock(x: Int, y: Int, z: Int, layer: Int = 0, block: Block, send: Boolean = true) {
+	fun setBlock(x: Int, y: Int, z: Int, block: Block, layer: Int = 0, send: Boolean = true) {
 		if (y >= this.dimension.maxY || y < this.dimension.minY) return
 
-		val chunk = this.getChunk(x shr 4, z shr 4)
-		chunk.setBlock(x and 0xF, y, z and 0xF, layer, block)
+		val chunk = this.chunkManager.getChunk(x shr 4, z shr 4)
+		chunk.setBlock(x and 0xF, y, z and 0xF, block, layer)
 
-		if (send) this.sendBlocks(chunk.getPlayers(), listOf(block))
+		if (send) this.sendBlocks(chunk.players, listOf(block))
 	}
 
 	fun sendBlocks(
@@ -136,9 +116,10 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 		flags: Set<UpdateBlockPacket.Flag> = UpdateBlockPacket.FLAG_ALL_PRIORITY
 	) {
 		val packets = mutableListOf<UpdateBlockPacket>()
+
+		val packet = UpdateBlockPacket()
+		packet.flags.addAll(flags)
 		blocks.forEach {
-			val packet = UpdateBlockPacket()
-			packet.flags.addAll(flags)
 			packet.blockPosition = it.position
 			packet.runtimeId = it.state.runtimeId
 			packet.dataLayer = 0
@@ -152,8 +133,7 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	}
 
 	fun getLoadedChunkEntities(chunkX: Int, chunkZ: Int): Collection<Entity> {
-		val loadedChunk = this.getLoadedChunk(chunkX, chunkZ) ?: return mutableSetOf()
-		return loadedChunk.entities
+		return this.chunkManager.getLoadedChunk(chunkX, chunkZ)?.entities ?: return setOf()
 	}
 
 	fun useItemOn(blockPosition: Vector3i, usedItem: Item, clickedBlockFace: Direction, player: Player): Item? {
@@ -183,9 +163,4 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	}
 
 	override fun hashCode() = Objects.hash(this.path)
-
-	companion object {
-
-		private val log = LogManager.getLogger(Player::class.java)
-	}
 }

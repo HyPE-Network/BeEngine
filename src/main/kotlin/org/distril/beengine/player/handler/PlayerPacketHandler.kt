@@ -2,9 +2,9 @@ package org.distril.beengine.player.handler
 
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler
 import com.nukkitx.protocol.bedrock.packet.*
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.player.Player
 import org.distril.beengine.server.Server
+import org.distril.beengine.util.Utils.getLogger
 
 class PlayerPacketHandler(private val player: Player) : BedrockPacketHandler {
 
@@ -65,6 +65,6 @@ class PlayerPacketHandler(private val player: Player) : BedrockPacketHandler {
 
 	companion object {
 
-		private val log = LogManager.getLogger(PlayerPacketHandler::class.java)
+		private val log = PlayerPacketHandler.getLogger()
 	}
 }

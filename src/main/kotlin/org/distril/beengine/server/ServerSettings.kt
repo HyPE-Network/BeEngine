@@ -1,6 +1,5 @@
 package org.distril.beengine.server
 
-import org.spongepowered.configurate.CommentedConfigurationNode
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.IOException
@@ -9,15 +8,11 @@ import java.nio.file.Path
 
 class ServerSettings(path: Path) {
 
-	private val loader: YamlConfigurationLoader
+	private val loader = YamlConfigurationLoader.builder().path(path).build()
 
-	private val config: CommentedConfigurationNode
-
-	init {
-		this.loader = YamlConfigurationLoader.builder().path(path).build()
-
+	private val config by lazy {
 		try {
-			this.config = this.loader.load()
+			this.loader.load()
 		} catch (exception: IOException) {
 			throw RuntimeException("An error occurred while loading ServerSettings configuration:", exception)
 		}

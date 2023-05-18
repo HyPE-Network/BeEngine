@@ -13,8 +13,9 @@ class Pow2BitArray(version: Version, size: Int, words: IntArray) : BitArray(vers
 		val bitIndex = index * this.version.bits
 		val arrayIndex = bitIndex shr 5
 		val offset = bitIndex and 31
-		this.words[arrayIndex] =
-			this.words[arrayIndex] and (this.version.maxEntryValue shl offset).inv() or (value and this.version.maxEntryValue shl offset)
+		this.words[arrayIndex] = this.words[arrayIndex] and
+				(this.version.maxEntryValue shl offset).inv() or
+				(value and this.version.maxEntryValue shl offset)
 	}
 
 	override fun get(index: Int): Int {

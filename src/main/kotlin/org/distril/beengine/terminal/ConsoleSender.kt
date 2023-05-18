@@ -1,7 +1,7 @@
 package org.distril.beengine.terminal
 
-import org.apache.logging.log4j.LogManager
 import org.distril.beengine.command.CommandSender
+import org.distril.beengine.util.Utils.getLogger
 
 class ConsoleSender : CommandSender {
 
@@ -15,6 +15,6 @@ class ConsoleSender : CommandSender {
 
 	companion object {
 
-		private val log = LogManager.getLogger(ConsoleSender::class.java)
+		private val log = ConsoleSender.getLogger()
 	}
 }

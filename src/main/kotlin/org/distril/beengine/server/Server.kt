@@ -22,6 +22,7 @@ import org.distril.beengine.scheduler.Scheduler
 import org.distril.beengine.terminal.Terminal
 import org.distril.beengine.util.BedrockResourceLoader
 import org.distril.beengine.util.Utils
+import org.distril.beengine.util.Utils.getLogger
 import org.distril.beengine.world.WorldRegistry
 import java.io.IOException
 import java.nio.file.Files
@@ -33,7 +34,7 @@ import kotlin.system.exitProcess
 
 object Server {
 
-	private val log = LogManager.getLogger(Server::class.java)
+	private val log = Server.getLogger()
 
 	var isRunning = true
 		private set

@@ -8,18 +8,20 @@ class SubChunk(val index: Int) {
 
 	val layers = arrayOf(Layer(), Layer())
 
-	fun setBlockState(x: Int, y: Int, z: Int, layer: Int, state: BlockState) {
+	fun setBlockState(x: Int, y: Int, z: Int, state: BlockState, layer: Int = 0) {
 		this.layers[layer][x and 0xf, y and 0xf, z and 0xf] = state
 	}
 
-	fun getBlockState(x: Int, y: Int, z: Int, layer: Int) = this.layers[layer][x and 0xf, y and 0xf, z and 0xf]
+	fun getBlockState(x: Int, y: Int, z: Int, layer: Int = 0) = this.layers[layer][x and 0xf, y and 0xf, z and 0xf]
 
 	fun writeToNetwork(buffer: ByteBuf) {
 		buffer.writeByte(VERSION)
 		buffer.writeByte(this.layers.size)
 		buffer.writeByte(this.index)
 
-		this.layers.forEach { it.writeToNetwork(buffer) }
+		synchronized(this.layers) {
+			this.layers.forEach { it.writeToNetwork(buffer) }
+		}
 	}
 
 	override fun equals(other: Any?): Boolean {
