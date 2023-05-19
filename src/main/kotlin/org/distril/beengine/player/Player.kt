@@ -349,7 +349,7 @@ class Player(
 		set(value) {
 			val from = this.chunk
 			val vector3i = position.toInt()
-			val to = this.world.chunkManager.getChunk(vector3i.x, vector3i.z)
+			val to = this.world.chunkManager.getChunk(vector3i.x shr 4, vector3i.z shr 4)
 			if (from != to) {
 				from.removeEntity(this)
 				to.addEntity(this)
@@ -361,7 +361,7 @@ class Player(
 
 	fun canInteract(
 		position: Vector3f,
-		maxDistance: Double = (if (this.isCreative) 13 else 7).toDouble(),
+		maxDistance: Double = if (this.isCreative) 13.0 else 7.0,
 		maxDiff: Double = 6.0
 	): Boolean {
 		if (this.position.distanceSquared(position) > maxDistance * maxDistance) return false
