@@ -73,6 +73,6 @@ abstract class ItemStackAction(
 
 	companion object {
 
-		private val log = ItemStackTransaction.getLogger()
+		private val log = ItemStackAction.getLogger()
 	}
 }
