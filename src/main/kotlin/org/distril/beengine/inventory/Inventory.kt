@@ -9,101 +9,101 @@ import org.distril.beengine.util.ItemUtils
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class Inventory(
-	open val holder: InventoryHolder,
-	val type: InventoryType,
-	overrideId: Int? = null
+    open val holder: InventoryHolder,
+    val type: InventoryType,
+    overrideId: Int? = null
 ) {
 
-	val viewers = mutableSetOf<Player>()
+    val viewers = mutableSetOf<Player>()
 
-	val items = arrayOfNulls<Item>(type.size)
+    val items = arrayOfNulls<Item>(type.size)
 
-	protected val id = overrideId ?: NEXT_ID.incrementAndGet()
+    protected val id = overrideId ?: NEXT_ID.incrementAndGet()
 
-	open fun setItem(slot: Int, item: Item?, send: Boolean = true): Boolean {
-		if (slot < 0 || slot >= this.items.size) return false
+    open fun setItem(slot: Int, item: Item?, send: Boolean = true): Boolean {
+        if (slot < 0 || slot >= this.items.size) return false
 
-		this.items[slot] = item
+        this.items[slot] = item
 
-		if (send) this.onSlotChange(slot)
+        if (send) this.onSlotChange(slot)
 
-		return true
-	}
+        return true
+    }
 
-	open fun getItem(slot: Int): Item {
-		return if (slot < 0 || slot >= this.items.size) Item.AIR
-		else ItemUtils.getAirIfNull(this.items[slot])
-	}
+    open fun getItem(slot: Int): Item {
+        return if (slot < 0 || slot >= this.items.size) Item.AIR
+        else ItemUtils.getAirIfNull(this.items[slot])
+    }
 
-	fun addItem(item: Item) {
-		this.items.indices.forEach {
-			if (this.items[it] == null) {
-				this.setItem(it, item)
-				return
-			}
-		}
-	}
+    fun addItem(item: Item) {
+        this.items.indices.forEach {
+            if (this.items[it] == null) {
+                this.setItem(it, item)
+                return
+            }
+        }
+    }
 
-	open fun clear() = this.clear(true)
+    open fun clear() = this.clear(true)
 
-	fun clear(send: Boolean) {
-		this.items.fill(null)
+    fun clear(send: Boolean) {
+        this.items.fill(null)
 
-		if (send) this.sendSlots()
-	}
+        if (send) this.sendSlots()
+    }
 
-	fun openFor(player: Player): Boolean {
-		if (this.viewers.add(player)) {
-			this.onOpen(player)
-			return true
-		}
+    fun openFor(player: Player): Boolean {
+        if (this.viewers.add(player)) {
+            this.onOpen(player)
+            return true
+        }
 
-		return false
-	}
+        return false
+    }
 
-	protected open fun onOpen(player: Player) {
-		/**/
-	}
+    protected open fun onOpen(player: Player) {
+        /**/
+    }
 
-	fun closeFor(player: Player): Boolean {
-		if (this.viewers.remove(player)) {
-			this.onClose(player)
-			return true
-		}
+    fun closeFor(player: Player): Boolean {
+        if (this.viewers.remove(player)) {
+            this.onClose(player)
+            return true
+        }
 
-		return false
-	}
+        return false
+    }
 
-	protected fun onClose(player: Player) {
-		val packet = ContainerClosePacket()
-		packet.id = this.id.toByte()
+    protected fun onClose(player: Player) {
+        val packet = ContainerClosePacket()
+        packet.id = this.id.toByte()
 
-		player.sendPacket(packet)
-	}
+        player.sendPacket(packet)
+    }
 
-	private fun onSlotChange(slot: Int) = this.sendSlot(slot, *this.viewers.toTypedArray())
+    private fun onSlotChange(slot: Int) = this.sendSlot(slot, *this.viewers.toTypedArray())
 
-	protected open fun sendSlot(slot: Int, vararg players: Player) {
-		val packet = InventorySlotPacket()
-		packet.containerId = this.id
-		packet.slot = slot
-		packet.item = ItemUtils.toNetwork(this.getItem(slot))
+    protected open fun sendSlot(slot: Int, vararg players: Player) {
+        val packet = InventorySlotPacket()
+        packet.containerId = this.id
+        packet.slot = slot
+        packet.item = ItemUtils.toNetwork(this.getItem(slot))
 
-		players.forEach { it.sendPacket(packet) }
-	}
+        players.forEach { it.sendPacket(packet) }
+    }
 
-	open fun sendSlots(player: Player) {
-		val packet = InventoryContentPacket()
-		packet.containerId = this.id
-		packet.contents = this.items.map { ItemUtils.toNetwork(it) }
+    open fun sendSlots(player: Player) {
+        val packet = InventoryContentPacket()
+        packet.containerId = this.id
+        packet.contents = this.items.map { ItemUtils.toNetwork(it) }
 
-		player.sendPacket(packet)
-	}
+        player.sendPacket(packet)
+    }
 
-	fun sendSlots() = this.viewers.forEach { this.sendSlots(it) }
+    fun sendSlots() = this.viewers.forEach { this.sendSlots(it) }
 
-	companion object {
+    companion object {
 
-		private val NEXT_ID = AtomicInteger(0)
-	}
+        private val NEXT_ID = AtomicInteger(0)
+    }
 }

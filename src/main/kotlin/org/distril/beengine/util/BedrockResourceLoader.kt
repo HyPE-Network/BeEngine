@@ -9,21 +9,21 @@ import kotlinx.coroutines.launch
 
 object BedrockResourceLoader {
 
-	val biomeDefinitionListPacket = BiomeDefinitionListPacket()
+    val biomeDefinitionListPacket = BiomeDefinitionListPacket()
 
-	val availableEntityIdentifiersPacket = AvailableEntityIdentifiersPacket()
+    val availableEntityIdentifiersPacket = AvailableEntityIdentifiersPacket()
 
-	suspend fun init() = coroutineScope {
-		launch {
-			NbtUtils.createNetworkReader(Utils.getResource("data/biome_definitions.dat")).use {
-				biomeDefinitionListPacket.definitions = it.readTag() as NbtMap
-			}
-		}
+    suspend fun init() = coroutineScope {
+        launch {
+            NbtUtils.createNetworkReader(Utils.getResource("data/biome_definitions.dat")).use {
+                biomeDefinitionListPacket.definitions = it.readTag() as NbtMap
+            }
+        }
 
-		launch {
-			NbtUtils.createNetworkReader(Utils.getResource("data/entity_identifiers.dat")).use {
-				availableEntityIdentifiersPacket.identifiers = it.readTag() as NbtMap
-			}
-		}
-	}
+        launch {
+            NbtUtils.createNetworkReader(Utils.getResource("data/entity_identifiers.dat")).use {
+                availableEntityIdentifiersPacket.identifiers = it.readTag() as NbtMap
+            }
+        }
+    }
 }

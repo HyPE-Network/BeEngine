@@ -2,12 +2,12 @@ package org.distril.beengine.command
 
 interface CommandSender {
 
-	val name: String
+    val name: String
 
-	val isConsole: Boolean
-		get() = false
+    val isConsole: Boolean
+        get() = false
 
-	fun sendMessage(message: String)
+    fun sendMessage(message: String)
 
-	fun hasPermission(permission: String): Boolean
+    fun hasPermission(permission: String): Boolean
 }

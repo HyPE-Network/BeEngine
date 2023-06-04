@@ -7,42 +7,42 @@ import java.util.concurrent.ConcurrentHashMap
 
 class WorldRegistry {
 
-	private val byName: MutableMap<String, World> = ConcurrentHashMap()
+    private val byName: MutableMap<String, World> = ConcurrentHashMap()
 
-	lateinit var defaultWorld: World
-		private set
+    lateinit var defaultWorld: World
+        private set
 
-	fun init() {
-		Utils.createDirectories(WORLD_PATH)
+    fun init() {
+        Utils.createDirectories(WORLD_PATH)
 
-		// todo: load all worlds
-		this.defaultWorld = this.createOrLoadWorld("defaultWorld", Dimension.OVERWORLD, FlatGenerator())
-	}
+        // todo: load all worlds
+        this.defaultWorld = this.createOrLoadWorld("defaultWorld", Dimension.OVERWORLD, FlatGenerator())
+    }
 
-	fun createOrLoadWorld(name: String, dimension: Dimension, generator: Generator): World {
-		val world = this.loadWorld(name) ?: this.createWorld(name, dimension, generator)
+    fun createOrLoadWorld(name: String, dimension: Dimension, generator: Generator): World {
+        val world = this.loadWorld(name) ?: this.createWorld(name, dimension, generator)
 
-		this.byName[name] = world
-		return world
-	}
+        this.byName[name] = world
+        return world
+    }
 
-	fun loadWorld(name: String): World? {
-		// todo
-		return null
-	}
+    fun loadWorld(name: String): World? {
+        // todo
+        return null
+    }
 
-	fun createWorld(name: String, dimension: Dimension, generator: Generator): World {
-		Utils.createDirectories(WORLD_PATH, name)
+    fun createWorld(name: String, dimension: Dimension, generator: Generator): World {
+        Utils.createDirectories(WORLD_PATH, name)
 
-		val world = World(name, dimension, generator)
-		this.byName[name] = world
-		return world
-	}
+        val world = World(name, dimension, generator)
+        this.byName[name] = world
+        return world
+    }
 
-	fun getWorld(name: String) = this.byName[name]
+    fun getWorld(name: String) = this.byName[name]
 
-	companion object {
+    companion object {
 
-		private const val WORLD_PATH = "worlds"
-	}
+        private const val WORLD_PATH = "worlds"
+    }
 }

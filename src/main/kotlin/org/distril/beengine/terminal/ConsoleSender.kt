@@ -5,16 +5,16 @@ import org.distril.beengine.util.Utils.getLogger
 
 class ConsoleSender : CommandSender {
 
-	override val name: String = "CONSOLE"
+    override val name: String = "CONSOLE"
 
-	override val isConsole: Boolean = true
+    override val isConsole: Boolean = true
 
-	override fun sendMessage(message: String) = log.info(message)
+    override fun sendMessage(message: String) = log.info(message)
 
-	override fun hasPermission(permission: String) = true
+    override fun hasPermission(permission: String) = true
 
-	companion object {
+    companion object {
 
-		private val log = ConsoleSender.getLogger()
-	}
+        private val log = ConsoleSender.getLogger()
+    }
 }

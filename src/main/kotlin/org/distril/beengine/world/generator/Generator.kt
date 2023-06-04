@@ -5,5 +5,5 @@ import java.util.concurrent.ThreadLocalRandom
 
 interface Generator {
 
-	fun generate(random: ThreadLocalRandom, chunk: Chunk)
+    fun generate(random: ThreadLocalRandom, chunk: Chunk)
 }

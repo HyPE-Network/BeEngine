@@ -14,155 +14,162 @@ import org.distril.beengine.material.item.Item
 import org.distril.beengine.player.Player
 import org.distril.beengine.server.Server
 import org.distril.beengine.util.Direction
-import org.distril.beengine.world.chunk.ChunkManager
+import org.distril.beengine.world.chunk.manager.ChunkManager
+import org.distril.beengine.world.chunk.processor.PlayerChunkProcessor
+import org.distril.beengine.world.chunk.processor.PlayerChunkRequest
 import org.distril.beengine.world.generator.Generator
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class World(val worldName: String, val dimension: Dimension, val generator: Generator) : Tickable(
-	"$worldName - World"
+    "$worldName-World"
 ) {
 
-	val path = Path.of("worlds", worldName)
-	val chunkManager = ChunkManager(this)
-	val entities: MutableMap<Long, Entity> = ConcurrentHashMap()
+    val path = Path.of("worlds", worldName)
+    val chunkManager = ChunkManager(this)
+    val playerChunkProcessor = PlayerChunkProcessor(this.worldName)
+    val entities: MutableMap<Long, Entity> = ConcurrentHashMap()
 
-	init {
-		this.start()
-	}
+    init {
+        this.start()
+    }
 
-	override suspend fun onUpdate(currentTick: Long): Unit = coroutineScope {
-		val tickedItems = mutableListOf<Deferred<Any>>()
-		tickedItems.addAll(chunkManager.tick())
+    override suspend fun onUpdate(currentTick: Long): Unit = coroutineScope {
+        val tickedItems = mutableListOf<Deferred<Any>>()
+        tickedItems.addAll(chunkManager.tick())
 
-		entities.values.forEach {
-			tickedItems.add(async { it.onUpdate(currentTick) })
-		}
+        entities.values.forEach {
+            tickedItems.add(async { it.onUpdate(currentTick) })
+        }
 
-		awaitAll(*tickedItems.toTypedArray())
-	}
+        awaitAll(*tickedItems.toTypedArray())
+    }
 
-	fun addEntity(entity: Entity, addInChunk: Boolean = true) {
-		this.entities[entity.id] = entity
+    fun addPlayerRequest(request: PlayerChunkRequest) {
+        this.playerChunkProcessor.addRequest(request)
+    }
 
-		if (addInChunk) {
-			val location = entity.location
-			location.chunk.addEntity(entity)
-		}
-	}
+    fun addEntity(entity: Entity, addInChunk: Boolean = true) {
+        this.entities[entity.id] = entity
 
-	fun removeEntity(entity: Entity, removeInChunk: Boolean = true) {
-		this.entities.remove(entity.id)
+        if (addInChunk) {
+            val location = entity.location
+            location.chunk.addEntity(entity)
+        }
+    }
 
-		if (removeInChunk) {
-			val location = entity.location
-			location.chunk.removeEntity(entity)
-		}
-	}
+    fun removeEntity(entity: Entity, removeInChunk: Boolean = true) {
+        this.entities.remove(entity.id)
 
-	fun getLoadedBlock(position: Vector3i, layer: Int = 0) =
-		this.getLoadedBlock(position.x, position.y, position.z, layer)
+        if (removeInChunk) {
+            val location = entity.location
+            location.chunk.removeEntity(entity)
+        }
+    }
 
-	fun getLoadedBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block? {
-		if (y >= this.dimension.maxY || y < this.dimension.minY) {
-			return Material.AIR.getBlock<Block>().apply {
-				world = this@World
-				position = Vector3i.from(x, y, z)
-			}
-		}
+    fun getLoadedBlock(position: Vector3i, layer: Int = 0) =
+        this.getLoadedBlock(position.x, position.y, position.z, layer)
 
-		val chunkX = x shr 4
-		val chunkZ = z shr 4
+    fun getLoadedBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block? {
+        if (y >= this.dimension.maxY || y < this.dimension.minY) {
+            return Material.AIR.getBlock<Block>().apply {
+                world = this@World
+                position = Vector3i.from(x, y, z)
+            }
+        }
 
-		val chunk = this.chunkManager.getLoadedChunk(chunkX, chunkZ) ?: return null
+        val chunkX = x shr 4
+        val chunkZ = z shr 4
 
-		return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
-			world = this@World
-			position = Vector3i.from(x, y, z)
-		}
-	}
+        val chunk = this.chunkManager.getLoadedChunk(chunkX, chunkZ) ?: return null
 
-	fun getBlock(position: Vector3i, layer: Int = 0) = this.getBlock(position.x, position.y, position.z, layer)
+        return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
+            world = this@World
+            position = Vector3i.from(x, y, z)
+        }
+    }
 
-	fun getBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block {
-		val loadedBlock = this.getLoadedBlock(x, y, z, layer)
-		if (loadedBlock != null) return loadedBlock
+    fun getBlock(position: Vector3i, layer: Int = 0) = this.getBlock(position.x, position.y, position.z, layer)
 
-		val chunkX = x shr 4
-		val chunkZ = z shr 4
+    fun getBlock(x: Int, y: Int, z: Int, layer: Int = 0): Block {
+        val loadedBlock = this.getLoadedBlock(x, y, z, layer)
+        if (loadedBlock != null) return loadedBlock
 
-		val chunk = this.chunkManager.getChunk(chunkX, chunkZ)
+        val chunkX = x shr 4
+        val chunkZ = z shr 4
 
-		return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
-			world = this@World
-			position = Vector3i.from(x, y, z)
-		}
-	}
+        val chunk = this.chunkManager.getChunk(chunkX, chunkZ)
 
-	fun setBlock(position: Vector3i, block: Block, layer: Int = 0) =
-		this.setBlock(position.x, position.y, position.z, block, layer)
+        return chunk.getBlock(x and 0xf, y, z and 0xf, layer).apply {
+            world = this@World
+            position = Vector3i.from(x, y, z)
+        }
+    }
 
-	fun setBlock(x: Int, y: Int, z: Int, block: Block, layer: Int = 0, send: Boolean = true) {
-		if (y >= this.dimension.maxY || y < this.dimension.minY) return
+    fun setBlock(position: Vector3i, block: Block, layer: Int = 0) =
+        this.setBlock(position.x, position.y, position.z, block, layer)
 
-		val chunk = this.chunkManager.getChunk(x shr 4, z shr 4)
-		chunk.setBlock(x and 0xF, y, z and 0xF, block, layer)
+    fun setBlock(x: Int, y: Int, z: Int, block: Block, layer: Int = 0, send: Boolean = true) {
+        if (y >= this.dimension.maxY || y < this.dimension.minY) return
 
-		if (send) this.sendBlocks(chunk.players, listOf(block))
-	}
+        val chunk = this.chunkManager.getChunk(x shr 4, z shr 4)
+        chunk.setBlock(x and 0xF, y, z and 0xF, block, layer)
 
-	fun sendBlocks(
-		targets: Collection<Player>,
-		blocks: Collection<Block>,
-		flags: Set<UpdateBlockPacket.Flag> = UpdateBlockPacket.FLAG_ALL_PRIORITY
-	) {
-		val packets = mutableListOf<UpdateBlockPacket>()
+        if (send) this.sendBlocks(chunk.players, listOf(block))
+    }
 
-		val packet = UpdateBlockPacket()
-		packet.flags.addAll(flags)
-		blocks.forEach {
-			packet.blockPosition = it.position
-			packet.runtimeId = it.state.runtimeId
-			packet.dataLayer = 0
-			packets.add(packet)
+    fun sendBlocks(
+        targets: Collection<Player>,
+        blocks: Collection<Block>,
+        flags: Set<UpdateBlockPacket.Flag> = UpdateBlockPacket.FLAG_ALL_PRIORITY
+    ) {
+        val packets = mutableListOf<UpdateBlockPacket>()
 
-			packet.dataLayer = 1
-			packets.add(packet)
-		}
+        val packet = UpdateBlockPacket()
+        packet.flags.addAll(flags)
+        blocks.forEach {
+            packet.blockPosition = it.position
+            packet.runtimeId = it.state.runtimeId
+            packet.dataLayer = 0
+            packets.add(packet)
 
-		Server.broadcastPackets(targets, packets)
-	}
+            packet.dataLayer = 1
+            packets.add(packet)
+        }
 
-	fun getLoadedChunkEntities(chunkX: Int, chunkZ: Int): Collection<Entity> {
-		return this.chunkManager.getLoadedChunk(chunkX, chunkZ)?.entities ?: return setOf()
-	}
+        Server.broadcastPackets(targets, packets)
+    }
 
-	fun useItemOn(blockPosition: Vector3i, usedItem: Item, clickedBlockFace: Direction, player: Player): Item? {
-		val clickedBlock = this.getBlock(blockPosition)
-		if (clickedBlock.material === Material.AIR) return null
+    fun getLoadedChunkEntities(chunkX: Int, chunkZ: Int): Collection<Entity> {
+        return this.chunkManager.getLoadedChunk(chunkX, chunkZ)?.entities ?: return setOf()
+    }
 
-		val replaceBlock = clickedBlock.getSide(clickedBlockFace)
+    fun useItemOn(blockPosition: Vector3i, usedItem: Item, clickedBlockFace: Direction, player: Player): Item? {
+        val clickedBlock = this.getBlock(blockPosition)
+        if (clickedBlock.material === Material.AIR) return null
 
-		val replacePos = replaceBlock.position!!
-		if (replacePos.y < this.dimension.maxY && replacePos.y >= this.dimension.minY) {
-			usedItem.toBlock<Block>()?.apply {
-				world = this@World
-				position = replacePos
-			}?.run { setBlock(replacePos, block = this) }
+        val replaceBlock = clickedBlock.getSide(clickedBlockFace)
 
-			return usedItem
-		}
+        val replacePos = replaceBlock.position!!
+        if (replacePos.y < this.dimension.maxY && replacePos.y >= this.dimension.minY) {
+            usedItem.toBlock<Block>()?.apply {
+                world = this@World
+                position = replacePos
+            }?.run { setBlock(replacePos, block = this) }
 
-		return null
-	}
+            return usedItem
+        }
 
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (other !is World) return false
+        return null
+    }
 
-		return this.path == other.path
-	}
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is World) return false
 
-	override fun hashCode() = Objects.hash(this.path)
+        return this.path == other.path
+    }
+
+    override fun hashCode() = Objects.hash(this.path)
 }

@@ -11,61 +11,60 @@ import org.distril.beengine.server.Server
 import org.distril.beengine.util.Utils.getLogger
 
 class ResourcePackPacketHandler(
-	private val session: BedrockServerSession,
-	private val loginData: LoginData
+    private val session: BedrockServerSession,
+    private val loginData: LoginData
 ) : BedrockPacketHandler {
 
-	init {
-		this.session.hardcodedBlockingId.set(Material.SHIELD.itemRuntimeId)
-		this.session.sendPacket(ResourcePacksInfoPacket()) // todo: add resource packs
-	}
+    init {
+        this.session.hardcodedBlockingId.set(Material.SHIELD.itemRuntimeId)
+        this.session.sendPacket(ResourcePacksInfoPacket()) // todo: add resource packs
+    }
 
-	override fun handle(packet: ResourcePackClientResponsePacket): Boolean {
-		when (packet.status) {
-			ResourcePackClientResponsePacket.Status.SEND_PACKS -> TODO()
+    override fun handle(packet: ResourcePackClientResponsePacket): Boolean {
+        when (packet.status) {
+            ResourcePackClientResponsePacket.Status.SEND_PACKS -> TODO()
 
-			ResourcePackClientResponsePacket.Status.HAVE_ALL_PACKS -> {
-				val stackPacket = ResourcePackStackPacket()
-				stackPacket.gameVersion = Network.CODEC.minecraftVersion
+            ResourcePackClientResponsePacket.Status.HAVE_ALL_PACKS -> {
+                val stackPacket = ResourcePackStackPacket()
+                stackPacket.gameVersion = Network.CODEC.minecraftVersion
 
-				this.session.sendPacket(stackPacket)
-			}
+                this.session.sendPacket(stackPacket)
+            }
 
-			ResourcePackClientResponsePacket.Status.COMPLETED -> {
-				Server.scheduler.scheduleTask(async = true) {
-					val player = Player(this.session, this.loginData)
-					this.session.apply {
-						addDisconnectHandler {
-							Server.removePlayer(player)
-							player.disconnect(it.name)
-						}
+            ResourcePackClientResponsePacket.Status.COMPLETED -> {
+                Server.scheduler.scheduleTask(async = true) {
+                    val player = Player(this.session, this.loginData)
+                    this.session.apply {
+                        this.addDisconnectHandler {
+                            Server.removePlayer(player)
+                            player.disconnect(it.name)
+                        }
 
-						packetHandler = PlayerPacketHandler(player)
-					}
+                        this.packetHandler = PlayerPacketHandler(player)
+                    }
 
-					player.initialize()
-					player.completePlayerInitialization()
-				}
-			}
+                    player.initialize()
+                }
+            }
 
-			else -> this.session.disconnect("disconnectionScreen.noReason")
-		}
+            else -> this.session.disconnect("disconnectionScreen.noReason")
+        }
 
-		return true
-	}
+        return true
+    }
 
-	override fun handle(packet: ResourcePackChunkRequestPacket): Boolean {
-		// todo
-		return super.handle(packet)
-	}
+    override fun handle(packet: ResourcePackChunkRequestPacket): Boolean {
+        // todo
+        return super.handle(packet)
+    }
 
-	override fun handle(packet: PacketViolationWarningPacket): Boolean {
-		log.debug("Packet violation: $packet")
-		return true
-	}
+    override fun handle(packet: PacketViolationWarningPacket): Boolean {
+        log.debug("Packet violation: $packet")
+        return true
+    }
 
-	companion object {
+    companion object {
 
-		private val log = ResourcePackPacketHandler.getLogger()
-	}
+        private val log = ResourcePackPacketHandler.getLogger()
+    }
 }

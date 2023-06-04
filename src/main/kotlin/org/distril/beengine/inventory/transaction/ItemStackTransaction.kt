@@ -11,53 +11,53 @@ import java.util.*
 
 class ItemStackTransaction(val player: Player) {
 
-	private val containers: MutableMap<ContainerSlotType, MutableList<ItemStackResponsePacket.ItemEntry>> =
-		EnumMap(ContainerSlotType::class.java)
+    private val containers: MutableMap<ContainerSlotType, MutableList<ItemStackResponsePacket.ItemEntry>> =
+        EnumMap(ContainerSlotType::class.java)
 
-	var creativeOutput: Item? = null
+    var creativeOutput: Item? = null
 
-	var status = ItemStackResponsePacket.ResponseStatus.OK
+    var status = ItemStackResponsePacket.ResponseStatus.OK
 
-	fun handle(action: ItemStackAction): Boolean {
-		if (!action.isValid(this.player)) {
-			log.warn("Failed validation check on ${action.javaClass.simpleName}")
-			action.onExecuteFail(player)
-			return false
-		}
+    fun handle(action: ItemStackAction): Boolean {
+        if (!action.isValid(this.player)) {
+            log.warn("Failed validation check on ${action.javaClass.simpleName}")
+            action.onExecuteFail(player)
+            return false
+        }
 
-		if (action.execute(player)) {
-			action.onExecuteSuccess(player)
-			return true
-		}
+        if (action.execute(player)) {
+            action.onExecuteSuccess(player)
+            return true
+        }
 
-		action.onExecuteFail(player)
-		return false
-	}
+        action.onExecuteFail(player)
+        return false
+    }
 
-	fun clear() = this.containers.clear()
+    fun clear() = this.containers.clear()
 
-	fun addContainers(containers: List<ContainerEntry>) {
-		containers.forEach {
-			this.containers.computeIfAbsent(it.container) { mutableListOf() }.apply { this.addAll(it.items) }
-		}
-	}
+    fun addContainers(containers: List<ContainerEntry>) {
+        containers.forEach {
+            this.containers.computeIfAbsent(it.container) { mutableListOf() }.apply { this.addAll(it.items) }
+        }
+    }
 
-	val containersEntries: List<ContainerEntry>
-		get() = this.containers.keys.map { ContainerEntry(it, this.containers[it]) }
+    val containersEntries: List<ContainerEntry>
+        get() = this.containers.keys.map { ContainerEntry(it, this.containers[it]) }
 
-	fun getInventoryByType(type: ContainerSlotType) = when (type) {
-		ContainerSlotType.HOTBAR,
-		ContainerSlotType.HOTBAR_AND_INVENTORY,
-		ContainerSlotType.INVENTORY,
-		ContainerSlotType.OFFHAND -> player.inventory
+    fun getInventoryByType(type: ContainerSlotType) = when (type) {
+        ContainerSlotType.HOTBAR,
+        ContainerSlotType.HOTBAR_AND_INVENTORY,
+        ContainerSlotType.INVENTORY,
+        ContainerSlotType.OFFHAND -> player.inventory
 
-		ContainerSlotType.CURSOR -> player.inventory.cursorInventory
+        ContainerSlotType.CURSOR -> player.inventory.cursorInventory
 
-		else -> player.openedInventory!!
-	}
+        else -> player.openedInventory!!
+    }
 
-	companion object {
+    companion object {
 
-		private val log = ItemStackTransaction.getLogger()
-	}
+        private val log = ItemStackTransaction.getLogger()
+    }
 }

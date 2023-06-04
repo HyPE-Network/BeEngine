@@ -11,73 +11,73 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class Layer(version: BitArray.Version = BitArray.Version.V2) {
 
-	val palette: MutableList<BlockState> = CopyOnWriteArrayList<BlockState>().apply {
-		this.add(AIR_STATE)
-	}
+    val palette: MutableList<BlockState> = CopyOnWriteArrayList<BlockState>().apply {
+        this.add(AIR_STATE)
+    }
 
-	var bitArray = version.createPalette(SIZE)
+    var bitArray = version.createPalette(SIZE)
 
-	private fun getPaletteHeader(version: BitArray.Version) = version.bits.toInt() shl 1 or 1
+    private fun getPaletteHeader(version: BitArray.Version) = version.bits.toInt() shl 1 or 1
 
-	operator fun get(x: Int, y: Int, z: Int): BlockState {
-		val index = x shl 8 or (z shl 4) or y
-		return this.palette[bitArray[index]]
-	}
+    operator fun get(x: Int, y: Int, z: Int): BlockState {
+        val index = x shl 8 or (z shl 4) or y
+        return this.palette[bitArray[index]]
+    }
 
-	operator fun set(x: Int, y: Int, z: Int, state: BlockState) {
-		try {
-			val index = x shl 8 or (z shl 4) or y
-			synchronized(this.bitArray) {
-				this.bitArray[index] = this.idFor(state)
-			}
-		} catch (exception: IllegalArgumentException) {
-			throw IllegalArgumentException("Unable to set block state: $state, palette: $palette", exception)
-		}
-	}
+    operator fun set(x: Int, y: Int, z: Int, state: BlockState) {
+        try {
+            val index = x shl 8 or (z shl 4) or y
+            synchronized(this.bitArray) {
+                this.bitArray[index] = this.idFor(state)
+            }
+        } catch (exception: IllegalArgumentException) {
+            throw IllegalArgumentException("Unable to set block state: $state, palette: $palette", exception)
+        }
+    }
 
-	fun writeToNetwork(buffer: ByteBuf) {
-		buffer.writeByte(this.getPaletteHeader(this.bitArray.version))
-		this.bitArray.words.forEach { buffer.writeIntLE(it) }
+    fun writeToNetwork(buffer: ByteBuf) {
+        buffer.writeByte(this.getPaletteHeader(this.bitArray.version))
+        this.bitArray.words.forEach { buffer.writeIntLE(it) }
 
-		VarInts.writeInt(buffer, this.palette.size)
-		this.palette.forEach { VarInts.writeInt(buffer, it.runtimeId) }
-	}
+        VarInts.writeInt(buffer, this.palette.size)
+        this.palette.forEach { VarInts.writeInt(buffer, it.runtimeId) }
+    }
 
-	private fun idFor(state: BlockState): Int {
-		var index = this.palette.indexOf(state)
-		if (index == -1) {
-			index = this.palette.size
-			val version = this.bitArray.version
-			if (index > version.maxEntryValue) {
-				version.next?.let { this.onResize(it) }
-			}
+    private fun idFor(state: BlockState): Int {
+        var index = this.palette.indexOf(state)
+        if (index == -1) {
+            index = this.palette.size
+            val version = this.bitArray.version
+            if (index > version.maxEntryValue) {
+                version.next?.let { this.onResize(it) }
+            }
 
-			this.palette.add(state)
-			return index
-		}
+            this.palette.add(state)
+            return index
+        }
 
-		return index
-	}
+        return index
+    }
 
-	private fun onResize(version: BitArray.Version) {
-		val newBitArray = version.createPalette(SIZE)
-		for (index in 0 until SIZE) newBitArray[index] = this.bitArray[index]
-		this.bitArray = newBitArray
-	}
+    private fun onResize(version: BitArray.Version) {
+        val newBitArray = version.createPalette(SIZE)
+        for (index in 0 until SIZE) newBitArray[index] = this.bitArray[index]
+        this.bitArray = newBitArray
+    }
 
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (other !is Layer) return false
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Layer) return false
 
-		return this.palette != other.palette && this.bitArray != other.bitArray
-	}
+        return this.palette != other.palette && this.bitArray != other.bitArray
+    }
 
-	override fun hashCode() = Objects.hash(this.palette, this.bitArray)
+    override fun hashCode() = Objects.hash(this.palette, this.bitArray)
 
-	companion object {
+    companion object {
 
-		private const val SIZE = 4096
+        private const val SIZE = 4096
 
-		private val AIR_STATE = Material.AIR.getBlock<Block>().state
-	}
+        private val AIR_STATE = Material.AIR.getBlock<Block>().state
+    }
 }
