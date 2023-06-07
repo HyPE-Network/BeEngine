@@ -42,7 +42,7 @@ class PlayerChunkManager(val player: Player) {
 			}
 		}
 
-	fun succesfull(chunkHash: Long) {
+	fun successful(chunkHash: Long) {
 		this.loadedChunks.add(chunkHash)
 		this.chunksSentCounter.incrementAndGet()
 	}

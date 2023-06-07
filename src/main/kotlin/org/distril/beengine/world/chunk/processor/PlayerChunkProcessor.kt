@@ -30,7 +30,7 @@ class PlayerChunkProcessor(worldName: String) {
 						continue
 					}
 
-					player.chunkManager.succesfull(chunk.hash())
+					player.chunkManager.successful(chunk.hash())
 
 					chunk.entities.forEach { if (it != player && !it.isSpawned) it.spawnFor(player) }
 				}
