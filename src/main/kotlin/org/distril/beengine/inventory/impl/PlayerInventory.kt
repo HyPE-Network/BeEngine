@@ -7,33 +7,33 @@ import org.distril.beengine.player.Player
 
 class PlayerInventory(player: Player) : CreatureInventory(player, ContainerId.INVENTORY) {
 
-    override val holder = super.holder as Player
+	override val holder = super.holder as Player
 
-    val cursorInventory = PlayerCursorInventory(player)
-    val craftingInventory = PlayerCraftingInventory(player)
+	val cursorInventory = PlayerCursorInventory(player)
+	val craftingInventory = PlayerCraftingInventory(player)
 
-    override fun clear() {
-        super.clear()
+	override fun clear() {
+		super.clear()
 
-        this.cursorInventory.clear()
-    }
+		this.cursorInventory.clear()
+	}
 
-    override fun onOpen(player: Player) {
-        val packet = ContainerOpenPacket()
-        packet.id = this.id.toByte()
-        packet.type = this.type.containerType
-        packet.blockPosition = Vector3i.ZERO
-        packet.uniqueEntityId = player.id
+	override fun onOpen(player: Player) {
+		val packet = ContainerOpenPacket()
+		packet.id = this.id.toByte()
+		packet.type = this.type.containerType
+		packet.blockPosition = Vector3i.ZERO
+		packet.uniqueEntityId = player.id
 
-        player.sendPacket(packet)
+		player.sendPacket(packet)
 
-        this.sendSlots(player)
-    }
+		this.sendSlots(player)
+	}
 
-    override fun sendSlots(player: Player) {
-        super.sendSlots(player)
+	override fun sendSlots(player: Player) {
+		super.sendSlots(player)
 
-        this.cursorInventory.sendSlots(player)
-        this.craftingInventory.sendSlots(player)
-    }
+		this.cursorInventory.sendSlots(player)
+		this.craftingInventory.sendSlots(player)
+	}
 }

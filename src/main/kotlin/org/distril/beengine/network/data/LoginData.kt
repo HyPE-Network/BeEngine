@@ -11,49 +11,49 @@ import org.distril.beengine.util.Utils.gson
 import java.util.*
 
 class LoginData private constructor(
-    val xuid: String,
-    val identityPublicKey: String,
-    val uuid: UUID,
-    val username: String,
-    val languageCode: String,
-    val device: Device,
-    val skin: SerializedSkin,
-    val authenticated: Boolean
+	val xuid: String,
+	val identityPublicKey: String,
+	val uuid: UUID,
+	val username: String,
+	val languageCode: String,
+	val device: Device,
+	val skin: SerializedSkin,
+	val authenticated: Boolean
 ) {
 
-    companion object {
+	companion object {
 
-        fun extract(chainData: AsciiString, skinData: AsciiString): LoginData? {
-            return try {
-                val chainJSON = gson.fromJson(chainData.toString(), JsonObject::class.java)
-                val chains = JSONArray()
-                chainJSON.getAsJsonArray("chain").forEach { chains.add(it.asString) }
+		fun extract(chainData: AsciiString, skinData: AsciiString): LoginData? {
+			return try {
+				val chainJSON = gson.fromJson(chainData.toString(), JsonObject::class.java)
+				val chains = JSONArray()
+				chainJSON.getAsJsonArray("chain").forEach { chains.add(it.asString) }
 
-                val authenticated = EncryptionUtils.verifyChain(chains)
+				val authenticated = EncryptionUtils.verifyChain(chains)
 
-                // Retrieve xuid, uuid, and username
-                val chainPayload = JWSObject.parse(chains[chains.size - 1] as String).payload.toString()
-                val jsonPayload = gson.fromJson(chainPayload, JsonObject::class.java)
-                val extraData = jsonPayload.getAsJsonObject("extraData")
-                val xuid = extraData["XUID"].asString
-                val uuid = UUID.fromString(extraData["identity"].asString)
-                val username = extraData["displayName"].asString
-                val identityPublicKey = jsonPayload["identityPublicKey"].asString
+				// Retrieve xuid, uuid, and username
+				val chainPayload = JWSObject.parse(chains[chains.size - 1] as String).payload.toString()
+				val jsonPayload = gson.fromJson(chainPayload, JsonObject::class.java)
+				val extraData = jsonPayload.getAsJsonObject("extraData")
+				val xuid = extraData["XUID"].asString
+				val uuid = UUID.fromString(extraData["identity"].asString)
+				val username = extraData["displayName"].asString
+				val identityPublicKey = jsonPayload["identityPublicKey"].asString
 
-                // Extract data from skin string
-                val skinJWS = JWSObject.parse(skinData.toString())
-                val skinJSON = gson.fromJson(skinJWS.payload.toString(), JsonObject::class.java)
+				// Extract data from skin string
+				val skinJWS = JWSObject.parse(skinData.toString())
+				val skinJSON = gson.fromJson(skinJWS.payload.toString(), JsonObject::class.java)
 
-                // Retrieve device and language code
-                val device = Device.fromOSId(skinJSON["DeviceOS"].asInt)
-                val languageCode = skinJSON["LanguageCode"].asString
+				// Retrieve device and language code
+				val device = Device.fromOSId(skinJSON["DeviceOS"].asInt)
+				val languageCode = skinJSON["LanguageCode"].asString
 
-                // Retrieve skin
-                val skin = SkinUtil.fromToken(skinJSON)
-                LoginData(xuid, identityPublicKey, uuid, username, languageCode, device, skin, authenticated)
-            } catch (exception: Exception) {
-                null
-            }
-        }
-    }
+				// Retrieve skin
+				val skin = SkinUtil.fromToken(skinJSON)
+				LoginData(xuid, identityPublicKey, uuid, username, languageCode, device, skin, authenticated)
+			} catch (exception: Exception) {
+				null
+			}
+		}
+	}
 }

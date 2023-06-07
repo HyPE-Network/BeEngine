@@ -5,5 +5,5 @@ import org.distril.beengine.inventory.impl.CreatureInventory
 
 abstract class EntityCreature(type: EntityType) : EntityLiving(type), InventoryHolder {
 
-    override val inventory by lazy { CreatureInventory(this) }
+	override val inventory by lazy { CreatureInventory(this) }
 }

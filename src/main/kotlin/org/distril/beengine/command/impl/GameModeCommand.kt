@@ -6,53 +6,53 @@ import org.distril.beengine.command.data.Args
 import org.distril.beengine.player.Player
 
 class GameModeCommand : Command(
-    "gamemode",
-    "Sets a player's game mode.",
-    "command.gamemode",
-    "gm"
+	"gamemode",
+	"Sets a player's game mode.",
+	"command.gamemode",
+	"gm"
 ) {
 
-    init {
-        this.addArguments {
-            GameMode("gameMode")
-            Target("player", true)
-        }
+	init {
+		this.addArguments {
+			GameMode("gameMode")
+			Target("player", true)
+		}
 
-        this.addArguments {
-            Integer("gameMode")
-            Target("player", true)
-        }
-    }
+		this.addArguments {
+			Integer("gameMode")
+			Target("player", true)
+		}
+	}
 
-    override fun execute(sender: CommandSender, args: Args) {
-        if (!sender.hasPermission(this.permission)) return
+	override fun execute(sender: CommandSender, args: Args) {
+		if (!sender.hasPermission(this.permission)) return
 
-        if (args.isEmpty()) {
-            sender.sendMessage("Use: /gamemode <gameMode> [player]")
-            return
-        }
+		if (args.isEmpty()) {
+			sender.sendMessage("Use: /gamemode <gameMode> [player]")
+			return
+		}
 
-        val gameMode = args.getGameMode("gameMode")
-        if (gameMode == null) {
-            sender.sendMessage("Game mode '${args.getString("gameMode")}' is invalid")
-            return
-        }
+		val gameMode = args.getGameMode("gameMode")
+		if (gameMode == null) {
+			sender.sendMessage("Game mode '${args.getString("gameMode")}' is invalid")
+			return
+		}
 
-        var target = args.getTarget("player")
-        if (sender.isConsole && (!args.has("player") || target == null)) {
-            sender.sendMessage("No targets matched selector")
-            return
-        }
+		var target = args.getTarget("player")
+		if (sender.isConsole && (!args.has("player") || target == null)) {
+			sender.sendMessage("No targets matched selector")
+			return
+		}
 
-        if (target == null) target = sender as Player
+		if (target == null) target = sender as Player
 
-        if (target != sender) {
-            sender.sendMessage("Set '${target.username}'s game mode to ${gameMode.identifier}")
-        } else {
-            sender.sendMessage("Set own game mode to ${gameMode.identifier}")
-        }
+		if (target != sender) {
+			sender.sendMessage("Set '${target.username}'s game mode to ${gameMode.identifier}")
+		} else {
+			sender.sendMessage("Set own game mode to ${gameMode.identifier}")
+		}
 
-        target.setGameMode(gameMode)
-        target.sendMessage("Your game mode has been updated to ${gameMode.identifier}")
-    }
+		target.setGameMode(gameMode)
+		target.sendMessage("Your game mode has been updated to ${gameMode.identifier}")
+	}
 }

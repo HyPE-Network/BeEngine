@@ -7,33 +7,33 @@ import org.jline.reader.LineReaderBuilder
 
 class Terminal : Thread("Terminal Thread") {
 
-    private val terminalUnsafe = TerminalUnsafe()
+	private val terminalUnsafe = TerminalUnsafe()
 
-    init {
-        this.isDaemon = true
-    }
+	init {
+		this.isDaemon = true
+	}
 
-    override fun run() = this.terminalUnsafe.start()
+	override fun run() = this.terminalUnsafe.start()
 
-    private class TerminalUnsafe : SimpleTerminalConsole() {
+	private class TerminalUnsafe : SimpleTerminalConsole() {
 
-        override fun isRunning() = Server.isRunning
+		override fun isRunning() = Server.isRunning
 
-        override fun runCommand(command: String) = Server.dispatchCommand(SENDER, command)
+		override fun runCommand(command: String) = Server.dispatchCommand(SENDER, command)
 
-        override fun shutdown() = Server.shutdown()
+		override fun shutdown() = Server.shutdown()
 
-        override fun buildReader(builder: LineReaderBuilder): LineReader {
-            builder.appName("BeEngine")
-            builder.option(LineReader.Option.HISTORY_BEEP, false)
-            builder.option(LineReader.Option.HISTORY_IGNORE_DUPS, true)
-            builder.option(LineReader.Option.HISTORY_IGNORE_SPACE, true)
-            return super.buildReader(builder)
-        }
-    }
+		override fun buildReader(builder: LineReaderBuilder): LineReader {
+			builder.appName("BeEngine")
+			builder.option(LineReader.Option.HISTORY_BEEP, false)
+			builder.option(LineReader.Option.HISTORY_IGNORE_DUPS, true)
+			builder.option(LineReader.Option.HISTORY_IGNORE_SPACE, true)
+			return super.buildReader(builder)
+		}
+	}
 
-    companion object {
+	companion object {
 
-        val SENDER = ConsoleSender()
-    }
+		val SENDER = ConsoleSender()
+	}
 }

@@ -8,43 +8,43 @@ import org.distril.beengine.util.Direction
 import org.distril.beengine.util.ItemUtils
 
 class ItemUseTransaction private constructor(
-    val type: Type,
-    val blockPosition: Vector3i,
-    val blockFace: Direction,
-    val hotbarSlot: Int,
-    val itemInHand: Item,
-    val playerPosition: Vector3f,
-    val clickPosition: Vector3f,
-    val blockRuntimeId: Int
+	val type: Type,
+	val blockPosition: Vector3i,
+	val blockFace: Direction,
+	val hotbarSlot: Int,
+	val itemInHand: Item,
+	val playerPosition: Vector3f,
+	val clickPosition: Vector3f,
+	val blockRuntimeId: Int
 ) {
 
-    enum class Type {
+	enum class Type {
 
-        CLICK_BLOCK,
-        CLICK_AIR,
-        BREAK_BLOCK;
+		CLICK_BLOCK,
+		CLICK_AIR,
+		BREAK_BLOCK;
 
-        companion object {
+		companion object {
 
-            fun fromTypeId(typeId: Int) = Type.values()[typeId]
-        }
-    }
+			fun fromTypeId(typeId: Int) = Type.values()[typeId]
+		}
+	}
 
-    companion object {
+	companion object {
 
-        fun read(packet: InventoryTransactionPacket): ItemUseTransaction {
-            val type = Type.fromTypeId(packet.actionType)
-            val blockPosition = packet.blockPosition
-            val blockFace = Direction.fromIndex(packet.blockFace)!!
-            val hotbarSlot = packet.hotbarSlot
-            val itemInHand = ItemUtils.fromNetwork(packet.itemInHand)
-            val playerPosition = packet.playerPosition
-            val clickPosition = packet.clickPosition
-            val blockRuntimeId = packet.blockRuntimeId
-            return ItemUseTransaction(
-                type, blockPosition, blockFace, hotbarSlot, itemInHand, playerPosition,
-                clickPosition, blockRuntimeId
-            )
-        }
-    }
+		fun read(packet: InventoryTransactionPacket): ItemUseTransaction {
+			val type = Type.fromTypeId(packet.actionType)
+			val blockPosition = packet.blockPosition
+			val blockFace = Direction.fromIndex(packet.blockFace)!!
+			val hotbarSlot = packet.hotbarSlot
+			val itemInHand = ItemUtils.fromNetwork(packet.itemInHand)
+			val playerPosition = packet.playerPosition
+			val clickPosition = packet.clickPosition
+			val blockRuntimeId = packet.blockRuntimeId
+			return ItemUseTransaction(
+				type, blockPosition, blockFace, hotbarSlot, itemInHand, playerPosition,
+				clickPosition, blockRuntimeId
+			)
+		}
+	}
 }

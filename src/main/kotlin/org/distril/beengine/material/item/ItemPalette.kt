@@ -14,45 +14,45 @@ import java.io.InputStreamReader
 
 object ItemPalette {
 
-    val items: BiMap<String, Int> = HashBiMap.create()
+	val items: BiMap<String, Int> = HashBiMap.create()
 
-    val entries = mutableSetOf<StartGamePacket.ItemEntry>()
+	val entries = mutableSetOf<StartGamePacket.ItemEntry>()
 
-    val creativeItems = mutableMapOf<Int, ItemData>()
+	val creativeItems = mutableMapOf<Int, ItemData>()
 
-    val creativeContentPacket = CreativeContentPacket()
+	val creativeContentPacket = CreativeContentPacket()
 
-    fun init() {
-        InputStreamReader(Utils.getResource("data/runtime_item_states.json")).use {
-            val itemsJsons = gson.fromJson(it, JsonArray::class.java)
-            itemsJsons.forEach { element ->
-                val itemJson = element.asJsonObject
-                val identifier = itemJson["name"].asString
-                val runtimeId = itemJson["id"].asInt
+	fun init() {
+		InputStreamReader(Utils.getResource("data/runtime_item_states.json")).use {
+			val itemsJsons = gson.fromJson(it, JsonArray::class.java)
+			itemsJsons.forEach { element ->
+				val itemJson = element.asJsonObject
+				val identifier = itemJson["name"].asString
+				val runtimeId = itemJson["id"].asInt
 
-                items[identifier] = runtimeId
+				items[identifier] = runtimeId
 
-                entries.add(StartGamePacket.ItemEntry(identifier, runtimeId.toShort(), false))
-            }
-        }
+				entries.add(StartGamePacket.ItemEntry(identifier, runtimeId.toShort(), false))
+			}
+		}
 
-        InputStreamReader(Utils.getResource("data/creative_items.json")).use {
-            val itemsJsons = gson.fromJson(it, JsonObject::class.java).getAsJsonArray("items")
-            var networkId = 0
-            itemsJsons.forEach { element ->
-                networkId++
+		InputStreamReader(Utils.getResource("data/creative_items.json")).use {
+			val itemsJsons = gson.fromJson(it, JsonObject::class.java).getAsJsonArray("items")
+			var networkId = 0
+			itemsJsons.forEach { element ->
+				networkId++
 
-                val itemJson = element.asJsonObject
-                creativeItems[networkId] = ItemUtils.fromJSON(itemJson).toBuilder().netId(networkId).build()
-            }
+				val itemJson = element.asJsonObject
+				creativeItems[networkId] = ItemUtils.fromJSON(itemJson).toBuilder().netId(networkId).build()
+			}
 
-            creativeContentPacket.contents = creativeItems.values.toTypedArray()
-        }
-    }
+			creativeContentPacket.contents = creativeItems.values.toTypedArray()
+		}
+	}
 
-    fun getIdentifier(runtimeId: Int) = items.inverse()[runtimeId]!!
+	fun getIdentifier(runtimeId: Int) = items.inverse()[runtimeId]!!
 
-    fun getRuntimeId(identifier: String) = items[identifier]!!
+	fun getRuntimeId(identifier: String) = items[identifier]!!
 
-    fun getCreativeItem(itemNetworkId: Int) = ItemUtils.fromNetwork(creativeItems[itemNetworkId])
+	fun getCreativeItem(itemNetworkId: Int) = ItemUtils.fromNetwork(creativeItems[itemNetworkId])
 }

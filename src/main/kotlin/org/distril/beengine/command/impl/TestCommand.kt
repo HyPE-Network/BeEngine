@@ -6,7 +6,7 @@ import org.distril.beengine.command.data.Args
 
 class TestCommand : Command("test", "Test command", "command.test") {
 
-    override fun execute(sender: CommandSender, args: Args) {
-        TODO("This class only used for tests")
-    }
+	override fun execute(sender: CommandSender, args: Args) {
+		TODO("This class only used for tests")
+	}
 }

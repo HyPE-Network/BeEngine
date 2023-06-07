@@ -7,7 +7,7 @@ import org.distril.beengine.util.Direction
 
 interface BlockBehaviors {
 
-    fun onPlace(item: Item, target: Block, blockFace: Direction, clickPosition: Vector3f, player: Player) = true
+	fun onPlace(item: Item, target: Block, blockFace: Direction, clickPosition: Vector3f, player: Player) = true
 
-    val canBeReplaced get() = false
+	val canBeReplaced get() = false
 }

@@ -5,7 +5,7 @@ import java.util.*
 
 interface PlayerDataProvider {
 
-    fun save(uuid: UUID, data: PlayerData, handler: (Throwable?) -> Unit)
+	fun save(uuid: UUID, data: PlayerData, handler: (Throwable?) -> Unit)
 
-    fun load(uuid: UUID, handler: (PlayerData, Throwable?) -> Unit)
+	fun load(uuid: UUID, handler: (PlayerData, Throwable?) -> Unit)
 }

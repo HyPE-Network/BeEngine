@@ -5,16 +5,16 @@ import org.distril.beengine.inventory.transaction.ItemStackTransaction
 import org.distril.beengine.player.Player
 
 class PlaceItemStackAction(
-    from: StackRequestSlotInfoData,
-    to: StackRequestSlotInfoData,
-    transaction: ItemStackTransaction,
-    count: Int,
-    requestId: Int
+	from: StackRequestSlotInfoData,
+	to: StackRequestSlotInfoData,
+	transaction: ItemStackTransaction,
+	count: Int,
+	requestId: Int
 ) : MoveItemStackAction(from, to, transaction, count, requestId) {
 
-    override fun execute(player: Player): Boolean {
-        this.fromItem = this.toItem
-        this.toItem = this.fromItem
-        return true
-    }
+	override fun execute(player: Player): Boolean {
+		this.fromItem = this.toItem
+		this.toItem = this.fromItem
+		return true
+	}
 }

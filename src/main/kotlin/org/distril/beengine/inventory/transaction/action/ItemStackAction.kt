@@ -10,69 +10,69 @@ import org.distril.beengine.player.Player
 import org.distril.beengine.util.Utils.getLogger
 
 abstract class ItemStackAction(
-    protected val from: StackRequestSlotInfoData? = null,
-    protected val to: StackRequestSlotInfoData? = null,
-    protected val transaction: ItemStackTransaction
+	protected val from: StackRequestSlotInfoData? = null,
+	protected val to: StackRequestSlotInfoData? = null,
+	protected val transaction: ItemStackTransaction
 ) {
 
-    protected open var fromItem = this.from.getItem()
-        get() = field?.clone()
-        set(value) {
-            this.from?.getInventory()?.setItem(this.from.slot.toInt(), value, false)
-        }
+	protected open var fromItem = this.from.getItem()
+		get() = field?.clone()
+		set(value) {
+			this.from?.getInventory()?.setItem(this.from.slot.toInt(), value, false)
+		}
 
-    protected var toItem = this.to.getItem()
-        get() = field?.clone()
-        set(value) {
-            this.to?.getInventory()?.setItem(this.to.slot.toInt(), value, false)
-        }
+	protected var toItem = this.to.getItem()
+		get() = field?.clone()
+		set(value) {
+			this.to?.getInventory()?.setItem(this.to.slot.toInt(), value, false)
+		}
 
-    abstract fun isValid(player: Player): Boolean
+	abstract fun isValid(player: Player): Boolean
 
-    abstract fun execute(player: Player): Boolean
+	abstract fun execute(player: Player): Boolean
 
-    protected abstract fun getContainers(player: Player): List<ContainerEntry>
+	protected abstract fun getContainers(player: Player): List<ContainerEntry>
 
-    fun onExecuteSuccess(player: Player) {
-        this.from?.getInventory()?.sendSlots(player)
-        this.to?.getInventory()?.sendSlots(player)
+	fun onExecuteSuccess(player: Player) {
+		this.from?.getInventory()?.sendSlots(player)
+		this.to?.getInventory()?.sendSlots(player)
 
-        this.transaction.status = ItemStackResponsePacket.ResponseStatus.OK
-        this.transaction.addContainers(this.getContainers(player))
-    }
+		this.transaction.status = ItemStackResponsePacket.ResponseStatus.OK
+		this.transaction.addContainers(this.getContainers(player))
+	}
 
-    fun onExecuteFail(player: Player) {
-        log.debug("Failed on transaction action: ${this.javaClass.simpleName}")
+	fun onExecuteFail(player: Player) {
+		log.debug("Failed on transaction action: ${this.javaClass.simpleName}")
 
-        this.transaction.status = ItemStackResponsePacket.ResponseStatus.ERROR
-        this.transaction.addContainers(this.getContainers(player))
-    }
+		this.transaction.status = ItemStackResponsePacket.ResponseStatus.ERROR
+		this.transaction.addContainers(this.getContainers(player))
+	}
 
-    protected fun StackRequestSlotInfoData.toNetwork(): ItemStackResponsePacket.ItemEntry {
-        val item = this.getItem()!!
-        val durability = 0 // todo
-        return ItemStackResponsePacket.ItemEntry(
-            this.slot,
-            this.slot,
-            item.count.toByte(),
-            item.networkId,
-            item.customName ?: "",
-            durability
-        )
-    }
+	protected fun StackRequestSlotInfoData.toNetwork(): ItemStackResponsePacket.ItemEntry {
+		val item = this.getItem()!!
+		val durability = 0 // todo
+		return ItemStackResponsePacket.ItemEntry(
+			this.slot,
+			this.slot,
+			item.count.toByte(),
+			item.networkId,
+			item.customName ?: "",
+			durability
+		)
+	}
 
-    private fun StackRequestSlotInfoData?.getInventory(): Inventory? {
-        if (this == null) return null
-        return transaction.getInventoryByType(this.container)
-    }
+	private fun StackRequestSlotInfoData?.getInventory(): Inventory? {
+		if (this == null) return null
+		return transaction.getInventoryByType(this.container)
+	}
 
-    private fun StackRequestSlotInfoData?.getItem(): Item? {
-        if (this == null) return null
-        return this.getInventory()?.getItem(this.slot.toInt())
-    }
+	private fun StackRequestSlotInfoData?.getItem(): Item? {
+		if (this == null) return null
+		return this.getInventory()?.getItem(this.slot.toInt())
+	}
 
-    companion object {
+	companion object {
 
-        private val log = ItemStackAction.getLogger()
-    }
+		private val log = ItemStackAction.getLogger()
+	}
 }

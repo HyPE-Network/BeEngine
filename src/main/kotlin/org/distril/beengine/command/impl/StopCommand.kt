@@ -7,7 +7,7 @@ import org.distril.beengine.server.Server
 
 class StopCommand : Command("stop", "Stopping server.", "command.stop") {
 
-    override fun execute(sender: CommandSender, args: Args) {
-        if (sender.hasPermission(this.permission)) Server.shutdown()
-    }
+	override fun execute(sender: CommandSender, args: Args) {
+		if (sender.hasPermission(this.permission)) Server.shutdown()
+	}
 }

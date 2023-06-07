@@ -6,16 +6,16 @@ import java.util.*
 
 class ItemRegistry {
 
-    private val byMaterial: MutableMap<Material, Item> = EnumMap(Material::class.java)
+	private val byMaterial: MutableMap<Material, Item> = EnumMap(Material::class.java)
 
-    fun init() {
-        // todo
-    }
+	fun init() {
+		// todo
+	}
 
-    fun register(material: Material, item: Item) {
-        this.byMaterial[material] = item
-    }
+	fun register(material: Material, item: Item) {
+		this.byMaterial[material] = item
+	}
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T : Item> from(material: Material) = this.byMaterial.getOrDefault(material, NoopItem(material)).clone() as T
+	@Suppress("UNCHECKED_CAST")
+	fun <T : Item> from(material: Material) = this.byMaterial.getOrDefault(material, NoopItem(material)).clone() as T
 }
