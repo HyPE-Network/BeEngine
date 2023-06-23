@@ -14,6 +14,6 @@ abstract class Task {
 	}
 
 	protected fun onCancel() {
-		/**/
+		// functional method
 	}
 }

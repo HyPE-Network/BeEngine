@@ -41,7 +41,7 @@ class PlayerPacketHandler(private val player: Player) : BedrockPacketHandler {
 		this.player.setRotation(pitch, yaw)
 		this.player.position = to
 
-		// player.sendPosition(MovePlayerPacket.Mode.NORMAL);
+		// todo when i refactor movement xD: player.sendPosition(MovePlayerPacket.Mode.NORMAL);
 		return true
 	}
 

@@ -58,9 +58,7 @@ class ChunkManager(private val world: World) {
 		val chunk = this.getLoadedChunk(key) ?: return
 		if (!force && chunk.loaders.isNotEmpty()) return
 
-		if (save) {
-			// this.saveChunk(chunk);
-		}
+		// todo: save chunk
 
 		chunk.close()
 		this.chunks.remove(key)

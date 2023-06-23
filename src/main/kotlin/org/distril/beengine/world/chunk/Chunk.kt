@@ -82,7 +82,7 @@ data class Chunk(val x: Int, val z: Int) {
 	val players get() = this.entities.filterIsInstance<Player>()
 
 	fun tick(): Boolean {
-		// todo tick block updates and block entities
+		// todo: tick block updates and block entities
 		if (this.expiryTime > 0 && this.canBeClosed) {
 			this.expiryTime--
 			return this.expiryTime == 0

@@ -27,8 +27,7 @@ class WorldRegistry {
 	}
 
 	fun loadWorld(name: String): World? {
-		// todo
-		return null
+		return null // todo
 	}
 
 	fun createWorld(name: String, dimension: Dimension, generator: Generator): World {

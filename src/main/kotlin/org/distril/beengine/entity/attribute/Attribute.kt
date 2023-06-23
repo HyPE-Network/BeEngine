@@ -1,61 +1,53 @@
-package org.distril.beengine.player.data.attribute
+package org.distril.beengine.entity.attribute
 
 import com.nukkitx.protocol.bedrock.data.AttributeData
+import kotlin.math.max
+import kotlin.math.min
 
 class Attribute(
 	val type: Type,
-	private var minValue: Float,
-	private var maxValue: Float,
-	private var defaultValue: Float
+	minValue: Float,
+	maxValue: Float,
+	defaultValue: Float
 ) {
 
+	var minValue: Float = minValue
+		private set
+	var maxValue: Float = maxValue
+		private set
+	var defaultValue: Float = defaultValue
+		private set
 	var value: Float = defaultValue
+		private set
 
 	fun minValue(minValue: Float): Attribute {
-		var minValue = minValue
-		if (minValue > this.maxValue) minValue = this.maxValue
-
-		this.minValue = minValue
+		this.minValue = min(this.maxValue, max(this.maxValue, minValue))
 		return this
 	}
 
 	fun maxValue(maxValue: Float): Attribute {
-		var maxValue = maxValue
-		if (maxValue < this.minValue) maxValue = this.minValue
+		this.maxValue = max(this.minValue, maxValue)
 
-		this.maxValue = maxValue
+		this.defaultValue(this.defaultValue)
+		this.value(this.value)
 		return this
 	}
 
 	fun defaultValue(defaultValue: Float): Attribute {
-		var defaultValue = defaultValue
-		if (defaultValue > this.maxValue) {
-			defaultValue = this.maxValue
-		} else if (defaultValue < this.minValue) {
-			defaultValue = this.minValue
-		}
-
-		this.value = defaultValue
+		this.defaultValue = max(this.minValue, min(this.maxValue, defaultValue))
 		return this
 	}
 
 	fun value(value: Float): Attribute {
-		var value = value
-		if (value > this.maxValue) {
-			value = this.maxValue
-		} else if (value < this.minValue) {
-			value = this.minValue
-		}
-
-		this.value = value
+		this.value = max(this.minValue, min(this.maxValue, value))
 		return this
 	}
 
-	fun toNetwork() = AttributeData(this.type.networkName, this.minValue, this.maxValue, this.value, this.defaultValue)
+	fun toNetwork() = AttributeData(this.type.networkId, this.minValue, this.maxValue, this.value, this.defaultValue)
 
 	fun clone() = Attribute(this.type, this.minValue, this.maxValue, this.defaultValue).value(this.value)
 
-	enum class Type(val networkName: String) {
+	enum class Type(val networkId: String) {
 
 		ABSORPTION("minecraft:absorption"),
 		SATURATION("minecraft:player.saturation"),

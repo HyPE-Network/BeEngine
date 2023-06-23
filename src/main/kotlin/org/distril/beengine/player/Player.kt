@@ -12,6 +12,7 @@ import com.nukkitx.protocol.bedrock.data.entity.EntityFlag
 import com.nukkitx.protocol.bedrock.packet.*
 import org.distril.beengine.command.CommandSender
 import org.distril.beengine.entity.Entity
+import org.distril.beengine.entity.attribute.Attribute
 import org.distril.beengine.entity.impl.EntityHuman
 import org.distril.beengine.inventory.Inventory
 import org.distril.beengine.inventory.impl.PlayerInventory
@@ -22,8 +23,6 @@ import org.distril.beengine.network.Network
 import org.distril.beengine.network.data.LoginData
 import org.distril.beengine.player.data.GameMode
 import org.distril.beengine.player.data.PlayerData
-import org.distril.beengine.player.data.attribute.Attribute
-import org.distril.beengine.player.data.attribute.Attributes
 import org.distril.beengine.player.manager.PlayerChunkManager
 import org.distril.beengine.server.Server
 import org.distril.beengine.util.BedrockResourceLoader
@@ -43,8 +42,6 @@ class Player(
 ) : EntityHuman(), CommandSender, ChunkLoader {
 
 	override val name = this.loginData.username
-
-	val attributes = Attributes(this)
 
 	override val inventory = PlayerInventory(this)
 	val chunkManager = PlayerChunkManager(this)
@@ -87,6 +84,10 @@ class Player(
 
 		if (this.isSpawned) {
 			this.chunkManager.queueNewChunks()
+
+			super.onUpdate(currentTick)
+
+			this.attributes.send(this)
 		}
 
 		if (this.chunkManager.chunksSentCount >= 46 && !this.isSpawned) this.doFirstSpawn()
@@ -114,8 +115,8 @@ class Player(
 			this.data = data
 
 			// no packet set data methods
-			this.pitch = this.data.pitch
-			this.yaw = this.data.yaw
+			this.pitch = data.pitch
+			this.yaw = data.yaw
 
 			this.init(this.data.location)
 
@@ -169,7 +170,7 @@ class Player(
 		this.sendPacket(BedrockResourceLoader.availableEntityIdentifiersPacket)
 
 		this.isLoggedIn = true
-		this.attributes.sendAll()
+		this.attributes.send(this)
 
 		Server.addPlayer(this)
 		Server.addOnlinePlayer(this)
@@ -216,8 +217,7 @@ class Player(
 		if (!this.session.isClosed) this.session.sendPacketImmediately(packet)
 	}
 
-	val uuidForData: UUID
-		get() = UUID.nameUUIDFromBytes(this.name.toByteArray(StandardCharsets.UTF_8))
+	val uuidForData get() = UUID.nameUUIDFromBytes(this.name.toByteArray(StandardCharsets.UTF_8))
 
 	fun setGameMode(gameMode: GameMode) {
 		this.data.gameMode = gameMode
@@ -228,14 +228,10 @@ class Player(
 		this.sendPacket(packet)
 	}
 
-	val isSurvival: Boolean
-		get() = this.data.gameMode === GameMode.SURVIVAL
-	val isCreative: Boolean
-		get() = this.data.gameMode === GameMode.CREATIVE
-	val isAdventure: Boolean
-		get() = this.data.gameMode === GameMode.ADVENTURE
-	val isSpectator: Boolean
-		get() = this.data.gameMode === GameMode.SPECTATOR
+	val isSurvival get() = this.data.gameMode === GameMode.SURVIVAL
+	val isCreative get() = this.data.gameMode === GameMode.CREATIVE
+	val isAdventure get() = this.data.gameMode === GameMode.ADVENTURE
+	val isSpectator get() = this.data.gameMode === GameMode.SPECTATOR
 
 	fun sendAttribute(attribute: Attribute) {
 		val packet = UpdateAttributesPacket()
@@ -245,8 +241,7 @@ class Player(
 		this.sendPacket(packet)
 	}
 
-	val isConnected: Boolean
-		get() = !this.session.isClosed
+	val isConnected get() = !this.session.isClosed
 
 	fun disconnect(reason: String = "", showReason: Boolean = true) {
 		if (showReason && reason.isNotEmpty()) {
@@ -283,13 +278,11 @@ class Player(
 		log.info("$name logged out due to $reason")
 	}
 
-	fun save(async: Boolean = false) {
+	fun save() {
 		if (this.isLoggedIn && this.name.isNotEmpty()) {
-			Server.scheduler.scheduleTask(async = async) {
-				Server.playerDataProvider.save(this.uuidForData, this.data) {
-					it?.let {
-						log.error("Failed to save data for ${this.uuidForData}", it)
-					}
+			Server.playerDataProvider.save(this.uuidForData, this.data) {
+				it?.let {
+					log.error("Failed to save data for ${this.uuidForData}", it)
 				}
 			}
 		}

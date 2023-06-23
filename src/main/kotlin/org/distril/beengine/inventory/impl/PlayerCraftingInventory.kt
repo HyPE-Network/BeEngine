@@ -10,7 +10,8 @@ class PlayerCraftingInventory(holder: Player) : Inventory(holder, InventoryType.
 
 	override val holder = super.holder as Player
 
-	override fun setItem(slot: Int, item: Item?, send: Boolean) = super.setItem(slot - SLOT_OFFSET, item, false)
+	override fun setItem(slot: Int, item: Item?, send: Boolean) =
+		super.setItem(slot - SLOT_OFFSET, item, false)
 
 	override fun getItem(slot: Int) = super.getItem(slot - SLOT_OFFSET)
 

@@ -42,8 +42,7 @@ class ItemStackTransaction(val player: Player) {
 		}
 	}
 
-	val containersEntries: List<ContainerEntry>
-		get() = this.containers.keys.map { ContainerEntry(it, this.containers[it]) }
+	val containersEntries get() = this.containers.keys.map { ContainerEntry(it, this.containers[it]) }
 
 	fun getInventoryByType(type: ContainerSlotType) = when (type) {
 		ContainerSlotType.HOTBAR,

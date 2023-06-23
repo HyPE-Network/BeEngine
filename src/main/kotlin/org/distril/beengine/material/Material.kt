@@ -1204,11 +1204,11 @@ enum class Material(val itemRuntimeId: Int) {
 
 		fun fromItemRuntimeId(runtimeId: Int) = BY_ITEM_RUNTIME_ID[runtimeId] ?: AIR
 
-		fun fromIdentifier(identifier: String): Material {
+		fun fromIdentifier(identifier: String): Material? {
 			var newIdentifier = identifier
 			if (!newIdentifier.startsWith("minecraft:")) newIdentifier = "minecraft:$newIdentifier"
 
-			return BY_IDENTIFIER[newIdentifier]!!
+			return BY_IDENTIFIER[newIdentifier]
 		}
 	}
 }

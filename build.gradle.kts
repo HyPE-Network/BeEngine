@@ -53,7 +53,6 @@ tasks {
 
 		transform(Log4j2PluginsCacheFileTransformer())
 
-		// Backwards compatible jar directory
 		destinationDirectory.set(file("$projectDir/target"))
 		archiveClassifier.set("")
 	}

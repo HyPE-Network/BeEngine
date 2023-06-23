@@ -26,7 +26,10 @@ class Scheduler(private val taskTimeout: Long) {
 	fun processTick(currentTick: Long) {
 		this.lastUpdateTick = currentTick
 		synchronized(this.queue) {
-			while (!this.queue.isEmpty() && this.queue.peek().run { this != null && this.nextRunTick <= currentTick }) {
+			while (this.queue.isNotEmpty() && this.queue.peek().run {
+					this != null && this.nextRunTick <= currentTick
+				}
+			) {
 				val taskEntry = this.queue.poll()
 				val task = taskEntry.task
 				if (taskEntry.async) {

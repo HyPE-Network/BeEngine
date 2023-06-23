@@ -11,10 +11,7 @@ import org.distril.beengine.util.Utils.getLogger
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletionException
 
-class Network(
-	ip: String,
-	port: Int
-) : BedrockServerEventHandler {
+class Network(ip: String, port: Int) : BedrockServerEventHandler {
 
 	private val bedrockServer: BedrockServer
 
@@ -22,7 +19,6 @@ class Network(
 		val bindAddress = InetSocketAddress(ip, port)
 		bedrockServer = BedrockServer(bindAddress, Runtime.getRuntime().availableProcessors())
 		bedrockServer.handler = this
-
 
 		PONG.apply {
 			motd = Server.settings.motd

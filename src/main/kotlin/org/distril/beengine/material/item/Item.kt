@@ -12,7 +12,7 @@ import kotlin.math.min
 
 abstract class Item(val material: Material) : Cloneable, ItemBehaviors {
 
-	val networkId = if (this.material === Material.AIR) 0 else NEXT_NETWORK_ID.incrementAndGet()
+	val networkId = if (this.material === Material.AIR) 0 else nextNetworkId.incrementAndGet()
 	var meta = 0
 	var count = 1
 		set(value) {
@@ -86,8 +86,7 @@ abstract class Item(val material: Material) : Cloneable, ItemBehaviors {
 	companion object {
 
 		val AIR = Material.AIR.getItem<Item>()
-			get() = field.clone()
 
-		private val NEXT_NETWORK_ID = AtomicInteger(0)
+		private val nextNetworkId = AtomicInteger(0)
 	}
 }

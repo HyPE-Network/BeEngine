@@ -16,7 +16,7 @@ class EntityMetadata(private val listener: Listener) {
 	private val dataChangeSet = EntityDataMap()
 
 	fun update() {
-		if (!this.dataChangeSet.isEmpty()) {
+		if (this.dataChangeSet.isNotEmpty()) {
 			this.listener.onDataChange(this.dataChangeSet)
 			this.dataChangeSet.clear()
 		}
@@ -39,24 +39,22 @@ class EntityMetadata(private val listener: Listener) {
 	fun getShort(data: EntityData) = this.data.getShort(data)
 
 	fun setShort(data: EntityData, value: Int) {
-		var value = value
-		value = value.toShort().toInt()
+		val newValue = value.toShort().toInt()
 		val oldValue = this.getShort(data)
-		if (oldValue.toInt() != value) {
-			this.data.putShort(data, value)
-			this.dataChangeSet.putShort(data, value)
+		if (oldValue.toInt() != newValue) {
+			this.data.putShort(data, newValue)
+			this.dataChangeSet.putShort(data, newValue)
 		}
 	}
 
 	fun getByte(data: EntityData) = this.data.getByte(data)
 
 	fun setByte(data: EntityData, value: Int) {
-		var value = value
-		value = value.toByte().toInt()
+		val newValue = value.toByte().toInt()
 		val oldValue = this.getByte(data)
-		if (oldValue.toInt() != value) {
-			this.data.putByte(data, value)
-			dataChangeSet.putByte(data, value)
+		if (oldValue.toInt() != newValue) {
+			this.data.putByte(data, newValue)
+			dataChangeSet.putByte(data, newValue)
 		}
 	}
 
@@ -142,7 +140,7 @@ class EntityMetadata(private val listener: Listener) {
 		}
 	}
 
-	interface Listener {
+	fun interface Listener {
 
 		fun onDataChange(dataMap: EntityDataMap)
 	}

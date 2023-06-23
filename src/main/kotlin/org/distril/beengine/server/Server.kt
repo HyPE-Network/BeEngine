@@ -121,36 +121,26 @@ object Server {
 		var nextTick = System.currentTimeMillis()
 		try {
 			while (this.isRunning) {
-				try {
-					val tickTime = System.currentTimeMillis()
-					val time = tickTime - nextTick
-					if (time < -25) {
-						try {
-							Thread.sleep(max(5, -time - 25))
-						} catch (exception: InterruptedException) {
-							log.error("Server interrupted whilst sleeping", exception)
-						}
-					}
+				val tickTime = System.currentTimeMillis()
+				val time = tickTime - nextTick
+				if (time < -25) Thread.sleep(max(5, -time - 25))
 
-					if (tickTime - nextTick < -25) return
+				if (tickTime - nextTick < -25) return
 
-					this.currentTick++
+				this.currentTick++
 
-					this.scheduler.processTick(this.currentTick)
+				this.scheduler.processTick(this.currentTick)
 
-					if (nextTick - tickTime < -1000) {
-						nextTick = tickTime
-					} else {
-						nextTick += 50
-					}
+				if (nextTick - tickTime < -1000) {
+					nextTick = tickTime
+				} else {
+					nextTick += 50
+				}
 
-					val current = System.currentTimeMillis()
-					if (nextTick - 0.1 > current) {
-						val allocated = nextTick - current - 1
-						if (allocated > 0) Thread.sleep(allocated, 900000)
-					}
-				} catch (exception: RuntimeException) {
-					log.error("Error whilst ticking server", exception)
+				val current = System.currentTimeMillis()
+				if (nextTick - 0.1 > current) {
+					val allocated = nextTick - current - 1
+					if (allocated > 0) Thread.sleep(allocated, 900000)
 				}
 			}
 		} catch (throwable: Throwable) {

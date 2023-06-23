@@ -10,6 +10,7 @@ import org.distril.beengine.inventory.InventoryType
 import org.distril.beengine.material.item.Item
 import org.distril.beengine.player.Player
 import org.distril.beengine.util.ItemUtils
+import kotlin.reflect.KProperty
 
 open class CreatureInventory(
 	holder: InventoryHolder,
@@ -18,37 +19,10 @@ open class CreatureInventory(
 
 	override val holder = super.holder as EntityCreature
 
-	var helmet: Item? = null
-		get() = ItemUtils.getAirIfNull(field)
-		set(value) {
-			field = value
-
-			this.sendArmor()
-		}
-
-	var chestplate: Item? = null
-		get() = ItemUtils.getAirIfNull(field)
-		set(value) {
-			field = value
-
-			this.sendArmor()
-		}
-
-	var leggings: Item? = null
-		get() = ItemUtils.getAirIfNull(field)
-		set(value) {
-			field = value
-
-			this.sendArmor()
-		}
-
-	var boots: Item? = null
-		get() = ItemUtils.getAirIfNull(field)
-		set(value) {
-			field = value
-
-			this.sendArmor()
-		}
+	var helmet: Item? by ArmorDelegate()
+	var chestplate: Item? by ArmorDelegate()
+	var leggings: Item? by ArmorDelegate()
+	var boots: Item? by ArmorDelegate()
 
 	var heldItemIndex: Int = 0
 		set(value) {
@@ -110,10 +84,10 @@ open class CreatureInventory(
 	protected fun sendArmor() {
 		val packet = MobArmorEquipmentPacket()
 		packet.runtimeEntityId = this.holder.id
-		packet.helmet = ItemUtils.toNetwork(helmet!!)
-		packet.chestplate = ItemUtils.toNetwork(chestplate!!)
-		packet.leggings = ItemUtils.toNetwork(leggings!!)
-		packet.boots = ItemUtils.toNetwork(boots!!)
+		packet.helmet = ItemUtils.toNetwork(helmet)
+		packet.chestplate = ItemUtils.toNetwork(chestplate)
+		packet.leggings = ItemUtils.toNetwork(leggings)
+		packet.boots = ItemUtils.toNetwork(boots)
 
 		this.holder.viewers.forEach { it.sendPacket(packet) }
 	}
@@ -121,5 +95,18 @@ open class CreatureInventory(
 	companion object {
 
 		private const val HOTBAR_SIZE = 9
+	}
+
+	inner class ArmorDelegate {
+
+		private var field: Item? = null
+
+		operator fun getValue(thisRef: Any?, property: KProperty<*>) = ItemUtils.getAirIfNull(this.field)
+
+		operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Item?) {
+			this.field = value
+
+			sendArmor()
+		}
 	}
 }

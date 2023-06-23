@@ -8,11 +8,11 @@ import com.nukkitx.protocol.bedrock.data.entity.EntityFlag
 import com.nukkitx.protocol.bedrock.packet.AddEntityPacket
 import com.nukkitx.protocol.bedrock.packet.RemoveEntityPacket
 import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket
+import org.distril.beengine.entity.attribute.Attribute
+import org.distril.beengine.entity.attribute.EntityAttributes
 import org.distril.beengine.entity.data.EntityMetadata
 import org.distril.beengine.player.Player
 import org.distril.beengine.server.Server
-import org.distril.beengine.world.World
-import org.distril.beengine.world.chunk.Chunk
 import org.distril.beengine.world.util.Location
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -30,20 +30,20 @@ abstract class Entity(val type: EntityType) : EntityMetadata.Listener {
 	var yaw = 0f
 
 	lateinit var location: Location
-	var maxHealth = 20f
-	open var health = 20f
+
+	val attributes = EntityAttributes()
+
+	var maxHealth: Float
+		get() = this.attributes[Attribute.Type.HEALTH].maxValue
 		set(value) {
-			if (field == value) return
+			this.attributes[Attribute.Type.HEALTH].maxValue(value)
+		}
 
-			if (field < 1) {
-				if (this.isAlive) this.kill()
-			} else if (value <= this.maxHealth || value < field) {
-				field = value
-			} else {
-				field = this.maxHealth
-			}
-
-			this.metadata.setInt(EntityData.HEALTH, field.toInt())
+	open var health: Float
+		get() = this.attributes[Attribute.Type.HEALTH].value
+		set(value) {
+			val newValue = this.attributes[Attribute.Type.HEALTH].value(value).value
+			this.metadata.setInt(EntityData.HEALTH, newValue.toInt())
 		}
 
 	var isSpawned = false
@@ -120,11 +120,9 @@ abstract class Entity(val type: EntityType) : EntityMetadata.Listener {
 
 	fun despawnForAll() = this.viewers.forEach { this.despawnFor(it) }
 
-	val world: World
-		get() = this.location.world
+	val world get() = this.location.world
 
-	val chunk: Chunk
-		get() = this.location.chunk
+	val chunk get() = this.location.chunk
 
 	open var position: Vector3f
 		get() = this.location.position
@@ -137,12 +135,7 @@ abstract class Entity(val type: EntityType) : EntityMetadata.Listener {
 		this.yaw = yaw
 	}
 
-	val isAlive: Boolean
-		get() = this.health > 0
-
-	open fun kill() {
-		this.health = 0f
-	}
+	val isAlive get() = this.health > this.attributes[Attribute.Type.HEALTH].minValue
 
 	fun close() {
 		if (this.isSpawned) {

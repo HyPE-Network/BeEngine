@@ -9,75 +9,50 @@ object SkinUtil {
 
 	fun fromToken(skinJson: JsonObject): SerializedSkin {
 		val builder = SerializedSkin.builder()
-		if (skinJson.has("SkinId")) builder.skinId(skinJson["SkinId"].asString)
-		if (skinJson.has("PlayFabId")) builder.playFabId(skinJson["PlayFabId"].asString)
-		if (skinJson.has("SkinResourcePatch")) {
-			builder.skinResourcePatch(
-				String(
-					Base64.getDecoder().decode(skinJson["SkinResourcePatch"].asString),
-					StandardCharsets.UTF_8
-				)
-			)
+
+		builder.skinId(skinJson["SkinId"]?.asString)
+		builder.playFabId(skinJson["PlayFabId"]?.asString)
+
+		skinJson["SkinResourcePatch"]?.asString?.let {
+			builder.skinResourcePatch(String(Base64.getDecoder().decode(it), StandardCharsets.UTF_8))
 		}
 
 		builder.skinData(this.getImageData(skinJson, "Skin"))
-		if (skinJson.has("AnimatedImageData")) {
-			val animations = mutableListOf<AnimationData>()
 
-			skinJson.getAsJsonArray("AnimatedImageData").forEach {
-				animations.add(getAnimationData(it.asJsonObject))
-			}
-
-			builder.animations(animations)
+		val animations = skinJson.getAsJsonArray("AnimatedImageData")?.map {
+			this.getAnimationData(it.asJsonObject)
 		}
+		builder.animations(animations)
 
-		if (skinJson.has("PersonaSkin")) {
-			builder.persona(skinJson["PersonaSkin"].asBoolean)
-			if (skinJson.has("PersonaPieces")) {
-				val pieces = mutableListOf<PersonaPieceData>()
+		skinJson["PersonaSkin"]?.asBoolean?.let { personaSkin ->
+			builder.persona(personaSkin)
 
-				skinJson.getAsJsonArray("PersonaPieces").forEach {
-					pieces.add(getPersonaPieceData(it.asJsonObject))
-				}
-
-				builder.personaPieces(pieces)
+			val pieces = skinJson.getAsJsonArray("PersonaPieces")?.map {
+				this.getPersonaPieceData(it.asJsonObject)
 			}
+			builder.personaPieces(pieces)
 
-			if (skinJson.has("PieceTintColors")) {
-				val tintColors = mutableListOf<PersonaPieceTintData>()
-
-				skinJson.getAsJsonArray("PieceTintColors").forEach {
-					tintColors.add(getPersonaPieceTintData(it.asJsonObject))
-				}
-
-				builder.tintColors(tintColors)
+			val tintColors = skinJson.getAsJsonArray("PieceTintColors")?.map {
+				this.getPersonaPieceTintData(it.asJsonObject)
 			}
+			builder.tintColors(tintColors)
 		}
 
 		builder.capeData(this.getImageData(skinJson, "Cape"))
-		if (skinJson.has("SkinGeometryData")) {
-			builder.geometryData(
-				String(
-					Base64.getDecoder().decode(skinJson["SkinGeometryData"].asString),
-					StandardCharsets.UTF_8
-				)
-			)
+
+		skinJson["SkinGeometryData"]?.asString?.let {
+			builder.geometryData(String(Base64.getDecoder().decode(it), StandardCharsets.UTF_8))
 		}
 
-		if (skinJson.has("SkinAnimationData")) {
-			builder.animationData(
-				String(
-					Base64.getDecoder().decode(skinJson["SkinAnimationData"].asString),
-					StandardCharsets.UTF_8
-				)
-			)
+		skinJson["SkinAnimationData"]?.asString?.let {
+			builder.animationData(String(Base64.getDecoder().decode(it), StandardCharsets.UTF_8))
 		}
 
-		if (skinJson.has("PremiumSkin")) builder.premium(skinJson["PremiumSkin"].asBoolean)
-		if (skinJson.has("CapeOnClassicSkin")) builder.capeOnClassic(skinJson["CapeOnClassicSkin"].asBoolean)
-		if (skinJson.has("CapeId")) builder.capeId(skinJson["CapeId"].asString)
-		if (skinJson.has("SkinColor")) builder.skinColor(skinJson["SkinColor"].asString)
-		if (skinJson.has("ArmSize")) builder.armSize(skinJson["ArmSize"].asString)
+		builder.premium(skinJson["PremiumSkin"]?.asBoolean == true)
+		builder.capeOnClassic(skinJson["CapeOnClassicSkin"]?.asBoolean == true)
+		builder.capeId(skinJson["CapeId"]?.asString)
+		builder.skinColor(skinJson["SkinColor"]?.asString)
+		builder.armSize(skinJson["ArmSize"]?.asString)
 
 		return builder.build()
 	}
@@ -89,8 +64,8 @@ object SkinUtil {
 		val frames = animationJson["Frames"].asFloat
 		val textureType = AnimatedTextureType.values()[animationJson["Type"].asInt]
 		var expressionType = AnimationExpressionType.BLINKING
-		if (animationJson.has("ExpressionType")) {
-			expressionType = AnimationExpressionType.values()[animationJson["ExpressionType"].asInt]
+		animationJson["ExpressionType"]?.asInt?.let {
+			expressionType = AnimationExpressionType.values()[it]
 		}
 
 		return AnimationData(ImageData.of(width, height, data), textureType, frames, expressionType)
@@ -107,20 +82,22 @@ object SkinUtil {
 
 	private fun getPersonaPieceTintData(pieceTintJson: JsonObject): PersonaPieceTintData {
 		val pieceType = pieceTintJson["PieceType"].asString
-		val colors = mutableListOf<String>()
-		pieceTintJson.getAsJsonArray("Colors").forEach {
-			colors.add(it.asString)
-		}
+		val colors = pieceTintJson.getAsJsonArray("Colors").map { it.asString }
 
 		return PersonaPieceTintData(pieceType, colors)
 	}
 
 	private fun getImageData(imageJson: JsonObject, name: String): ImageData {
-		if (imageJson.has(name + "Data")) {
-			val skinImage = Base64.getDecoder().decode(imageJson[name + "Data"].asString)
-			return if (imageJson.has(name + "ImageHeight") && imageJson.has(name + "ImageWidth")) {
-				val width = imageJson[name + "ImageWidth"].asInt
-				val height = imageJson[name + "ImageHeight"].asInt
+		val dataKey = name + "Data"
+		val widthKey = name + "ImageWidth"
+		val heightKey = name + "ImageHeight"
+
+		if (imageJson.has(dataKey)) {
+			val skinImage = Base64.getDecoder().decode(imageJson[dataKey].asString)
+			val width = imageJson[widthKey]?.asInt
+			val height = imageJson[heightKey]?.asInt
+
+			return if (width != null && height != null) {
 				ImageData.of(width, height, skinImage)
 			} else {
 				when (skinImage.size / 4) {

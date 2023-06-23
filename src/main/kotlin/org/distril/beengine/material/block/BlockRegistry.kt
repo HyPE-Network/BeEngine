@@ -18,7 +18,7 @@ class BlockRegistry {
 
 	fun getBlockFromState(state: BlockState): Block {
 		val identifier = state.states.getString("name")
-		val material = Material.fromIdentifier(identifier)
+		val material = Material.fromIdentifier(identifier)!!
 		return this.from(material, state)
 	}
 

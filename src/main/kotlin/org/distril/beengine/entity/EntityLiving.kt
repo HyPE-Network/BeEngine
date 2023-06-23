@@ -6,26 +6,25 @@ import org.distril.beengine.server.Server
 
 abstract class EntityLiving(type: EntityType) : Entity(type) {
 
-	override var health = super.health
+	override var health: Float
+		get() = super.health
 		set(value) {
-			val wasAlive = this.isAlive
 			super.health = value
-			if (this.isAlive && !wasAlive) {
+
+			if (!this.isAlive) {
+				this.kill()
+
 				val packet = EntityEventPacket()
 				packet.runtimeEntityId = this.id
 				packet.type = EntityEventType.RESPAWN
 
 				Server.broadcastPacket(this.viewers, packet)
 			}
-
-			field = value
 		}
 
-	override fun kill() {
-		if (this.isAlive) {
-			super.kill()
+	fun kill() {
+		if (!this.isAlive) return
 
-			// TODO: drop all items
-		}
+		// TODO: drop all items
 	}
 }

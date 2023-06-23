@@ -62,7 +62,7 @@ abstract class Inventory(
 	}
 
 	protected open fun onOpen(player: Player) {
-		/**/
+		// functional method
 	}
 
 	fun closeFor(player: Player): Boolean {

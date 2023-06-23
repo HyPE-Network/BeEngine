@@ -15,28 +15,29 @@ object ItemUtils {
 
 	fun fromJSON(itemJson: JsonObject): ItemData {
 		val itemData = ItemData.builder()
+
 		val identifier = itemJson["id"].asString
 		itemData.id(ItemPalette.getRuntimeId(identifier))
-		if (itemJson.has("block_state_b64")) {
-			val blockNbt = decodeNbt(itemJson["block_state_b64"].asString)
+
+		itemJson["block_state_b64"]?.let {
+			val blockNbt = decodeNbt(it.asString)
 			itemData.blockRuntimeId(BlockPalette.getRuntimeId(blockNbt))
 		}
 
-		if (itemJson.has("blockRuntimeId")) itemData.blockRuntimeId(itemJson["blockRuntimeId"].asInt)
+		itemJson["blockRuntimeId"]?.asInt?.let {
+			itemData.blockRuntimeId(it)
+		}
 
-		if (itemJson.has("damage")) {
-			var meta = itemJson["damage"].asInt
-			if (meta and 0x7FFF == 0x7FFF) {
-				meta = -1
-			}
-
+		itemJson["damage"]?.asInt?.let {
+			val meta = if (it and 0x7FFF == 0x7FFF) -1 else it
 			itemData.damage(meta)
 		}
 
-		if (itemJson.has("nbt_b64")) itemData.tag(decodeNbt(itemJson["nbt_b64"].asString))
+		itemJson["nbt_b64"]?.let {
+			itemData.tag(decodeNbt(it.asString))
+		}
 
-		return itemData.usingNetId(false)
-			.count(1).build()
+		return itemData.usingNetId(false).count(1).build()
 	}
 
 	private fun decodeNbt(base64: String?): NbtMap {
@@ -60,8 +61,7 @@ object ItemUtils {
 			.blockingTicks(0)
 			.blockRuntimeId(nonNullItem.blockRuntimeId)
 			.netId(nonNullItem.networkId)
-			.usingNetId(nonNullItem.networkId != 0)
-			.build()
+			.usingNetId(nonNullItem.networkId != 0).build()
 	}
 
 	fun fromNetwork(itemData: ItemData?): Item {

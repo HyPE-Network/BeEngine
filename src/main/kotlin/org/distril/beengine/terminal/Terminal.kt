@@ -19,7 +19,7 @@ class Terminal : Thread("Terminal Thread") {
 
 		override fun isRunning() = Server.isRunning
 
-		override fun runCommand(command: String) = Server.dispatchCommand(SENDER, command)
+		override fun runCommand(command: String) = Server.dispatchCommand(sender, command)
 
 		override fun shutdown() = Server.shutdown()
 
@@ -34,6 +34,6 @@ class Terminal : Thread("Terminal Thread") {
 
 	companion object {
 
-		val SENDER = ConsoleSender()
+		val sender = ConsoleSender()
 	}
 }

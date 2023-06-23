@@ -31,8 +31,7 @@ abstract class MoveItemStackAction(
 
 		val fromItem = this.fromItem!!
 		val toItem = this.toItem!!
-		return fromItem.count == count &&
-				(toItem.material === Material.AIR || fromItem.equal(toItem))
+		return fromItem.count == count && (toItem.material === Material.AIR || fromItem.equal(toItem))
 	}
 
 	override fun getContainers(player: Player): List<ContainerEntry> {

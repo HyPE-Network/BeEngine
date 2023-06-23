@@ -8,8 +8,7 @@ class TaskEntry(
 	var nextRunTick: Long = 0
 ) {
 
-	val isCancelled: Boolean
-		get() = this.task.cancelled
+	val isCancelled get() = this.task.cancelled
 
 	val isRepeating = this.period > 0
 }

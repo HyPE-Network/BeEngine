@@ -24,7 +24,7 @@ class LoginData private constructor(
 	companion object {
 
 		fun extract(chainData: AsciiString, skinData: AsciiString): LoginData? {
-			return try {
+			try {
 				val chainJSON = gson.fromJson(chainData.toString(), JsonObject::class.java)
 				val chains = JSONArray()
 				chainJSON.getAsJsonArray("chain").forEach { chains.add(it.asString) }
@@ -50,9 +50,10 @@ class LoginData private constructor(
 
 				// Retrieve skin
 				val skin = SkinUtil.fromToken(skinJSON)
-				LoginData(xuid, identityPublicKey, uuid, username, languageCode, device, skin, authenticated)
+
+				return LoginData(xuid, identityPublicKey, uuid, username, languageCode, device, skin, authenticated)
 			} catch (exception: Exception) {
-				null
+				return null
 			}
 		}
 	}

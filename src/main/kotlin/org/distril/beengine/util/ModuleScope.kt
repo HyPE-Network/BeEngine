@@ -18,10 +18,9 @@ class ModuleScope(
 	private val parentJob = SupervisorJob(parentContext[Job])
 
 	override val coroutineContext: CoroutineContext =
-		parentContext + parentJob + CoroutineName("$name Scope") + dispatcher +
-				CoroutineExceptionHandler { context, throwable ->
-					exceptionHandler(context, throwable, log, name)
-				}
+		parentContext + parentJob + CoroutineName("$name Scope") + dispatcher + CoroutineExceptionHandler { context, throwable ->
+			exceptionHandler(context, throwable, log, name)
+		}
 
 	fun dispose() = this.parentJob.cancel()
 

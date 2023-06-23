@@ -2,7 +2,10 @@ package org.distril.beengine.player.handler
 
 import com.nukkitx.protocol.bedrock.BedrockServerSession
 import com.nukkitx.protocol.bedrock.handler.BedrockPacketHandler
-import com.nukkitx.protocol.bedrock.packet.*
+import com.nukkitx.protocol.bedrock.packet.PacketViolationWarningPacket
+import com.nukkitx.protocol.bedrock.packet.ResourcePackClientResponsePacket
+import com.nukkitx.protocol.bedrock.packet.ResourcePackStackPacket
+import com.nukkitx.protocol.bedrock.packet.ResourcePacksInfoPacket
 import org.distril.beengine.material.Material
 import org.distril.beengine.network.Network
 import org.distril.beengine.network.data.LoginData
@@ -53,13 +56,8 @@ class ResourcePackPacketHandler(
 		return true
 	}
 
-	override fun handle(packet: ResourcePackChunkRequestPacket): Boolean {
-		// todo
-		return super.handle(packet)
-	}
-
 	override fun handle(packet: PacketViolationWarningPacket): Boolean {
-		log.debug("Packet violation: $packet")
+		log.debug("Packet violation: {}", packet)
 		return true
 	}
 

@@ -89,6 +89,7 @@ class NBTPlayerDataProvider : PlayerDataProvider {
 
 
 	companion object {
+
 		private val log = NBTPlayerDataProvider.getLogger()
 	}
 }
