@@ -19,7 +19,7 @@ as well as expand the functionality of the server to meet the needs of players.
 
 ---
 
-- `git clone https://github.com/Distril/BeEngine.git`
+- `https://github.com/HyPE-Network/BeEngine.git`
 - `cd BeEngine`
 - `gradle shadowjar`
 
