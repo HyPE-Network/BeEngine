@@ -113,7 +113,10 @@ class CommandRegistry {
 	fun createPacketFor(player: Player): AvailableCommandsPacket {
 		val packet = AvailableCommandsPacket()
 		this.commands.values.forEach { command ->
-			command.permission.let { if (it == "" || player.hasPermission(it)) packet.commands.add(command.toNetwork()) }
+			command.permission.let {
+				if (it == "" || player.hasPermission(it))
+					packet.commands.add(command.toNetwork())
+			}
 		}
 
 		return packet

@@ -16,8 +16,11 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 	private val transaction = ItemStackTransaction(this.player)
 
 	override fun handle(packet: ItemStackRequestPacket): Boolean {
+		log.debug(packet.toString())
+
 		val responsePacket = ItemStackResponsePacket()
 		var continueActions = true
+
 		for (request in packet.requests) {
 			for (action in request.actions) {
 				if (!continueActions) break
@@ -76,7 +79,7 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 						// skip it because deprecated
 					}
 
-					else -> log.warn("Missing inventory action handler: ${action.type}")
+					else -> log.warn("Missing inventory action handler: $packet")
 				}
 			}
 
@@ -96,19 +99,21 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 	}
 
 	override fun handle(packet: InventoryTransactionPacket): Boolean {
-		if (this.player.isSpectator) return true
+		log.debug(packet.toString())
+
+		if (this.player.isSpectator || !this.player.isAlive) return true
 
 		when (packet.transactionType) {
 			TransactionType.ITEM_USE -> {
 				val transaction = ItemUseTransaction.read(packet)
-				when (transaction.type) {
-					ItemUseTransaction.Type.CLICK_BLOCK -> {
-						this.player.setUsingItem(false)
+				val blockPosition = transaction.blockPosition
+				if (this.player.canInteract(blockPosition.toFloat())) {
+					when (transaction.type) {
+						ItemUseTransaction.Type.CLICK_BLOCK -> {
+							this.player.setUsingItem(false)
 
-						val blockPosition = transaction.blockPosition
-						val world = player.world
-						val blockFace = transaction.blockFace
-						if (this.player.canInteract(blockPosition.toFloat().add(0.5, 0.5, 0.5))) {
+							val world = player.world
+							val blockFace = transaction.blockFace
 							val clientItem = transaction.itemInHand
 							var serverItem = this.player.inventory.getItemInHand()
 							if (this.player.isCreative) {
@@ -134,22 +139,25 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 									return true
 								}
 							}
+
+							this.player.inventory.sendHeldItem(listOf(this.player))
+
+							val target = world.getBlock(blockPosition)
+							val block = target.getSide(blockFace)
+							world.sendBlocks(setOf(this.player), listOf(target, block))
+
+							this.player.setUsingItem(true)
+							return true
 						}
 
-						this.player.inventory.sendHeldItem(listOf(this.player))
-						if (blockPosition.distanceSquared(player.position.toInt()) > 10000) return true
+						ItemUseTransaction.Type.CLICK_AIR -> {
+							// todo
+						}
 
-						val target = world.getBlock(blockPosition)
-						val block = target.getSide(blockFace)
-						world.sendBlocks(setOf(this.player), listOf(target, block))
-
-						this.player.setUsingItem(false)
-						return true
+						ItemUseTransaction.Type.BREAK_BLOCK -> {
+							// todo
+						}
 					}
-
-					ItemUseTransaction.Type.CLICK_AIR -> TODO("CLICK_AIR")
-
-					ItemUseTransaction.Type.BREAK_BLOCK -> TODO("BREAK_BLOCK")
 				}
 			}
 
@@ -157,10 +165,9 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 
 			TransactionType.ITEM_RELEASE -> TODO("ITEM_RELEASE")
 
-			else -> log.info("Unhandled transaction type: ${packet.transactionType}")
+			else -> log.info("Unhandled transaction type: $packet")
 		}
 
-		log.info(packet.toString())
 		return true
 	}
 
@@ -175,7 +182,7 @@ class InventoryPacketHandler(private val player: Player) : BedrockPacketHandler 
 	}
 
 	override fun handle(packet: PacketViolationWarningPacket): Boolean {
-		log.warn("Packet violation $packet")
+		log.debug("Packet violation {}", packet)
 		return true
 	}
 

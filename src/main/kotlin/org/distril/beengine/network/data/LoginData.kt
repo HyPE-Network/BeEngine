@@ -25,9 +25,10 @@ class LoginData private constructor(
 
 		fun extract(chainData: AsciiString, skinData: AsciiString): LoginData? {
 			try {
-				val chainJSON = gson.fromJson(chainData.toString(), JsonObject::class.java)
-				val chains = JSONArray()
-				chainJSON.getAsJsonArray("chain").forEach { chains.add(it.asString) }
+				val chains = JSONArray().apply {
+					val json = gson.fromJson(chainData.toString(), JsonObject::class.java)
+					json.getAsJsonArray("chain").forEach { this.add(it.asString) }
+				}
 
 				val authenticated = EncryptionUtils.verifyChain(chains)
 
