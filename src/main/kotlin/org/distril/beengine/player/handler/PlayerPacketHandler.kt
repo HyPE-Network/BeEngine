@@ -59,7 +59,7 @@ class PlayerPacketHandler(private val player: Player) : BedrockPacketHandler {
 	override fun handle(packet: ContainerClosePacket) = this.inventoryPacketHandler.handle(packet)
 
 	override fun handle(packet: PacketViolationWarningPacket): Boolean {
-		log.warn("Packet violation $packet")
+		log.debug("Packet violation {}", packet)
 		return true
 	}
 

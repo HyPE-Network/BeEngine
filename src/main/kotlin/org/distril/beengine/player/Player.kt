@@ -359,7 +359,7 @@ class Player(
 	fun canInteract(
 		position: Vector3f,
 		maxDistance: Double = if (this.isCreative) 13.0 else 7.0,
-		maxDiff: Double = 6.0
+		maxDiff: Double = 2.0
 	): Boolean {
 		if (this.position.distanceSquared(position) > maxDistance * maxDistance) return false
 

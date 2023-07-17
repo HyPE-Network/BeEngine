@@ -49,26 +49,28 @@ abstract class ItemStackAction(
 	}
 
 	protected fun StackRequestSlotInfoData.toNetwork(): ItemStackResponsePacket.ItemEntry {
-		val item = this.getItem()!!
-		val durability = 0 // todo
+		val item = this.getItem() ?: return ItemStackResponsePacket.ItemEntry(
+			0, 0, 0,
+			0, "", 0
+		)
 		return ItemStackResponsePacket.ItemEntry(
 			this.slot,
 			this.slot,
 			item.count.toByte(),
 			item.networkId,
 			item.customName ?: "",
-			durability
+			0 // todo
 		)
-	}
-
-	private fun StackRequestSlotInfoData?.getInventory(): Inventory? {
-		if (this == null) return null
-		return transaction.getInventoryByType(this.container)
 	}
 
 	private fun StackRequestSlotInfoData?.getItem(): Item? {
 		if (this == null) return null
 		return this.getInventory()?.getItem(this.slot.toInt())
+	}
+
+	private fun StackRequestSlotInfoData?.getInventory(): Inventory? {
+		if (this == null) return null
+		return transaction.getInventoryByType(this.container)
 	}
 
 	companion object {

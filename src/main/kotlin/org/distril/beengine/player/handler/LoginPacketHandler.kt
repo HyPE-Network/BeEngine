@@ -109,9 +109,8 @@ class LoginPacketHandler(private val session: BedrockServerSession) : BedrockPac
 		return true
 	}
 
-	@Suppress("LoggingStringTemplateAsArgument")
 	override fun handle(packet: PacketViolationWarningPacket): Boolean {
-		log.debug("Packet violation $packet")
+		log.debug("Packet violation {}", packet)
 		return true
 	}
 
