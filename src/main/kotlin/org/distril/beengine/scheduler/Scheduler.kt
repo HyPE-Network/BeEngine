@@ -7,88 +7,84 @@ import org.distril.beengine.scheduler.task.RunnableTask
 import org.distril.beengine.scheduler.task.Task
 import org.distril.beengine.scheduler.task.TaskEntry
 import org.distril.beengine.util.Utils.getLogger
-import java.util.*
-import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.Executors
+import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 class Scheduler(private val taskTimeout: Long) {
 
-	private val queue: Queue<TaskEntry> = ArrayDeque()
+	private val executor = Executors.newCachedThreadPool()
 
-	private var lastUpdateTick: Long = 0
+	private val queue = PriorityBlockingQueue<TaskEntry>()
 
-	fun scheduleTask(delay: Int = 0, period: Int = 0, async: Boolean = false, runnable: Runnable) =
-		this.scheduleTask(delay, period, async, RunnableTask(runnable))
-
-	fun scheduleTask(delay: Int = 0, period: Int = 0, async: Boolean = false, task: Task) =
-		this.addInQueue(TaskEntry(task, delay, period, async))
+	private val lastUpdateTick = AtomicLong(0)
 
 	fun processTick(currentTick: Long) {
-		this.lastUpdateTick = currentTick
+		this.lastUpdateTick.set(currentTick)
+
 		synchronized(this.queue) {
-			while (this.queue.isNotEmpty() && this.queue.peek().run {
-					this != null && this.nextRunTick <= currentTick
-				}
-			) {
+			while (this.queue.isNotEmpty() && this.queue.peek().nextRunTick <= currentTick) {
 				val taskEntry = this.queue.poll()
-				val task = taskEntry.task
-				if (taskEntry.async) {
-					POOL.submit {
-						Thread.currentThread().apply { name = "BeEngine Scheduler Task #" + this.id }
-
-						runBlocking {
-							try {
-								withTimeout(taskTimeout) { task.onRun() }
-							} catch (exception: TimeoutCancellationException) {
-								log.error("Scheduler Task timed out:", exception)
-							} catch (exception: Exception) {
-								log.error("Scheduler Task failed with exception:", exception)
-							}
-						}
-
-						if (!task.cancelled && taskEntry.isRepeating) {
-							this.addInQueue(taskEntry)
-						}
-					}
+				if (taskEntry.isAsync) {
+					this.executor.submit { this.executeTask(taskEntry) }
 				} else {
-					task.onRun()
-
-					if (!task.cancelled && taskEntry.isRepeating) {
-						this.addInQueue(taskEntry)
-					}
+					this.executeTask(taskEntry)
 				}
 			}
 		}
 	}
 
-	private fun addInQueue(entry: TaskEntry) {
-		if (entry.isRepeating) {
-			entry.nextRunTick = this.lastUpdateTick + entry.period
-		} else {
-			entry.nextRunTick = this.lastUpdateTick + entry.delay
+	private fun executeTask(entry: TaskEntry) {
+		if (!entry.isCancelled) {
+			runBlocking {
+				try {
+					withTimeout(taskTimeout) { entry.task.onRun() }
+				} catch (exception: TimeoutCancellationException) {
+					log.error("Task timed out:", exception)
+				} catch (exception: Exception) {
+					log.error("Task failed with exception:", exception)
+				}
+
+				if (entry.isRepeating && !entry.isCancelled) addInQueue(entry, entry.period)
+			}
+		}
+	}
+
+	fun scheduleTask(delay: Int = 0, period: Int = 0, async: Boolean = false, runnable: Runnable) =
+		this.scheduleTask(delay, period, async, RunnableTask(runnable))
+
+	fun scheduleTask(delay: Int = 0, period: Int = 0, async: Boolean = false, task: Task) =
+		this.addInQueue(TaskEntry(task, delay, period, async), delay)
+
+
+	private fun addInQueue(entry: TaskEntry, adds: Int): TaskEntry {
+		synchronized(this.queue) {
+			entry.nextRunTick = this.lastUpdateTick.get() + adds
+			this.queue.offer(entry)
 		}
 
-		synchronized(this.queue) { this.queue.offer(entry) }
+		return entry
 	}
 
 	fun cancelAllTasks() {
 		synchronized(this.queue) {
-			this.queue.forEach { it.task.cancel() }
+			this.queue.forEach { it.cancel() }
 			this.queue.clear()
 		}
 
-		POOL.shutdown()
+		this.executor.shutdown()
 		try {
-			if (!POOL.awaitTermination(this.taskTimeout, TimeUnit.MILLISECONDS)) POOL.shutdownNow()
+			if (!this.executor.awaitTermination(this.taskTimeout, TimeUnit.MILLISECONDS)) {
+				this.executor.shutdownNow()
+			}
 		} catch (_: InterruptedException) {
-			POOL.shutdownNow()
+			this.executor.shutdownNow()
 		}
 	}
 
 	companion object {
 
 		private val log = Scheduler.getLogger()
-
-		private val POOL = ForkJoinPool.commonPool()
 	}
 }

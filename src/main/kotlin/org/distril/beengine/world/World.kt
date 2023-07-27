@@ -26,10 +26,10 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	"$worldName-World"
 ) {
 
-	val path = Path.of("worlds", worldName)
+	val path: Path = Path.of("worlds", worldName)
 	val chunkManager = ChunkManager(this)
-	val playerChunkProcessor = PlayerChunkProcessor(this.worldName)
-	val entities: MutableMap<Long, Entity> = ConcurrentHashMap()
+	private val playerChunkProcessor = PlayerChunkProcessor(this.worldName)
+	private val entities: MutableMap<Long, Entity> = ConcurrentHashMap()
 
 	init {
 		this.start()

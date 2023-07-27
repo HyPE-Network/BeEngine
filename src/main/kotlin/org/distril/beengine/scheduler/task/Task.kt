@@ -1,19 +1,10 @@
 package org.distril.beengine.scheduler.task
 
-abstract class Task {
+interface Task {
 
-	var cancelled = false
-		private set
+	fun onRun()
 
-	abstract fun onRun()
-
-	fun cancel() {
-		this.cancelled = true
-
-		this.onCancel()
-	}
-
-	protected fun onCancel() {
+	fun onCancel() {
 		// functional method
 	}
 }
