@@ -5,7 +5,6 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.IOException
 import java.nio.file.Path
 
-
 class ServerSettings(path: Path) {
 
 	private val loader = YamlConfigurationLoader.builder().path(path).build()

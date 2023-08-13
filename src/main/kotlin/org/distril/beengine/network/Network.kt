@@ -9,7 +9,6 @@ import org.distril.beengine.player.handler.LoginPacketHandler
 import org.distril.beengine.server.Server
 import org.distril.beengine.util.Utils.getLogger
 import java.net.InetSocketAddress
-import java.util.concurrent.CompletionException
 
 class Network(ip: String, port: Int) : BedrockServerEventHandler {
 
@@ -30,13 +29,14 @@ class Network(ip: String, port: Int) : BedrockServerEventHandler {
 	}
 
 	fun start() {
-		try {
-			bedrockServer.bind().join()
-			log.info("Server started on ${bedrockServer.bindAddress} with ${CODEC.minecraftVersion} Minecraft version")
-		} catch (exception: CompletionException) {
-			if (exception.cause is Exception) throw exception.cause as Exception
+		bedrockServer.bind().whenComplete { _, exception ->
+			if (exception != null) {
+				if (exception.cause is Exception) throw exception.cause as Exception
 
-			throw exception
+				throw exception
+			}
+
+			log.info("Server started on ${bedrockServer.bindAddress} with ${CODEC.minecraftVersion} Minecraft version")
 		}
 	}
 

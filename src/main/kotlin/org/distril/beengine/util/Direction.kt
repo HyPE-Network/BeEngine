@@ -4,18 +4,21 @@ import com.nukkitx.math.vector.Vector3i
 import kotlin.math.abs
 import kotlin.math.floor
 
+/**
+ * Enum class representing different directions in a 3D space.
+ * Each direction has an associated opposite direction, an axis, axis direction,
+ * and a unit vector indicating the change in position along each axis.
+ *
+ * @property opposite The index of the opposite direction.
+ * @property horizontalIndex Ordering index for the HORIZONTALS field (S-W-N-E).
+ * @property axis The axis associated with the direction.
+ * @property axisDirection The axis direction (POSITIVE or NEGATIVE) associated with the direction.
+ * @property unitVector The unit vector indicating the change in position along each axis.
+ */
 enum class Direction(
 	private val opposite: Int,
-	/**
-	 * Ordering index for the HORIZONTALS field (S-W-N-E)
-	 */
 	val horizontalIndex: Int,
 	val axis: Axis,
-	/**
-	 * Get the horizontal index of this BlockFace (0-3). The order is S-W-N-E
-	 *
-	 * @return horizontal index
-	 */
 	val axisDirection: AxisDirection,
 	val unitVector: Vector3i
 ) {
@@ -36,20 +39,28 @@ enum class Direction(
 	 */
 	val horizontalAngle = ((this.horizontalIndex and 3) * 90).toFloat()
 
+	/**
+	 * Get the offset of the given position along this direction.
+	 *
+	 * @param position The initial position.
+	 * @param step The step size for the offset (default is 1).
+	 * @return The updated position after applying the offset.
+	 */
 	fun getOffset(position: Vector3i, step: Int = 1) =
 		position.add(this.unitVector.x * step, this.unitVector.y * step, this.unitVector.z * step)
 
 	/**
-	 * Get the opposite BlockFace (e.g. DOWN ==&gt; UP)
+	 * Get the opposite Direction (e.g., DOWN => UP).
 	 *
-	 * @return block face
+	 * @return The opposite Direction.
 	 */
 	fun getOpposite() = fromIndex(this.opposite)
 
 	/**
-	 * Rotate this BlockFace around the Y axis clockwise (NORTH =&gt; EAST =&gt; SOUTH =&gt; WEST =&gt; BB_NORTH)
+	 * Rotate this Direction 90 degrees clockwise around the Y axis (NORTH => EAST => SOUTH => WEST => NORTH).
 	 *
-	 * @return block face
+	 * @return The rotated Direction.
+	 * @throws RuntimeException if the rotation is not defined for the current Direction.
 	 */
 	fun rotateY() = when (this) {
 		NORTH -> EAST
@@ -60,9 +71,10 @@ enum class Direction(
 	}
 
 	/**
-	 * Rotate this BlockFace around the Y axis counter-clockwise (NORTH =&gt; WEST =&gt; SOUTH =&gt; EAST =&gt; BB_NORTH)
+	 * Rotate this Direction 90 degrees counter-clockwise around the Y axis (NORTH => WEST => SOUTH => EAST => NORTH).
 	 *
-	 * @return block face
+	 * @return The counter-clockwise rotated Direction.
+	 * @throws RuntimeException if the counter-clockwise rotation is not defined for the current Direction.
 	 */
 	fun rotateYCCW() = when (this) {
 		NORTH -> WEST
@@ -98,7 +110,7 @@ enum class Direction(
 		private val horizontals = arrayOfNulls<Direction>(4)
 
 		init {
-			Direction.values().forEach {
+			entries.forEach {
 				values[it.ordinal] = it
 				if (it.axis.plane == Plane.HORIZONTAL) {
 					horizontals[it.horizontalIndex] = it
@@ -106,13 +118,36 @@ enum class Direction(
 			}
 		}
 
+		/**
+		 * Get the Direction enum value from the given index.
+		 *
+		 * @param index The index of the direction.
+		 * @return The Direction enum value.
+		 */
 		fun fromIndex(index: Int) = this.values[abs(index % this.values.size)]
 
+		/**
+		 * Get the Direction enum value from the given horizontal index.
+		 *
+		 * @param index The horizontal index of the direction.
+		 * @return The Direction enum value.
+		 */
 		fun fromHorizontalIndex(index: Int) = this.horizontals[abs(index % this.horizontals.size)]
 
+		/**
+		 * Get the Direction enum value from the given horizontal angle.
+		 *
+		 * @param angle The horizontal angle in degrees.
+		 * @return The Direction enum value.
+		 */
 		fun fromHorizontalAngle(angle: Double) =
 			this.fromHorizontalIndex(floor(angle / 90.0 + 0.5).toInt() and 3)
 
+		/**
+		 * Get the Direction enum value from the given axis direction and axis.
+		 *
+		 * @throws RuntimeException if the direction cannot be found.
+		 */
 		fun fromAxis(axisDirection: AxisDirection, axis: Axis): Direction {
 			this.values.forEach {
 				if (it!!.axisDirection == axisDirection && it.axis == axis) {

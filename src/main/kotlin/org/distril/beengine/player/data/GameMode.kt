@@ -15,10 +15,10 @@ enum class GameMode(
 
 	companion object {
 
-		fun fromIdentifierOrAlias(idOrAlias: String) = GameMode.values().firstOrNull {
+		fun fromIdentifierOrAlias(idOrAlias: String) = entries.firstOrNull {
 			it.identifier.equals(idOrAlias, true) || it.alias.equals(idOrAlias, true)
 		}
 
-		fun fromId(id: Int) = GameMode.values()[id]
+		fun fromId(id: Int) = entries[id]
 	}
 }

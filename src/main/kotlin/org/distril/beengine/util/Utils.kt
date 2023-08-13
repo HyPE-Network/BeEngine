@@ -22,5 +22,8 @@ object Utils {
 
 	fun getResource(name: String): InputStream = ClassLoader.getSystemResourceAsStream(name)!!
 
+	fun requireInRange(value: Int, minValue: Int = 0, maxValue: Int, name: String) =
+		require(value in minValue until maxValue) { "$name out of bounds" }
+
 	fun Any.getLogger() = LogManager.getLogger(this::class.java)!!
 }

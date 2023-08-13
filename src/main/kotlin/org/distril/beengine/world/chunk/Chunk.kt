@@ -16,7 +16,7 @@ data class Chunk(val x: Int, val z: Int) {
 
 	val subChunks = arrayOfNulls<SubChunk>(SubChunk.COUNT)
 
-	val entities = Collections.newSetFromMap(ConcurrentHashMap<Entity, Boolean>())
+	val entities: MutableSet<Entity> = Collections.newSetFromMap(ConcurrentHashMap())
 
 	val loaders = mutableSetOf<ChunkLoader>()
 

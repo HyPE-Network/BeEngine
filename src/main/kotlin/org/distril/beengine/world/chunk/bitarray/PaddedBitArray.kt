@@ -1,11 +1,11 @@
 package org.distril.beengine.world.chunk.bitarray
 
-import com.google.common.base.Preconditions
+import org.distril.beengine.util.Utils.requireInRange
 
 class PaddedBitArray(version: Version, size: Int, words: IntArray) : BitArray(version, size, words) {
 
 	override fun set(index: Int, value: Int) {
-		Preconditions.checkElementIndex(index, this.size)
+		requireInRange(index, maxValue = this.size, name = "index")
 		require(value >= 0 && value <= this.version.maxEntryValue) {
 			"Max value: ${this.version.maxEntryValue}. Received value $value"
 		}
@@ -18,7 +18,7 @@ class PaddedBitArray(version: Version, size: Int, words: IntArray) : BitArray(ve
 	}
 
 	override fun get(index: Int): Int {
-		Preconditions.checkElementIndex(index, this.size)
+		requireInRange(index, maxValue = this.size, name = "index")
 
 		val arrayIndex = index / this.version.entriesPerWord
 		val offset = index % this.version.entriesPerWord * this.version.bits

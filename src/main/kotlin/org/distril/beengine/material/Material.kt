@@ -1196,7 +1196,7 @@ enum class Material(val itemRuntimeId: Int) {
 		private val BY_IDENTIFIER = mutableMapOf<String, Material>()
 
 		init {
-			Material.values().forEach {
+			entries.forEach {
 				BY_ITEM_RUNTIME_ID[it.itemRuntimeId] = it
 				BY_IDENTIFIER[it.identifier] = it
 			}

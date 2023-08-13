@@ -70,7 +70,8 @@ object ItemUtils {
 		return Material.fromItemRuntimeId(itemData.id).getItem<Item>().apply {
 			meta = itemData.damage
 			count = itemData.count
-			nbt = itemData.tag
+			if (itemData.tag != null)
+				nbt = itemData.tag
 		}
 	}
 }

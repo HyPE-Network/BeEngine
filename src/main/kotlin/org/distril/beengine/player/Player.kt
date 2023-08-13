@@ -217,7 +217,7 @@ class Player(
 		if (!this.session.isClosed) this.session.sendPacketImmediately(packet)
 	}
 
-	val uuidForData get() = UUID.nameUUIDFromBytes(this.name.toByteArray(StandardCharsets.UTF_8))
+	val uuidForData: UUID get() = UUID.nameUUIDFromBytes(this.name.toByteArray(StandardCharsets.UTF_8))
 
 	fun setGameMode(gameMode: GameMode) {
 		this.data.gameMode = gameMode

@@ -2,6 +2,7 @@ package org.distril.beengine.world.chunk.processor
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.distril.beengine.util.ModuleScope
 import org.distril.beengine.util.Utils.getLogger
 
@@ -38,9 +39,7 @@ class PlayerChunkProcessor(worldName: String) {
 		}
 	}
 
-	fun addRequest(request: PlayerChunkRequest) {
-		this.scope.launch { requests.send(request) }
-	}
+	fun addRequest(request: PlayerChunkRequest) = runBlocking { requests.send(request) }
 
 	companion object {
 

@@ -62,10 +62,10 @@ object SkinUtil {
 		val height = animationJson["ImageHeight"].asInt
 		val data = Base64.getDecoder().decode(animationJson["Image"].asString)
 		val frames = animationJson["Frames"].asFloat
-		val textureType = AnimatedTextureType.values()[animationJson["Type"].asInt]
+		val textureType = AnimatedTextureType.entries[animationJson["Type"].asInt]
 		var expressionType = AnimationExpressionType.BLINKING
 		animationJson["ExpressionType"]?.asInt?.let {
-			expressionType = AnimationExpressionType.values()[it]
+			expressionType = AnimationExpressionType.entries[it]
 		}
 
 		return AnimationData(ImageData.of(width, height, data), textureType, frames, expressionType)

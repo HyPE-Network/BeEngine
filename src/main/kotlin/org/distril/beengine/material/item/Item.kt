@@ -13,19 +13,17 @@ import kotlin.math.min
 abstract class Item(val material: Material) : Cloneable, ItemBehaviors {
 
 	val networkId = if (this.material === Material.AIR) 0 else nextNetworkId.incrementAndGet()
+
 	var meta = 0
+
 	var count = 1
 		set(value) {
 			field = max(0, min(value, this.maxCount))
 		}
 
-	var nbt = NbtMap.EMPTY
-		set(value) {
-			field = value ?: NbtMap.EMPTY
-		}
+	var nbt: NbtMap = NbtMap.EMPTY
 
-	val blockRuntimeId: Int
-		get() = this.toBlock<Block>()?.state?.runtimeId ?: 0
+	val blockRuntimeId get() = this.toBlock<Block>()?.state?.runtimeId ?: 0
 
 	var customName: String?
 		get() = this.nbt.getCompound("display").getString("Name")

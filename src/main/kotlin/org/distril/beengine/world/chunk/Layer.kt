@@ -7,29 +7,30 @@ import org.distril.beengine.material.block.Block
 import org.distril.beengine.material.block.BlockState
 import org.distril.beengine.world.chunk.bitarray.BitArray
 import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentHashMap
 
 class Layer(version: BitArray.Version = BitArray.Version.V2) {
 
-	val palette: MutableList<BlockState> = CopyOnWriteArrayList<BlockState>().apply {
-		this.add(AIR_STATE)
+	private val palette: MutableMap<BlockState, Int> = ConcurrentHashMap<BlockState, Int>().apply {
+		this[AIR_STATE] = 0
 	}
+
+	private val inversePalette: Map<Int, BlockState>
+		get() = palette.entries.associate { (k, v) -> v to k }
 
 	var bitArray = version.createPalette(SIZE)
 
 	private fun getPaletteHeader(version: BitArray.Version) = version.bits.toInt() shl 1 or 1
 
-	operator fun get(x: Int, y: Int, z: Int): BlockState {
+	operator fun get(x: Int, y: Int, z: Int): BlockState? {
 		val index = x shl 8 or (z shl 4) or y
-		return this.palette[bitArray[index]]
+		return this.inversePalette[bitArray[index]]
 	}
 
 	operator fun set(x: Int, y: Int, z: Int, state: BlockState) {
 		try {
 			val index = x shl 8 or (z shl 4) or y
-			synchronized(this.bitArray) {
-				this.bitArray[index] = this.idFor(state)
-			}
+			this.bitArray[index] = this.idFor(state)
 		} catch (exception: IllegalArgumentException) {
 			throw IllegalArgumentException("Unable to set block state: $state, palette: $palette", exception)
 		}
@@ -40,22 +41,20 @@ class Layer(version: BitArray.Version = BitArray.Version.V2) {
 		this.bitArray.words.forEach { buffer.writeIntLE(it) }
 
 		VarInts.writeInt(buffer, this.palette.size)
-		this.palette.forEach { VarInts.writeInt(buffer, it.runtimeId) }
+		this.palette.keys.forEach { VarInts.writeInt(buffer, it.runtimeId) }
 	}
 
 	private fun idFor(state: BlockState): Int {
-		var index = this.palette.indexOf(state)
-		if (index == -1) {
-			index = this.palette.size
-			val version = this.bitArray.version
-			if (index > version.maxEntryValue) {
-				version.next?.let { this.onResize(it) }
-			}
+		val existingIndex = this.palette[state]
+		if (existingIndex != null) return existingIndex
 
-			this.palette.add(state)
-			return index
+		val index = this.palette.size
+		val version = this.bitArray.version
+		if (index > version.maxEntryValue) {
+			version.next?.let { this.onResize(it) }
 		}
 
+		this.palette[state] = index
 		return index
 	}
 

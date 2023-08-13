@@ -23,8 +23,6 @@ enum class Device(
 
 	companion object {
 
-		fun fromOSId(osId: Int): Device {
-			return Device.values().firstOrNull { it.osId == osId } ?: UNKNOWN
-		}
+		fun fromOSId(osId: Int) = entries.firstOrNull { it.osId == osId } ?: UNKNOWN
 	}
 }

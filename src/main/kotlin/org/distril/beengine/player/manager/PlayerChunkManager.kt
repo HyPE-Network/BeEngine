@@ -3,25 +3,25 @@ package org.distril.beengine.player.manager
 import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket
 import com.nukkitx.protocol.bedrock.packet.NetworkChunkPublisherUpdatePacket
-import it.unimi.dsi.fastutil.longs.LongArrayList
-import it.unimi.dsi.fastutil.longs.LongComparator
-import it.unimi.dsi.fastutil.longs.LongConsumer
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import org.distril.beengine.player.Player
 import org.distril.beengine.util.ChunkUtils
 import org.distril.beengine.world.chunk.processor.SendChunk
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import java.util.function.Consumer
 
 class PlayerChunkManager(val player: Player) {
 
 	private val chunkComparator = AroundPlayerChunkComparator(this.player)
 
-	private val removeChunkLoader = LongConsumer {
+	private val removeChunkLoader = Consumer<Long> {
 		this.player.world.chunkManager.getLoadedChunk(it)?.let { chunk ->
 			chunk.removeLoader(this.player)
-			chunk.entities.forEach { entity -> entity.despawnFor(this.player) }
+			chunk.entities.forEach { entity ->
+				if (entity !is Player)
+					entity.despawnFor(this.player)
+			}
 		}
 	}
 
@@ -51,50 +51,48 @@ class PlayerChunkManager(val player: Player) {
 		this.queueNewChunks(position.floorX shr 4, position.floorZ shr 4)
 
 	fun queueNewChunks(fromChunkX: Int, fromChunkZ: Int) {
-		synchronized(this) {
-			val radiusSqr = this.radius * this.radius
+		val radiusSqr = this.radius * this.radius
 
-			val chunksForRadius = mutableSetOf<Long>()
-			val sentCopy = LongOpenHashSet(this.loadedChunks)
+		val chunksForRadius = mutableListOf<Long>()
+		val sentCopy = mutableSetOf<Long>().apply { addAll(loadedChunks) }
 
-			val chunksToLoad = LongArrayList()
-			for (x in -this.radius..this.radius) for (z in -this.radius..this.radius) {
-				if (((x * x) + (z * z)) > radiusSqr) continue
+		val chunksToLoad = mutableListOf<Long>()
+		for (x in -this.radius..this.radius) for (z in -this.radius..this.radius) {
+			if (((x * x) + (z * z)) > radiusSqr) continue
 
-				val chunkX = fromChunkX + x
-				val chunkZ = fromChunkZ + z
+			val chunkX = fromChunkX + x
+			val chunkZ = fromChunkZ + z
 
-				val key = ChunkUtils.encode(chunkX, chunkZ)
-				chunksForRadius.add(key)
+			val key = ChunkUtils.encode(chunkX, chunkZ)
+			chunksForRadius.add(key)
 
-				if (!this.loadedChunks.contains(key)) chunksToLoad.add(key)
-			}
+			if (!this.loadedChunks.contains(key)) chunksToLoad.add(key)
+		}
 
-			val loadedChunksChanged = this.loadedChunks.retainAll(chunksForRadius)
-			if (loadedChunksChanged || chunksToLoad.isNotEmpty()) {
-				val packet = NetworkChunkPublisherUpdatePacket()
-				packet.position = this.player.position.toInt()
-				packet.radius = this.radius shl 4
+		val loadedChunksChanged = this.loadedChunks.retainAll(chunksForRadius.toSet())
+		if (loadedChunksChanged || chunksToLoad.isNotEmpty()) {
+			val packet = NetworkChunkPublisherUpdatePacket()
+			packet.position = this.player.position.toInt()
+			packet.radius = this.radius shl 4
 
-				this.player.sendPacket(packet)
-			}
+			this.player.sendPacket(packet)
+		}
 
-			// Order chunks for smoother loading
-			chunksToLoad.unstableSort(this.chunkComparator)
+		// Order chunks for smoother loading
+		chunksToLoad.sortWith(this.chunkComparator)
 
-			val world = this.player.world
-			val chunkManager = world.chunkManager
-			chunksToLoad.forEach {
-				val chunkX = ChunkUtils.decodeX(it)
-				val chunkZ = ChunkUtils.decodeZ(it)
+		val world = this.player.world
+		val chunkManager = world.chunkManager
+		chunksToLoad.forEach {
+			val chunkX = ChunkUtils.decodeX(it)
+			val chunkZ = ChunkUtils.decodeZ(it)
 
-				val chunk = chunkManager.getChunk(chunkX, chunkZ)
-				world.addPlayerRequest(SendChunk(this.player, chunk))
+			val chunk = chunkManager.getChunk(chunkX, chunkZ)
+			world.addPlayerRequest(SendChunk(this.player, chunk))
 
-				sentCopy.removeAll(chunksForRadius)
-				// Remove player from chunk loaders
-				sentCopy.forEach(removeChunkLoader)
-			}
+			sentCopy.removeAll(chunksForRadius.toSet())
+			// Remove player from chunk loaders
+			sentCopy.forEach(removeChunkLoader)
 		}
 	}
 
@@ -110,7 +108,7 @@ class PlayerChunkManager(val player: Player) {
 		private const val MAX_RADIUS = 32
 	}
 
-	class AroundPlayerChunkComparator(val player: Player) : LongComparator {
+	class AroundPlayerChunkComparator(val player: Player) : Comparator<Long> {
 
 		override fun compare(chunkKey1: Long, chunkKey2: Long): Int {
 			val spawnX = this.player.location.chunkX

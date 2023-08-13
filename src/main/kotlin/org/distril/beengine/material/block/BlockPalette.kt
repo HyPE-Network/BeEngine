@@ -1,7 +1,5 @@
 package org.distril.beengine.material.block
 
-import com.google.common.collect.BiMap
-import com.google.common.collect.HashBiMap
 import com.nukkitx.nbt.NbtMap
 import com.nukkitx.nbt.NbtType
 import com.nukkitx.nbt.NbtUtils
@@ -12,7 +10,10 @@ import org.distril.beengine.util.Utils
 
 object BlockPalette {
 
-	val states: BiMap<NbtMap, Int> = HashBiMap.create()
+	val states = mutableMapOf<NbtMap, Int>()
+	val inverseStates: Map<Int, NbtMap>
+		get() = states.entries.associate { (k, v) -> v to k }
+
 	val defaultStates = mutableMapOf<String, BlockState>()
 
 	val meta2state = mutableMapOf<String, MutableList<BlockState>>()
@@ -34,7 +35,7 @@ object BlockPalette {
 		}
 	}
 
-	fun getBlockFullState(runtimeId: Int) = this.states.inverse().getOrDefault(runtimeId, NbtMap.EMPTY)
+	fun getBlockFullState(runtimeId: Int): NbtMap = this.inverseStates[runtimeId]!!
 
 	fun getRuntimeId(identifier: String, states: NbtMap): Int {
 		val fullState = NbtMap.builder().apply {

@@ -1,5 +1,3 @@
-@file:Suppress("VulnerableLibrariesLocal")
-
 import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
 
 plugins {
@@ -25,7 +23,6 @@ dependencies {
 	implementation(libs.configurate)
 
 	implementation(libs.gson)
-	implementation(libs.guava)
 	implementation(libs.coroutines)
 
 	implementation(libs.bundles.log4j)

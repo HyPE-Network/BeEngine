@@ -1,11 +1,12 @@
 package org.distril.beengine.world.chunk.manager
 
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.distril.beengine.util.ChunkUtils
 import org.distril.beengine.world.World
 import org.distril.beengine.world.chunk.Chunk
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ThreadLocalRandom
 
@@ -13,7 +14,7 @@ class ChunkManager(private val world: World) {
 
 	val chunks: MutableMap<Long, Chunk> = ConcurrentHashMap()
 
-	val random = ThreadLocalRandom.current()
+	val random: Random = ThreadLocalRandom.current()
 
 	fun getLoadedChunk(x: Int, z: Int) = this.getLoadedChunk(ChunkUtils.encode(x, z))
 
@@ -25,33 +26,32 @@ class ChunkManager(private val world: World) {
 
 	fun generateChunk(x: Int, z: Int) = this.generateChunk(ChunkUtils.encode(x, z))
 
-	fun generateChunk(key: Long): Chunk = synchronized(this.chunks) {
+	fun generateChunk(key: Long): Chunk {
 		val loadedChunk = this.getLoadedChunk(key)
 		if (loadedChunk != null) return loadedChunk
 
-		val chunk = this.chunks.computeIfAbsent(key) {
-			Chunk(ChunkUtils.decodeX(it), ChunkUtils.decodeZ(it))
+		val chunk: Chunk
+		synchronized(this.chunks) {
+			chunk = this.chunks.computeIfAbsent(key) {
+				Chunk(ChunkUtils.decodeX(it), ChunkUtils.decodeZ(it))
+			}
 		}
 
 		this.world.generator.generate(this.random, chunk)
 		return chunk
 	}
 
-	suspend fun tick(): Collection<Deferred<Unit>> {
-		val tickedChunks = mutableListOf<Deferred<Unit>>()
+	suspend fun tick() {
 		if (chunks.isNotEmpty()) {
 			coroutineScope {
-				chunks.forEach { (key, chunk) ->
-					tickedChunks.add(async {
+				chunks.map { (key, chunk) ->
+					async {
 						val canBeUnload = chunk.tick()
-
 						if (canBeUnload) unloadChunk(key)
-					})
-				}
+					}
+				}.awaitAll()
 			}
 		}
-
-		return tickedChunks
 	}
 
 	fun unloadChunk(key: Long, save: Boolean = true, force: Boolean = false) {

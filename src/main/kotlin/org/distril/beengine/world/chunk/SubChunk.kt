@@ -9,7 +9,9 @@ class SubChunk(val index: Int) {
 	val layers = arrayOf(Layer(), Layer())
 
 	fun setBlockState(x: Int, y: Int, z: Int, state: BlockState, layer: Int = 0) {
-		this.layers[layer][x and 0xf, y and 0xf, z and 0xf] = state
+		synchronized(this.layers) {
+			this.layers[layer][x and 0xf, y and 0xf, z and 0xf] = state
+		}
 	}
 
 	fun getBlockState(x: Int, y: Int, z: Int, layer: Int = 0) = this.layers[layer][x and 0xf, y and 0xf, z and 0xf]

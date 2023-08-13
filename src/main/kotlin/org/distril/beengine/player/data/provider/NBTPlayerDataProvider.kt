@@ -18,12 +18,12 @@ import java.util.*
 
 class NBTPlayerDataProvider : PlayerDataProvider {
 
-	private val scope = ModuleScope("NBTPlayerDataProvider", dispatcher = Dispatchers.IO)
+	private val scope = ModuleScope("PlayerDataProvider", dispatcher = Dispatchers.IO)
 
 	override fun save(uuid: UUID, data: PlayerData, handler: (Throwable?) -> Unit) {
 		val playerFile = resolvePlayerNBTFile(uuid)
 		if (playerFile.exists() && !playerFile.delete()) {
-			log.error("Failed to save data of $uuid. Failed to delete existing player data file")
+			log.error("Failed to delete existing player data file!")
 		}
 
 		this.scope.launch {
@@ -83,7 +83,7 @@ class NBTPlayerDataProvider : PlayerDataProvider {
 			val position = Vector3f.from(data.getFloat("x"), data.getFloat("y"), data.getFloat("z"))
 			val world = Server.worldRegistry.getWorld(data.getString("worldName"))!!
 			this.location = Location(world, position)
-			this.gameMode = GameMode.values()[data.getInt("gamemode")]
+			this.gameMode = GameMode.fromId(data.getInt("gamemode"))
 		}
 	}
 

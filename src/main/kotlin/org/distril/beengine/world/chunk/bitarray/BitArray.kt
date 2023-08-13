@@ -42,7 +42,7 @@ abstract class BitArray(val version: Version, val size: Int, val words: IntArray
 
 		companion object {
 
-			operator fun get(version: Int, read: Boolean) = values().first {
+			operator fun get(version: Int, read: Boolean) = entries.first {
 				!read && it.entriesPerWord <= version || read && it.bits.toInt() == version
 			}
 		}

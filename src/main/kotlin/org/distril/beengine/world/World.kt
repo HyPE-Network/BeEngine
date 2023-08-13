@@ -2,7 +2,6 @@ package org.distril.beengine.world
 
 import com.nukkitx.math.vector.Vector3i
 import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -36,14 +35,9 @@ class World(val worldName: String, val dimension: Dimension, val generator: Gene
 	}
 
 	override suspend fun onUpdate(currentTick: Long): Unit = coroutineScope {
-		val tickedItems = mutableListOf<Deferred<Any>>()
-		tickedItems.addAll(chunkManager.tick())
+		chunkManager.tick()
 
-		entities.values.forEach {
-			tickedItems.add(async { it.onUpdate(currentTick) })
-		}
-
-		awaitAll(*tickedItems.toTypedArray())
+		entities.values.map { async { it.onUpdate(currentTick) } }.awaitAll()
 	}
 
 	fun addPlayerRequest(request: PlayerChunkRequest) {

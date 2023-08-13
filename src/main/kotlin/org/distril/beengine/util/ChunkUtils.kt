@@ -1,13 +1,13 @@
 package org.distril.beengine.util
 
-import com.google.common.base.Preconditions
+import org.distril.beengine.util.Utils.requireInRange
 
 object ChunkUtils {
 
 	fun checkBounds(x: Int, y: Int, z: Int) {
-		Preconditions.checkElementIndex(x, 16, "X coordinate")
-		Preconditions.checkElementIndex(y, 256, "Y coordinate")
-		Preconditions.checkElementIndex(z, 16, "Z coordinate")
+		requireInRange(x, maxValue = 16, name = "X")
+		requireInRange(y, maxValue = 256, name = "Y")
+		requireInRange(z, maxValue = 16, name = "Z")
 	}
 
 	fun decodeX(chunkKey: Long) = (chunkKey shr 32).toInt()

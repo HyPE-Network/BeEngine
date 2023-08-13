@@ -26,7 +26,7 @@ class ItemUseTransaction private constructor(
 
 		companion object {
 
-			fun fromTypeId(typeId: Int) = Type.values()[typeId]
+			fun fromTypeId(typeId: Int) = entries[typeId]
 		}
 	}
 
