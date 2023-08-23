@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
 
 plugins {
-	kotlin("jvm") version "1.9.0"
+	kotlin("jvm") version "1.9.10"
 	id("java-library")
 	id("application")
 	alias(libs.plugins.shadow)
