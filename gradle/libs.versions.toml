@@ -3,7 +3,7 @@ shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
 
 [versions]
 log4j = "2.21.0"
-jline = "3.23.0"
+jline = "3.24.0"
 
 [libraries]
 # Logger
